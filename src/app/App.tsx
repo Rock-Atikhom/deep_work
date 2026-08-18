@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createSessionState,
   reduceSession,
@@ -9,6 +9,13 @@ import {
   type SessionState,
   type SoundPreference,
 } from "../session/session-machine";
+import {
+  openDeepWorkRepository,
+  type DeepWorkRepository,
+  type RepositorySnapshot,
+  type SessionPreferences,
+  type SessionSummary,
+} from "../storage/repository";
 
 const MINUTE = 60_000;
 const initialConfig: SessionConfig = {
@@ -29,6 +36,41 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function reflectionLabel(value: Reflection): string {
+  return value === "not-yet" ? "Not yet" : capitalize(value);
+}
+
+function sessionFromSummary(summary: SessionSummary): SessionState {
+  return {
+    config: {
+      durationMs: summary.durationMs,
+      goal: summary.goal,
+      sound: "silent",
+      subject: summary.subject,
+    },
+    elapsedMs: summary.elapsedMs,
+    finishReason: summary.finishReason,
+    finishedAtMs: summary.finishedAtMs,
+    pausedAtMs: null,
+    phase: "complete",
+    reflection: summary.reflection ?? null,
+    sessionId: summary.sessionId,
+    sessionStartedAtMs: summary.startedAtMs,
+    startedAtMs: null,
+  };
+}
+
+function sessionPreferences(snapshot: RepositorySnapshot): SessionPreferences {
+  return {
+    durationMs: snapshot.preferences.durationMs,
+    sound: snapshot.preferences.sound,
+  };
+}
+
+function newSessionId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `session-${Date.now()}`;
+}
+
 function dispatchEvent(
   setSession: React.Dispatch<React.SetStateAction<SessionState>>,
   event: SessionEvent,
@@ -36,10 +78,100 @@ function dispatchEvent(
   setSession((current) => reduceSession(current, event));
 }
 
-export function App() {
+type AppProps = {
+  repository?: DeepWorkRepository;
+};
+
+export function App({ repository: providedRepository }: AppProps = {}) {
   const [form, setForm] = useState(initialConfig);
   const [session, setSession] = useState(() => createSessionState(initialConfig));
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [storageStatus, setStorageStatus] = useState<"loading" | "ready" | "unavailable">(
+    "loading",
+  );
+  const repositoryRef = useRef<DeepWorkRepository | null>(providedRepository ?? null);
+  const hydratedRef = useRef(false);
+  const persistedPhaseRef = useRef<SessionState["phase"] | null>(null);
+  const persistenceQueueRef = useRef(Promise.resolve());
+
+  const queuePersistence = useCallback(
+    (operation: (repository: DeepWorkRepository) => Promise<void>) => {
+      persistenceQueueRef.current = persistenceQueueRef.current
+        .then(async () => {
+          const repository = repositoryRef.current;
+          if (!repository) return;
+          try {
+            await operation(repository);
+          } catch {
+            setStorageStatus("unavailable");
+          }
+        })
+        .catch(() => undefined);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    let ownsRepository = false;
+
+    async function hydrate() {
+      let repository = providedRepository;
+      try {
+        if (!repository) {
+          repository = await openDeepWorkRepository();
+          ownsRepository = true;
+        }
+
+        const snapshot = await repository.load();
+        if (cancelled) return;
+
+        repositoryRef.current = repository;
+        const recoveredSession =
+          snapshot.active ??
+          (snapshot.summaries.length > 0
+            ? sessionFromSummary(snapshot.summaries[snapshot.summaries.length - 1]!)
+            : null);
+        if (recoveredSession) {
+          setSession(recoveredSession);
+          setNowMs(Date.now());
+        }
+        const preferences = sessionPreferences(snapshot);
+        setForm((current) => ({ ...current, ...preferences }));
+        setStorageStatus("ready");
+      } catch {
+        if (!cancelled) setStorageStatus("unavailable");
+      } finally {
+        if (!cancelled) hydratedRef.current = true;
+        if (cancelled && ownsRepository) repository?.close();
+      }
+    }
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+      if (ownsRepository) repositoryRef.current?.close();
+    };
+  }, [providedRepository]);
+
+  useEffect(() => {
+    if (!hydratedRef.current || storageStatus === "unavailable") return;
+    queuePersistence((repository) =>
+      repository.savePreferences({ durationMs: form.durationMs, sound: form.sound }),
+    );
+  }, [form.durationMs, form.sound, queuePersistence, storageStatus]);
+
+  useEffect(() => {
+    if (!hydratedRef.current || storageStatus === "unavailable") return;
+    if (session.phase === "focus" && persistedPhaseRef.current === "focus") return;
+    persistedPhaseRef.current = session.phase;
+
+    if (session.phase === "focus" || session.phase === "paused" || session.phase === "reflection") {
+      queuePersistence((repository) => repository.saveActiveSession(session));
+    } else if (session.phase === "complete") {
+      queuePersistence((repository) => repository.completeSession(session));
+    }
+  }, [queuePersistence, session, storageStatus]);
 
   useEffect(() => {
     if (session.phase !== "focus") return undefined;
@@ -67,11 +199,17 @@ export function App() {
     };
 
     setNowMs(Date.now());
-    setSession(reduceSession(createSessionState(config), { type: "START", atMs: Date.now() }));
+    setSession(
+      reduceSession(createSessionState(config), {
+        atMs: Date.now(),
+        sessionId: newSessionId(),
+        type: "START",
+      }),
+    );
   }
 
   function chooseReflection(value: Reflection) {
-    dispatchEvent(setSession, { type: "REFLECT", value });
+    dispatchEvent(setSession, { atMs: nowMs, type: "REFLECT", value });
   }
 
   if (session.phase === "setup") {
@@ -185,6 +323,16 @@ export function App() {
             <button className="primary-button" type="submit" disabled={!canStart}>
               Start session
             </button>
+            {storageStatus === "loading" && (
+              <p className="storage-status" role="status">
+                Restoring your local session...
+              </p>
+            )}
+            {storageStatus === "unavailable" && (
+              <p className="storage-status" role="status">
+                Local saving is unavailable. This session will still run in memory.
+              </p>
+            )}
             <p className="form-footnote">You can pause or end the session whenever you need.</p>
           </form>
         </section>
@@ -259,7 +407,7 @@ export function App() {
                 type="button"
                 onClick={() => chooseReflection(value)}
               >
-                {value === "not-yet" ? "Not yet" : capitalize(value)}
+                {reflectionLabel(value)}
               </button>
             ))}
           </div>
@@ -274,7 +422,16 @@ export function App() {
       <section className="complete-card" aria-labelledby="complete-title">
         <p className="product-mark">Deep Work Companion</p>
         <h1 id="complete-title">Session complete</h1>
-        <p>Your goal reflection is saved for this screen only in this first session slice.</p>
+        <p className="complete-subject">{session.config.subject}</p>
+        <p className="complete-goal">{session.config.goal}</p>
+        {session.reflection && (
+          <p className="complete-reflection">Reflection: {reflectionLabel(session.reflection)}</p>
+        )}
+        <p>
+          {storageStatus === "ready"
+            ? "Your goal reflection is saved on this device for your private review."
+            : "Your goal reflection is available for this session only."}
+        </p>
         <button
           className="primary-button"
           type="button"

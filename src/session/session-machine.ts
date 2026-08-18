@@ -14,19 +14,22 @@ export interface SessionState {
   config: SessionConfig;
   elapsedMs: number;
   finishReason: FinishReason;
+  finishedAtMs: number | null;
   pausedAtMs: number | null;
   phase: SessionPhase;
   reflection: Reflection | null;
+  sessionId: string | null;
+  sessionStartedAtMs: number | null;
   startedAtMs: number | null;
 }
 
 export type SessionEvent =
-  | { type: "START"; atMs: number }
+  | { type: "START"; atMs: number; sessionId?: string }
   | { type: "PAUSE"; atMs: number }
   | { type: "RESUME"; atMs: number }
   | { type: "TICK"; atMs: number }
   | { type: "END"; atMs: number }
-  | { type: "REFLECT"; value: Reflection }
+  | { type: "REFLECT"; atMs?: number; value: Reflection }
   | { type: "RESET" };
 
 export function createSessionState(config: SessionConfig): SessionState {
@@ -34,9 +37,12 @@ export function createSessionState(config: SessionConfig): SessionState {
     config,
     elapsedMs: 0,
     finishReason: null,
+    finishedAtMs: null,
     pausedAtMs: null,
     phase: "setup",
     reflection: null,
+    sessionId: null,
+    sessionStartedAtMs: null,
     startedAtMs: null,
   };
 }
@@ -67,6 +73,7 @@ function finish(
     ...state,
     elapsedMs,
     finishReason: reason,
+    finishedAtMs: atMs,
     pausedAtMs: null,
     phase: "reflection",
     startedAtMs: null,
@@ -77,7 +84,13 @@ export function reduceSession(state: SessionState, event: SessionEvent): Session
   switch (event.type) {
     case "START":
       if (state.phase !== "setup") return state;
-      return { ...state, phase: "focus", startedAtMs: event.atMs };
+      return {
+        ...state,
+        phase: "focus",
+        sessionId: event.sessionId ?? `session-${event.atMs}`,
+        sessionStartedAtMs: event.atMs,
+        startedAtMs: event.atMs,
+      };
 
     case "PAUSE":
       if (state.phase !== "focus") return state;
@@ -101,6 +114,7 @@ export function reduceSession(state: SessionState, event: SessionEvent): Session
           ...state,
           elapsedMs: state.config.durationMs,
           finishReason: "completed",
+          finishedAtMs: event.atMs,
           phase: "reflection",
           startedAtMs: null,
         };
@@ -114,7 +128,12 @@ export function reduceSession(state: SessionState, event: SessionEvent): Session
 
     case "REFLECT":
       if (state.phase !== "reflection") return state;
-      return { ...state, phase: "complete", reflection: event.value };
+      return {
+        ...state,
+        finishedAtMs: state.finishedAtMs ?? event.atMs ?? null,
+        phase: "complete",
+        reflection: event.value,
+      };
 
     case "RESET":
       if (state.phase !== "complete") return state;

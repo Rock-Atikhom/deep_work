@@ -24,6 +24,10 @@ def run_smoke(page: Page) -> None:
     assert page.get_by_role("heading", name="Focus Stage").is_visible()
     assert page.get_by_text("Timer-Only Session").is_visible()
     assert page.get_by_text("Review cell respiration notes").is_visible()
+    page.wait_for_timeout(100)
+    page.reload(wait_until="networkidle")
+    page.get_by_role("heading", name="Focus Stage").wait_for(state="visible")
+    assert page.get_by_text("Review cell respiration notes").is_visible()
 
     page.get_by_role("button", name="Pause session").click()
     assert page.get_by_role("heading", name="Focus Stage").is_visible()
