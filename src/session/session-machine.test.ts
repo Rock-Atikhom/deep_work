@@ -65,4 +65,15 @@ describe("Timer-Only Focus Session state", () => {
     expect(state.awarenessMode).toBe("paused-hidden");
     expect(state.phase).toBe("focus");
   });
+
+  it("records a completed optional Quick Review for reflection and garden growth", () => {
+    let state = createSessionState(config);
+    state = reduceSession(state, { type: "START", atMs: 1_000 });
+    state = reduceSession(state, { type: "AWARENESS_EVENT", atMs: 5_000, signal: "gaze-down" });
+    state = reduceSession(state, { type: "OPEN_QUICK_REVIEW", atMs: 5_100 });
+    state = reduceSession(state, { type: "COMPLETE_REVIEW", atMs: 6_000 });
+
+    expect(state.phase).toBe("focus");
+    expect(state.quickReviewCompleted).toBe(true);
+  });
 });

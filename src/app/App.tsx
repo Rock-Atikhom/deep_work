@@ -9,12 +9,22 @@ import {
   type SessionState,
   type SoundPreference,
 } from "../session/session-machine";
-import { cloneQuestionDeck, type QuestionDeck } from "../decks/question-deck";
+import {
+  cloneQuestionDeck,
+  serializeQuestionDeck,
+  type QuestionDeck,
+} from "../decks/question-deck";
+import type { PresetName } from "../session/session-types";
 import { useSessionController, type CameraAdapter } from "./use-session-controller";
 import type { VisionClient } from "../vision/vision-client";
 import { CalibrationScreen } from "../ui/screens/CalibrationScreen";
 import { QuickReviewScreen } from "../ui/screens/QuickReviewScreen";
+import { HistoryScreen } from "../ui/screens/HistoryScreen";
+import { ReflectionScreen } from "../ui/screens/ReflectionScreen";
+import { SettingsScreen } from "../ui/screens/SettingsScreen";
+import { DeckLibraryScreen } from "../ui/screens/DeckLibraryScreen";
 import { StaticSkeleton } from "../ui/components/StaticSkeleton";
+import { BotanicalProgress } from "../ui/components/BotanicalProgress";
 import { GentleResetDialog } from "../ui/components/GentleResetDialog";
 import { playAwarenessChime } from "../alerts/sound";
 import {
@@ -28,6 +38,7 @@ const MINUTE = 60_000;
 const initialConfig: SessionConfig = {
   durationMs: 25 * MINUTE,
   goal: "",
+  preset: "balanced",
   sound: "silent",
   subject: "",
 };
@@ -56,6 +67,10 @@ function reflectionLabel(value: Reflection): string {
   return value === "not-yet" ? "Not yet" : capitalize(value);
 }
 
+function gardenStageLabel(stage: "sprout" | "leaf" | "bloom"): string {
+  return stage === "bloom" ? "Bloom" : stage === "leaf" ? "Leaf" : "Sprout";
+}
+
 function sessionFromSummary(summary: SessionSummary): SessionState {
   return {
     config: {
@@ -67,6 +82,7 @@ function sessionFromSummary(summary: SessionSummary): SessionState {
     elapsedMs: summary.elapsedMs,
     awarenessCount: summary.awarenessCount,
     awarenessMode: "active",
+    quickReviewCompleted: summary.quickReviewCompleted === true,
     finishReason: summary.finishReason,
     finishedAtMs: summary.finishedAtMs,
     pausedAtMs: null,
@@ -81,25 +97,13 @@ function sessionFromSummary(summary: SessionSummary): SessionState {
 function sessionPreferences(snapshot: RepositorySnapshot) {
   return {
     durationMs: snapshot.preferences.durationMs,
+    preset: snapshot.preferences.preset ?? "balanced",
     sound: snapshot.preferences.sound,
   };
 }
 
 function newSessionId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `session-${Date.now()}`;
-}
-
-function gardenStageLabel(stage: "sprout" | "leaf" | "bloom"): string {
-  return stage === "bloom" ? "Bloom" : stage === "leaf" ? "Leaf" : "Sprout";
-}
-
-function summaryStatus(finishReason: "completed" | "ended"): string {
-  return finishReason === "completed" ? "Completed" : "Ended early";
-}
-
-function formatHistoryDuration(elapsedMs: number): string {
-  const minutes = Math.max(1, Math.round(elapsedMs / MINUTE));
-  return `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
 }
 
 function newQuestionDeck(): QuestionDeck {
@@ -119,6 +123,7 @@ type DeckWorkspaceProps = {
   onAddQuestion: () => void;
   onDelete: () => void;
   onDraftChange: (draft: QuestionDeck) => void;
+  onExport: (deck: QuestionDeck) => void;
   onImport: (file: File) => void;
   onNew: () => void;
   onSave: () => void;
@@ -133,6 +138,7 @@ function DeckWorkspace({
   onAddQuestion,
   onDelete,
   onDraftChange,
+  onExport,
   onImport,
   onNew,
   onSave,
@@ -145,15 +151,7 @@ function DeckWorkspace({
   }
 
   return (
-    <section className="deck-workspace" aria-labelledby="deck-title">
-      <div className="deck-heading">
-        <div>
-          <p className="section-kicker">Optional local support</p>
-          <h2 id="deck-title">Question Deck</h2>
-        </div>
-        <p>Keep prompts and explanations on this device for a future Quick Review.</p>
-      </div>
-
+    <DeckLibraryScreen>
       <label className="field" htmlFor="question-deck-select">
         <span>Question Deck</span>
         <select
@@ -290,9 +288,14 @@ function DeckWorkspace({
               Save deck
             </button>
             {decks.some((deck) => deck.id === draft.id) && (
-              <button className="text-button" type="button" onClick={onDelete}>
-                Delete deck
-              </button>
+              <>
+                <button className="secondary-button" type="button" onClick={() => onExport(draft)}>
+                  Export deck
+                </button>
+                <button className="text-button" type="button" onClick={onDelete}>
+                  Delete deck
+                </button>
+              </>
             )}
           </div>
         </form>
@@ -301,7 +304,7 @@ function DeckWorkspace({
           Choose a deck to edit it, or create a new one for this subject.
         </p>
       )}
-    </section>
+    </DeckLibraryScreen>
   );
 }
 
@@ -324,6 +327,8 @@ function ProgressShelf({ onDelete, onExport, snapshot }: ProgressShelfProps) {
         </p>
       </div>
 
+      <BotanicalProgress garden={snapshot.garden} />
+
       {snapshot.garden.plants.length > 0 ? (
         <ul className="garden-list">
           {snapshot.garden.plants.map((plant) => (
@@ -339,31 +344,7 @@ function ProgressShelf({ onDelete, onExport, snapshot }: ProgressShelfProps) {
         <p className="empty-progress">No completed sessions yet.</p>
       )}
 
-      <div className="history-heading">
-        <h3>Session history</h3>
-        <p>Only your subjects, goals, timing, reflections, and session status are kept here.</p>
-      </div>
-      {snapshot.summaries.length > 0 ? (
-        <ol className="history-list">
-          {[...snapshot.summaries].reverse().map((summary) => (
-            <li key={summary.sessionId}>
-              <div className="history-main">
-                <strong>{summary.subject}</strong>
-                <span>{summary.goal}</span>
-              </div>
-              <div className="history-meta">
-                <span>{summaryStatus(summary.finishReason)}</span>
-                <span>{formatHistoryDuration(summary.elapsedMs)}</span>
-                {summary.reflection && (
-                  <span>Reflection: {reflectionLabel(summary.reflection)}</span>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="empty-progress">Complete a session to add its summary here.</p>
-      )}
+      <HistoryScreen summaries={snapshot.summaries} />
 
       <div className="data-actions">
         <button className="secondary-button" type="button" onClick={onExport}>
@@ -383,6 +364,9 @@ type DeleteDialogProps = {
 };
 
 function DeleteDialog({ onCancel, onConfirm }: DeleteDialogProps) {
+  const [confirmation, setConfirmation] = useState("");
+  const confirmed = confirmation === "DELETE LOCAL DATA";
+
   return (
     <div className="dialog-backdrop" role="presentation">
       <section
@@ -397,11 +381,21 @@ function DeleteDialog({ onCancel, onConfirm }: DeleteDialogProps) {
           This removes your sessions, reflections, Learning Garden, and saved preferences from this
           device.
         </p>
+        <label className="field" htmlFor="delete-confirmation">
+          <span>Type DELETE LOCAL DATA to continue</span>
+          <input
+            id="delete-confirmation"
+            aria-label="Type DELETE LOCAL DATA"
+            value={confirmation}
+            onChange={(event) => setConfirmation(event.target.value)}
+            autoComplete="off"
+          />
+        </label>
         <div className="dialog-actions">
           <button className="secondary-button" type="button" onClick={onCancel}>
             Keep my data
           </button>
-          <button className="danger-button" type="button" onClick={onConfirm}>
+          <button className="danger-button" type="button" onClick={onConfirm} disabled={!confirmed}>
             Delete all local data
           </button>
         </div>
@@ -446,6 +440,9 @@ export function App({
     "loading",
   );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteStatus, setDeleteStatus] = useState<string | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const repositoryRef = useRef<DeepWorkRepository | null>(providedRepository ?? null);
   const hydratedRef = useRef(false);
   const persistedPhaseRef = useRef<SessionState["phase"] | null>(null);
@@ -464,6 +461,7 @@ export function App({
     },
     [form.sound],
   );
+  const activePreset: PresetName = form.preset ?? "balanced";
   const {
     allowCamera,
     cameraMode: activeCameraMode,
@@ -479,6 +477,7 @@ export function App({
   } = useSessionController({
     camera: providedCamera ?? cameraAdapter,
     onAwarenessEvent: handleAwarenessEvent,
+    preset: activePreset,
     vision: providedVision ?? visionAdapter,
   });
 
@@ -534,6 +533,7 @@ export function App({
         }
         const preferences = sessionPreferences(snapshot);
         setForm((current) => ({ ...current, ...preferences }));
+        setReducedMotion(snapshot.preferences.reducedMotion ?? false);
         setStorageStatus("ready");
       } catch {
         if (!cancelled) setStorageStatus("unavailable");
@@ -555,11 +555,25 @@ export function App({
     queuePersistence((repository) =>
       repository.savePreferences({
         durationMs: form.durationMs,
+        preset: activePreset,
+        reducedMotion,
         selectedDeckId,
         sound: form.sound,
       }),
     );
-  }, [form.durationMs, form.sound, queuePersistence, selectedDeckId, storageStatus]);
+  }, [
+    form.durationMs,
+    activePreset,
+    form.sound,
+    queuePersistence,
+    reducedMotion,
+    selectedDeckId,
+    storageStatus,
+  ]);
+
+  useEffect(() => {
+    document.documentElement.dataset.reducedMotion = reducedMotion ? "true" : "false";
+  }, [reducedMotion]);
 
   useEffect(() => {
     if (!hydratedRef.current || storageStatus === "unavailable") return;
@@ -617,6 +631,7 @@ export function App({
       cameraMode: activeCameraMode,
       durationMs: form.durationMs,
       goal: form.goal.trim(),
+      preset: activePreset,
       sound: form.sound,
       subject: form.subject.trim(),
     };
@@ -722,6 +737,16 @@ export function App({
     }
   }
 
+  function exportDeck(deck: QuestionDeck) {
+    const blob = new Blob([serializeQuestionDeck(deck)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${deck.id}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   function exportData() {
     queuePersistence(async (repository) => {
       const content = await repository.exportData();
@@ -737,16 +762,33 @@ export function App({
 
   function deleteAllData() {
     setDeleteDialogOpen(false);
+    setDeleteStatus(null);
     persistedPhaseRef.current = "setup";
     setForm({ ...initialConfig });
+    setReducedMotion(false);
+    setSettingsOpen(false);
     setSession(createSessionState(initialConfig));
     setSnapshot(initialSnapshot);
     setSelectedDeckId(null);
     setDeckDraft(null);
     setDeckMessage(null);
-    queuePersistence(async (repository) => {
-      setSnapshot(await repository.deleteAllData());
-    });
+    queuePersistence(
+      async (repository) => {
+        setSnapshot(await repository.deleteAllData());
+        setDeleteStatus("Your local data was deleted from this device.");
+      },
+      () => setDeleteStatus("Local data could not be deleted. Try again."),
+    );
+  }
+
+  function resetSettings() {
+    setForm((current) => ({
+      ...current,
+      durationMs: initialConfig.durationMs,
+      preset: "balanced",
+      sound: initialConfig.sound,
+    }));
+    setReducedMotion(false);
   }
 
   if (session.phase === "setup") {
@@ -754,7 +796,16 @@ export function App({
       <main className="page-shell">
         <section className="setup-layout" aria-labelledby="setup-title">
           <div className="intro-column">
-            <p className="product-mark">Deep Work Companion</p>
+            <div className="product-row">
+              <p className="product-mark">Deep Work Companion</p>
+              <button
+                className="text-button settings-toggle"
+                type="button"
+                onClick={() => setSettingsOpen((open) => !open)}
+              >
+                {settingsOpen ? "Close settings" : "Open settings"}
+              </button>
+            </div>
             <h1 id="setup-title">Make room for focused learning</h1>
             <p className="intro-copy">
               Choose one subject and one goal. The timer keeps the next study block clear.
@@ -968,6 +1019,26 @@ export function App({
             <p className="form-footnote">You can pause or end the session whenever you need.</p>
           </form>
         </section>
+        {settingsOpen && (
+          <SettingsScreen
+            durationMs={form.durationMs}
+            onDeleteData={() => setDeleteDialogOpen(true)}
+            onDurationChange={(durationMs) => setForm((current) => ({ ...current, durationMs }))}
+            onExportData={exportData}
+            onPresetChange={(preset: PresetName) => setForm((current) => ({ ...current, preset }))}
+            onReset={resetSettings}
+            onSoundChange={(sound) => setForm((current) => ({ ...current, sound }))}
+            onReducedMotionChange={setReducedMotion}
+            preset={form.preset ?? "balanced"}
+            reducedMotion={reducedMotion}
+            sound={form.sound}
+          />
+        )}
+        {deleteStatus && (
+          <p className="data-status" role="status">
+            {deleteStatus}
+          </p>
+        )}
         <DeckWorkspace
           decks={snapshot.decks}
           draft={deckDraft}
@@ -975,6 +1046,7 @@ export function App({
           onAddQuestion={addQuestionToDraft}
           onDelete={deleteDeck}
           onDraftChange={setDeckDraft}
+          onExport={exportDeck}
           onImport={importDeck}
           onNew={startNewDeck}
           onSave={saveDeckDraft}
@@ -1045,13 +1117,19 @@ export function App({
   }
 
   if (session.phase === "quick-review") {
+    const selectedDeck = snapshot.decks.find((deck) => deck.id === selectedDeckId);
+    const reviewCard = selectedDeck?.questions[0];
     return (
       <main className="page-shell">
         <QuickReviewScreen
           onComplete={() =>
             dispatchEvent(setSession, { type: "COMPLETE_REVIEW", atMs: Date.now() })
           }
-          prompt="State the next step you can explain without looking at your notes."
+          {...(reviewCard?.explanation ? { explanation: reviewCard.explanation } : {})}
+          prompt={
+            reviewCard?.prompt ??
+            "State the next step you can explain without looking at your notes."
+          }
         />
       </main>
     );
@@ -1127,26 +1205,14 @@ export function App({
   if (session.phase === "reflection") {
     return (
       <main className="page-shell">
-        <section className="reflection-card" aria-labelledby="reflection-title">
-          <p className="product-mark">Deep Work Companion</p>
-          <h1 id="reflection-title">Reflect on this session</h1>
-          <p className="reflection-subject">{session.config.subject}</p>
-          <p className="reflection-goal">{session.config.goal}</p>
-          <p className="reflection-prompt">Did you complete your goal?</p>
-          <div className="reflection-actions">
-            {(["yes", "partly", "not-yet"] as const).map((value) => (
-              <button
-                className="reflection-button"
-                key={value}
-                type="button"
-                onClick={() => chooseReflection(value)}
-              >
-                {reflectionLabel(value)}
-              </button>
-            ))}
-          </div>
-          <p className="reflection-note">Your answer is for your own review. It is not a score.</p>
-        </section>
+        <ReflectionScreen
+          awarenessCount={session.awarenessCount}
+          focusTimeLabel={formatDuration(session.elapsedMs)}
+          goal={session.config.goal}
+          onReflect={chooseReflection}
+          quickReviewCompleted={session.quickReviewCompleted}
+          subject={session.config.subject}
+        />
       </main>
     );
   }

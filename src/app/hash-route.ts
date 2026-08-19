@@ -1,5 +1,13 @@
 export type AppRoute =
-  "welcome" | "setup" | "calibration" | "focus" | "quick-review" | "reflection";
+  | "welcome"
+  | "setup"
+  | "calibration"
+  | "focus"
+  | "quick-review"
+  | "reflection"
+  | "history"
+  | "decks"
+  | "settings";
 
 const ROUTES: readonly AppRoute[] = [
   "welcome",
@@ -8,6 +16,9 @@ const ROUTES: readonly AppRoute[] = [
   "focus",
   "quick-review",
   "reflection",
+  "history",
+  "decks",
+  "settings",
 ];
 
 export function parseHashRoute(hash: string): AppRoute {

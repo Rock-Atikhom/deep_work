@@ -7,5 +7,7 @@ describe("hash routes", () => {
     expect(parseHashRoute("#calibration")).toBe("calibration");
     expect(parseHashRoute("#/unknown")).toBe("welcome");
     expect(formatHashRoute("quick-review")).toBe("#/quick-review");
+    expect(parseHashRoute("#/settings")).toBe("settings");
+    expect(formatHashRoute("history")).toBe("#/history");
   });
 });

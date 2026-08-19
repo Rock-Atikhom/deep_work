@@ -4,6 +4,7 @@ import type {
   SessionState,
   SoundPreference,
 } from "../session/session-machine";
+import type { PresetName } from "../session/session-types";
 import {
   cloneQuestionDeck,
   parseQuestionDeckDocument,
@@ -21,6 +22,8 @@ const ROOT_KEY = "root";
 
 export interface SessionPreferences {
   durationMs: number;
+  preset?: PresetName;
+  reducedMotion?: boolean;
   selectedDeckId: string | null;
   sound: SoundPreference;
 }
@@ -37,6 +40,7 @@ export interface SessionSummary {
   finishedAtMs: number;
   finishReason: Exclude<FinishReason, null>;
   goal: string;
+  quickReviewCompleted?: boolean;
   reflection?: Reflection;
   schemaVersion: typeof STORAGE_SCHEMA_VERSION;
   sessionId: string;
@@ -154,6 +158,10 @@ function toSummary(session: SessionState): SessionSummary {
     subject: session.config.subject,
   };
 
+  if (session.quickReviewCompleted) {
+    summary.quickReviewCompleted = true;
+  }
+
   if (session.reflection !== null) {
     summary.reflection = session.reflection;
   }
@@ -200,6 +208,7 @@ export async function openDeepWorkRepository(
                     ? record.active.awarenessCount
                     : 0,
                 awarenessMode: record.active.awarenessMode ?? "active",
+                quickReviewCompleted: record.active.quickReviewCompleted === true,
               }
             : null,
           decks: Array.isArray(record.decks)

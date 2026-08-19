@@ -5,6 +5,8 @@
 html {
   min-width: 320px;
   background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -73,12 +75,26 @@ button:disabled {
   text-transform: uppercase;
 }
 
+.product-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-toggle {
+  margin: 0;
+  padding: 0;
+}
+
 h1,
-h2 {
+h2,
+h3 {
   margin: 0;
   font-family: "Newsreader", Georgia, serif;
   font-weight: 500;
   letter-spacing: -0.035em;
+  text-wrap: balance;
 }
 
 h1 {
@@ -98,6 +114,7 @@ h2 {
   color: var(--ink-soft);
   font-size: 1.1rem;
   line-height: 1.6;
+  text-wrap: pretty;
 }
 
 .mode-note {
@@ -146,6 +163,7 @@ h2 {
   margin: 0;
   color: var(--ink-soft);
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .camera-video {
@@ -155,34 +173,147 @@ h2 {
   pointer-events: none;
 }
 
-.static-skeleton {
+.settings-screen {
   display: grid;
-  gap: 12px;
+  gap: 20px;
+  width: min(1160px, 100%);
+  margin: 28px auto 0;
+  border-top: 1px solid var(--line);
+  padding: 28px 0 0;
 }
 
-.static-skeleton p {
+.settings-heading {
+  display: grid;
+  gap: 8px;
+  max-width: 600px;
+}
+
+.settings-heading p:last-child {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.settings-check {
+  width: fit-content;
+}
+
+.settings-check input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: var(--botanical);
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.data-status {
+  width: min(1160px, 100%);
+  margin: 18px auto 0;
+  border-top: 1px solid var(--botanical);
+  padding-top: 12px;
+  color: var(--botanical-dark);
+}
+
+.botanical-progress {
+  display: grid;
+  grid-template-columns: minmax(130px, 180px) 1fr;
+  gap: 22px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0;
+}
+
+.botanical-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  fill: none;
+  stroke: var(--botanical-dark);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.botanical-copy {
+  display: grid;
+  gap: 5px;
+}
+
+.botanical-copy .section-kicker {
+  margin: 0;
+}
+
+.botanical-copy strong {
+  color: var(--ink);
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 2rem;
+  font-weight: 500;
+}
+
+.botanical-copy span {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+.reflection-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0;
+}
+
+.reflection-facts div {
+  display: grid;
+  gap: 5px;
+}
+
+.reflection-facts dt {
+  color: var(--mineral);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reflection-facts dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 1.5rem;
+}
+
+.preparation-status {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0;
+}
+
+.preparation-status p {
+  margin: 0;
   color: var(--botanical-dark);
   font-size: 0.88rem;
   font-weight: 600;
-}
-
-.skeleton-blocks {
-  display: grid;
-  gap: 7px;
-}
-
-.skeleton-block {
-  display: block;
-  height: 12px;
-  background: var(--paper-deep);
-}
-
-.skeleton-block:nth-child(2) {
-  width: 78%;
-}
-
-.skeleton-block:nth-child(3) {
-  width: 58%;
+  text-wrap: pretty;
 }
 
 .intention-form,
@@ -212,6 +343,7 @@ h2 {
   margin: 0;
   color: var(--ink-soft);
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .storage-status {
@@ -241,11 +373,13 @@ h2 {
 .field input,
 .field textarea {
   width: 100%;
+  min-height: 46px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
   padding: 12px 13px;
+  line-height: 1.35;
 }
 
 .field textarea {
@@ -324,7 +458,6 @@ h2 {
   color: var(--paper-light);
 }
 
-.primary-button:hover:not(:disabled),
 .primary-button:focus-visible {
   background: var(--botanical-dark);
 }
@@ -341,20 +474,26 @@ h2 {
   color: var(--botanical-dark);
 }
 
-.secondary-button:hover,
-.reflection-button:hover,
 .secondary-button:focus-visible,
 .reflection-button:focus-visible {
   background: rgba(61, 90, 64, 0.1);
 }
 
 .text-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
   border: 0;
   border-bottom: 1px solid currentColor;
   border-radius: 0;
   background: transparent;
   color: var(--danger);
   padding: 8px 0;
+}
+
+.file-button:focus-within {
+  outline: 3px solid var(--botanical);
+  outline-offset: 3px;
 }
 
 .focus-stage {
@@ -388,6 +527,7 @@ h2 {
   color: var(--botanical-dark);
   font-size: 0.85rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .focus-main {
@@ -414,6 +554,7 @@ h2 {
   color: var(--ink-soft);
   font-size: 1.15rem;
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .timer {
@@ -429,6 +570,7 @@ h2 {
 .timer-caption {
   margin: 0;
   color: var(--mineral);
+  text-wrap: pretty;
 }
 
 .focus-actions {
@@ -468,6 +610,7 @@ h2 {
   color: var(--ink-soft);
   font-size: 1.25rem;
   line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .reflection-prompt {
@@ -520,6 +663,7 @@ h2 {
   color: var(--ink-soft);
   font-size: 0.86rem;
   line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .deck-workspace > .field {
@@ -653,6 +797,7 @@ h2 {
 .garden-count {
   margin: 0;
   color: var(--botanical-dark);
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
 
@@ -716,6 +861,7 @@ h2 {
   color: var(--ink-soft);
   font-size: 0.86rem;
   line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .history-list li {
@@ -739,6 +885,7 @@ h2 {
 .history-meta {
   justify-content: flex-end;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .data-actions {
@@ -898,6 +1045,11 @@ h2 {
     padding: 22px;
   }
 
+  .settings-grid,
+  .reflection-facts {
+    grid-template-columns: 1fr;
+  }
+
   .progress-shelf {
     margin-top: 18px;
     padding: 20px;
@@ -976,4 +1128,12 @@ h2 {
   *::after {
     scroll-behavior: auto !important;
   }
+}
+
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] *::before,
+html[data-reduced-motion="true"] *::after {
+  scroll-behavior: auto !important;
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
 }

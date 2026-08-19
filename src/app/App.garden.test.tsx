@@ -31,6 +31,9 @@ describe("Learning Garden and local history", () => {
     expect(
       screen.getByText(/sessions, reflections, Learning Garden, and saved preferences/i),
     ).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Type DELETE LOCAL DATA" }), {
+      target: { value: "DELETE LOCAL DATA" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Delete all local data" }));
 
     await waitFor(() =>

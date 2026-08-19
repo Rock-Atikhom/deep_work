@@ -32,6 +32,7 @@ export interface SessionState {
   elapsedMs: number;
   awarenessCount: number;
   awarenessMode: AwarenessMode;
+  quickReviewCompleted: boolean;
   finishReason: FinishReason;
   finishedAtMs: number | null;
   pausedAtMs: number | null;
@@ -65,6 +66,7 @@ export function createSessionState(config: SessionConfig): SessionState {
     elapsedMs: 0,
     awarenessCount: 0,
     awarenessMode: "active",
+    quickReviewCompleted: false,
     finishReason: null,
     finishedAtMs: null,
     pausedAtMs: null,
@@ -195,7 +197,13 @@ export function reduceSession(state: SessionState, event: SessionEvent): Session
 
     case "COMPLETE_REVIEW":
       if (state.phase !== "quick-review") return state;
-      return { ...state, awarenessMode: "active", phase: "focus", startedAtMs: event.atMs };
+      return {
+        ...state,
+        awarenessMode: "active",
+        phase: "focus",
+        quickReviewCompleted: true,
+        startedAtMs: event.atMs,
+      };
 
     case "TAKING_NOTES":
       if (state.phase !== "gentle-reset") return state;
