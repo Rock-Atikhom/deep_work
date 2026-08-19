@@ -25,6 +25,14 @@ const initialConfig: SessionConfig = {
   subject: "",
 };
 
+const initialSnapshot: RepositorySnapshot = {
+  active: null,
+  garden: { plants: [], schemaVersion: 1 },
+  preferences: { durationMs: 25 * MINUTE, sound: "silent" },
+  schemaVersion: 1,
+  summaries: [],
+};
+
 function formatDuration(durationMs: number): string {
   const totalSeconds = Math.max(0, Math.ceil(durationMs / 1_000));
   const minutes = Math.floor(totalSeconds / 60);
@@ -71,6 +79,124 @@ function newSessionId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `session-${Date.now()}`;
 }
 
+function gardenStageLabel(stage: "sprout" | "leaf" | "bloom"): string {
+  return stage === "bloom" ? "Bloom" : stage === "leaf" ? "Leaf" : "Sprout";
+}
+
+function summaryStatus(finishReason: "completed" | "ended"): string {
+  return finishReason === "completed" ? "Completed" : "Ended early";
+}
+
+function formatHistoryDuration(elapsedMs: number): string {
+  const minutes = Math.max(1, Math.round(elapsedMs / MINUTE));
+  return `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+}
+
+type ProgressShelfProps = {
+  onDelete: () => void;
+  onExport: () => void;
+  snapshot: RepositorySnapshot;
+};
+
+function ProgressShelf({ onDelete, onExport, snapshot }: ProgressShelfProps) {
+  return (
+    <section className="progress-shelf" aria-labelledby="garden-title">
+      <div className="progress-header">
+        <div>
+          <p className="section-kicker">Private progress</p>
+          <h2 id="garden-title">Learning Garden</h2>
+        </div>
+        <p className="garden-count">
+          {snapshot.garden.plants.length} {snapshot.garden.plants.length === 1 ? "plant" : "plants"}
+        </p>
+      </div>
+
+      {snapshot.garden.plants.length > 0 ? (
+        <ul className="garden-list">
+          {snapshot.garden.plants.map((plant) => (
+            <li key={plant.sessionId}>
+              <span className={`garden-stage garden-stage-${plant.stage}`}>
+                {gardenStageLabel(plant.stage)}
+              </span>
+              <span>{plant.subject}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="empty-progress">No completed sessions yet.</p>
+      )}
+
+      <div className="history-heading">
+        <h3>Session history</h3>
+        <p>Only your subjects, goals, timing, reflections, and session status are kept here.</p>
+      </div>
+      {snapshot.summaries.length > 0 ? (
+        <ol className="history-list">
+          {[...snapshot.summaries].reverse().map((summary) => (
+            <li key={summary.sessionId}>
+              <div className="history-main">
+                <strong>{summary.subject}</strong>
+                <span>{summary.goal}</span>
+              </div>
+              <div className="history-meta">
+                <span>{summaryStatus(summary.finishReason)}</span>
+                <span>{formatHistoryDuration(summary.elapsedMs)}</span>
+                {summary.reflection && (
+                  <span>Reflection: {reflectionLabel(summary.reflection)}</span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="empty-progress">Complete a session to add its summary here.</p>
+      )}
+
+      <div className="data-actions">
+        <button className="secondary-button" type="button" onClick={onExport}>
+          Export my data
+        </button>
+        <button className="text-button" type="button" onClick={onDelete}>
+          Delete my data
+        </button>
+      </div>
+    </section>
+  );
+}
+
+type DeleteDialogProps = {
+  onCancel: () => void;
+  onConfirm: () => void;
+};
+
+function DeleteDialog({ onCancel, onConfirm }: DeleteDialogProps) {
+  return (
+    <div className="dialog-backdrop" role="presentation">
+      <section
+        className="delete-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-title"
+      >
+        <p className="section-kicker">Local data control</p>
+        <h2 id="delete-title">Delete all local data?</h2>
+        <p>
+          This removes your sessions, reflections, Learning Garden, and saved preferences from this
+          device.
+        </p>
+        <div className="dialog-actions">
+          <button className="secondary-button" type="button" onClick={onCancel}>
+            Keep my data
+          </button>
+          <button className="danger-button" type="button" onClick={onConfirm}>
+            Delete all local data
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function dispatchEvent(
   setSession: React.Dispatch<React.SetStateAction<SessionState>>,
   event: SessionEvent,
@@ -85,17 +211,19 @@ type AppProps = {
 export function App({ repository: providedRepository }: AppProps = {}) {
   const [form, setForm] = useState(initialConfig);
   const [session, setSession] = useState(() => createSessionState(initialConfig));
+  const [snapshot, setSnapshot] = useState<RepositorySnapshot>(initialSnapshot);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [storageStatus, setStorageStatus] = useState<"loading" | "ready" | "unavailable">(
     "loading",
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const repositoryRef = useRef<DeepWorkRepository | null>(providedRepository ?? null);
   const hydratedRef = useRef(false);
   const persistedPhaseRef = useRef<SessionState["phase"] | null>(null);
   const persistenceQueueRef = useRef(Promise.resolve());
 
   const queuePersistence = useCallback(
-    (operation: (repository: DeepWorkRepository) => Promise<void>) => {
+    (operation: (repository: DeepWorkRepository) => Promise<unknown>) => {
       persistenceQueueRef.current = persistenceQueueRef.current
         .then(async () => {
           const repository = repositoryRef.current;
@@ -127,6 +255,7 @@ export function App({ repository: providedRepository }: AppProps = {}) {
         if (cancelled) return;
 
         repositoryRef.current = repository;
+        setSnapshot(snapshot);
         const recoveredSession =
           snapshot.active ??
           (snapshot.summaries.length > 0
@@ -169,7 +298,9 @@ export function App({ repository: providedRepository }: AppProps = {}) {
     if (session.phase === "focus" || session.phase === "paused" || session.phase === "reflection") {
       queuePersistence((repository) => repository.saveActiveSession(session));
     } else if (session.phase === "complete") {
-      queuePersistence((repository) => repository.completeSession(session));
+      queuePersistence(async (repository) => {
+        setSnapshot(await repository.completeSession(session));
+      });
     }
   }, [queuePersistence, session, storageStatus]);
 
@@ -210,6 +341,30 @@ export function App({ repository: providedRepository }: AppProps = {}) {
 
   function chooseReflection(value: Reflection) {
     dispatchEvent(setSession, { atMs: nowMs, type: "REFLECT", value });
+  }
+
+  function exportData() {
+    queuePersistence(async (repository) => {
+      const content = await repository.exportData();
+      const blob = new Blob([content], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "deep-work-companion-data.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  function deleteAllData() {
+    setDeleteDialogOpen(false);
+    persistedPhaseRef.current = "setup";
+    setForm({ ...initialConfig });
+    setSession(createSessionState(initialConfig));
+    setSnapshot(initialSnapshot);
+    queuePersistence(async (repository) => {
+      setSnapshot(await repository.deleteAllData());
+    });
   }
 
   if (session.phase === "setup") {
@@ -336,6 +491,14 @@ export function App({ repository: providedRepository }: AppProps = {}) {
             <p className="form-footnote">You can pause or end the session whenever you need.</p>
           </form>
         </section>
+        <ProgressShelf
+          onDelete={() => setDeleteDialogOpen(true)}
+          onExport={exportData}
+          snapshot={snapshot}
+        />
+        {deleteDialogOpen && (
+          <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
+        )}
       </main>
     );
   }
@@ -440,6 +603,14 @@ export function App({ repository: providedRepository }: AppProps = {}) {
           Start another session
         </button>
       </section>
+      <ProgressShelf
+        onDelete={() => setDeleteDialogOpen(true)}
+        onExport={exportData}
+        snapshot={snapshot}
+      />
+      {deleteDialogOpen && (
+        <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
+      )}
     </main>
   );
 }

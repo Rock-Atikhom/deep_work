@@ -38,6 +38,21 @@ def run_smoke(page: Page) -> None:
     assert page.get_by_role("heading", name="Reflect on this session").is_visible()
     page.get_by_role("button", name="Yes").click()
     assert page.get_by_role("heading", name="Session complete").is_visible()
+    assert page.get_by_role("heading", name="Learning Garden").is_visible()
+    assert page.get_by_text("Session history").is_visible()
+
+    page.get_by_role("button", name="Delete my data").click()
+    assert page.get_by_role("dialog", name="Delete all local data?").is_visible()
+    page.get_by_role("button", name="Delete all local data").click()
+    page.get_by_role("heading", name="Make room for focused learning").wait_for(
+        state="visible"
+    )
+    assert page.get_by_text("No completed sessions yet.").is_visible()
+
+    page.get_by_label("Subject").fill("Chemistry")
+    page.get_by_label("Session goal").fill("Practice balancing equations")
+    page.get_by_role("button", name="Start session").click()
+    assert page.get_by_role("heading", name="Focus Stage").is_visible()
     assert not console_errors, f"Unexpected browser console errors: {console_errors}"
 
 

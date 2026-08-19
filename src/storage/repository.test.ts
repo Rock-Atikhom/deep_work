@@ -30,6 +30,7 @@ describe("Deep Work local repository", () => {
     const serialized = JSON.stringify(snapshot);
 
     expect(snapshot.active?.sessionId).toBe("session-1");
+    expect(snapshot.garden.plants).toHaveLength(0);
     expect(snapshot.active?.sessionStartedAtMs).toBe(1_000);
     expect(remainingMs(snapshot.active!, 61_000)).toBe(24 * 60_000);
     expect(serialized).not.toMatch(/frame|image|landmark|blendshape|iris|gaze|headPose/i);
@@ -68,6 +69,27 @@ describe("Deep Work local repository", () => {
     await expect(repository.load()).resolves.toMatchObject({
       preferences: { durationMs: 50 * 60_000, sound: "soft" },
     });
+    repository.close();
+  });
+
+  it("exports and deletes every durable category", async () => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    let session = createSessionState(config);
+    session = reduceSession(session, { type: "START", atMs: 1_000, sessionId: "session-3" });
+    session = reduceSession(session, { type: "END", atMs: 2_000 });
+    session = reduceSession(session, { type: "REFLECT", value: "partly", atMs: 3_000 });
+    await repository.completeSession(session);
+    await repository.savePreferences({ durationMs: 50 * 60_000, sound: "soft" });
+
+    const exported = await repository.exportData();
+    expect(exported).toContain("Review joins");
+    expect(exported).toContain("Learning Garden");
+
+    const afterDelete = await repository.deleteAllData();
+    expect(afterDelete.active).toBeNull();
+    expect(afterDelete.garden.plants).toHaveLength(0);
+    expect(afterDelete.summaries).toHaveLength(0);
+    expect(afterDelete.preferences).toEqual({ durationMs: 25 * 60_000, sound: "silent" });
     repository.close();
   });
 });

@@ -4,6 +4,8 @@ import type {
   SessionState,
   SoundPreference,
 } from "../session/session-machine";
+import { deriveGarden, type GardenState } from "../garden/garden";
+import { formatLocalExport } from "./export";
 
 export const STORAGE_SCHEMA_VERSION = 1 as const;
 const DEFAULT_DATABASE_NAME = "deep-work-companion";
@@ -36,6 +38,7 @@ export interface SessionSummary {
 
 export interface RepositorySnapshot {
   active: StoredSession | null;
+  garden: GardenState;
   preferences: SessionPreferences;
   schemaVersion: typeof STORAGE_SCHEMA_VERSION;
   summaries: SessionSummary[];
@@ -43,7 +46,9 @@ export interface RepositorySnapshot {
 
 export interface DeepWorkRepository {
   close(): void;
-  completeSession(session: SessionState): Promise<void>;
+  completeSession(session: SessionState): Promise<RepositorySnapshot>;
+  deleteAllData(): Promise<RepositorySnapshot>;
+  exportData(): Promise<string>;
   load(): Promise<RepositorySnapshot>;
   saveActiveSession(session: SessionState): Promise<void>;
   savePreferences(preferences: SessionPreferences): Promise<void>;
@@ -78,6 +83,7 @@ function transactionDone(transaction: IDBTransaction): Promise<void> {
 function emptyRoot(): StoredRoot {
   return {
     active: null,
+    garden: { plants: [], schemaVersion: 1 },
     key: ROOT_KEY,
     preferences: { ...defaultPreferences },
     schemaVersion: STORAGE_SCHEMA_VERSION,
@@ -157,7 +163,8 @@ export async function openDeepWorkRepository(
     const transaction = database.transaction(STORE_NAME, "readonly");
     const record = await requestResult(transaction.objectStore(STORE_NAME).get(ROOT_KEY));
     await transactionDone(transaction);
-    return record ? { ...emptyRoot(), ...record } : emptyRoot();
+    const root = record ? { ...emptyRoot(), ...record } : emptyRoot();
+    return { ...root, garden: deriveGarden(root.summaries) };
   }
 
   async function writeRoot(root: StoredRoot): Promise<void> {
@@ -182,8 +189,23 @@ export async function openDeepWorkRepository(
       } else {
         root.summaries.push(summary);
       }
+      root.garden = deriveGarden(root.summaries);
       root.active = null;
       await writeRoot(root);
+      return root;
+    },
+
+    async deleteAllData() {
+      const root = emptyRoot();
+      const transaction = database.transaction(STORE_NAME, "readwrite");
+      transaction.objectStore(STORE_NAME).clear();
+      transaction.objectStore(STORE_NAME).put(root);
+      await transactionDone(transaction);
+      return root;
+    },
+
+    async exportData() {
+      return formatLocalExport(await readRoot());
     },
 
     load: readRoot,

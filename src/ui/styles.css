@@ -413,6 +413,182 @@ h2 {
   margin-top: 12px;
 }
 
+.progress-shelf {
+  width: min(980px, 100%);
+  margin: 28px auto 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+}
+
+.progress-header,
+.history-heading,
+.data-actions {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.section-kicker {
+  margin: 0 0 8px;
+  color: var(--mineral);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.progress-header h2 {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.garden-count {
+  margin: 0;
+  color: var(--botanical-dark);
+  font-weight: 600;
+}
+
+.garden-list,
+.history-list {
+  display: grid;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.garden-list {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.garden-list li,
+.history-list li {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+
+.garden-list li {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.garden-stage {
+  display: inline-flex;
+  min-width: 62px;
+  justify-content: center;
+  border: 1px solid var(--botanical);
+  padding: 4px 7px;
+  color: var(--botanical-dark);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.garden-stage-bloom {
+  background: rgba(61, 90, 64, 0.12);
+}
+
+.history-heading {
+  margin-top: 32px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.history-heading h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.history-heading p,
+.empty-progress {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.history-list li {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.history-main,
+.history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+}
+
+.history-main span,
+.history-meta {
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+}
+
+.history-meta {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.data-actions {
+  justify-content: flex-start;
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.danger-button {
+  min-height: 48px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  background: var(--danger);
+  color: var(--paper-light);
+  padding: 0 18px;
+  font-weight: 600;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(24, 48, 66, 0.28);
+}
+
+.delete-dialog {
+  display: grid;
+  gap: 16px;
+  width: min(480px, 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-light);
+  padding: 28px;
+}
+
+.delete-dialog h2,
+.delete-dialog p {
+  margin: 0;
+}
+
+.delete-dialog p:not(.section-kicker) {
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
 @media (max-width: 760px) {
   .page-shell {
     padding: 18px;
@@ -436,6 +612,31 @@ h2 {
   }
 
   .intention-form {
+    padding: 22px;
+  }
+
+  .progress-shelf {
+    margin-top: 18px;
+    padding: 20px;
+  }
+
+  .progress-header,
+  .history-heading,
+  .data-actions {
+    display: grid;
+    align-items: start;
+  }
+
+  .history-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .history-meta {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .delete-dialog {
     padding: 22px;
   }
 

@@ -25,6 +25,8 @@ function failingRepository(): DeepWorkRepository {
   return {
     close() {},
     completeSession: unavailable,
+    deleteAllData: unavailable,
+    exportData: unavailable,
     load: unavailable,
     saveActiveSession: unavailable,
     savePreferences: unavailable,
@@ -74,7 +76,7 @@ describe("Timer-Only persistence", () => {
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: "Session complete" })).toBeInTheDocument(),
     );
-    expect(screen.getByText("Reflection: Yes")).toBeInTheDocument();
+    expect(screen.getAllByText("Reflection: Yes").length).toBeGreaterThan(0);
     repository.close();
   });
 
