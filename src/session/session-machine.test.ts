@@ -53,4 +53,16 @@ describe("Timer-Only Focus Session state", () => {
     expect(state.reflection).toBe("partly");
     expect(reduceSession(state, { type: "RESET" }).phase).toBe("setup");
   });
+
+  it("counts awareness events without changing timer progress and pauses awareness when hidden", () => {
+    let state = createSessionState(config);
+    state = reduceSession(state, { type: "START", atMs: 1_000 });
+    state = reduceSession(state, { type: "AWARENESS_EVENT", atMs: 5_000, signal: "gaze-down" });
+    expect(state.awarenessCount).toBe(1);
+    expect(state.phase).toBe("gentle-reset");
+    state = reduceSession(state, { type: "CONTINUE_STUDYING", atMs: 5_500 });
+    state = reduceSession(state, { type: "PAGE_HIDDEN", atMs: 6_000 });
+    expect(state.awarenessMode).toBe("paused-hidden");
+    expect(state.phase).toBe("focus");
+  });
 });

@@ -1,11 +1,28 @@
-export type SessionPhase = "setup" | "focus" | "paused" | "reflection" | "complete";
+export type SessionPhase =
+  | "welcome"
+  | "consent"
+  | "setup"
+  | "calibration"
+  | "focus"
+  | "gentle-reset"
+  | "quick-review"
+  | "paused"
+  | "notes-pause"
+  | "break"
+  | "reflection"
+  | "complete";
 export type Reflection = "yes" | "partly" | "not-yet";
 export type SoundPreference = "silent" | "soft" | "standard";
 export type FinishReason = "completed" | "ended" | null;
+export type AwarenessMode = "active" | "paused-hidden" | "paused-manual";
+export type AwarenessSignal = "gaze-down" | "head-away" | "face-absent";
 
 export interface SessionConfig {
+  cameraMode?: "enabled" | "disabled";
+  deckId?: string | null;
   durationMs: number;
   goal: string;
+  preset?: "gentle" | "balanced" | "strict";
   sound: SoundPreference;
   subject: string;
 }
@@ -13,6 +30,8 @@ export interface SessionConfig {
 export interface SessionState {
   config: SessionConfig;
   elapsedMs: number;
+  awarenessCount: number;
+  awarenessMode: AwarenessMode;
   finishReason: FinishReason;
   finishedAtMs: number | null;
   pausedAtMs: number | null;
@@ -29,6 +48,14 @@ export type SessionEvent =
   | { type: "RESUME"; atMs: number }
   | { type: "TICK"; atMs: number }
   | { type: "END"; atMs: number }
+  | { type: "AWARENESS_EVENT"; atMs: number; signal: AwarenessSignal }
+  | { type: "CONTINUE_STUDYING"; atMs: number }
+  | { type: "OPEN_QUICK_REVIEW"; atMs: number }
+  | { type: "COMPLETE_REVIEW"; atMs: number }
+  | { type: "TAKING_NOTES"; atMs: number }
+  | { type: "PAGE_HIDDEN"; atMs: number }
+  | { type: "PAGE_VISIBLE"; atMs: number }
+  | { type: "END_SESSION"; atMs: number }
   | { type: "REFLECT"; atMs?: number; value: Reflection }
   | { type: "RESET" };
 
@@ -36,6 +63,8 @@ export function createSessionState(config: SessionConfig): SessionState {
   return {
     config,
     elapsedMs: 0,
+    awarenessCount: 0,
+    awarenessMode: "active",
     finishReason: null,
     finishedAtMs: null,
     pausedAtMs: null,
@@ -87,6 +116,7 @@ export function reduceSession(state: SessionState, event: SessionEvent): Session
       return {
         ...state,
         phase: "focus",
+        awarenessMode: "active",
         sessionId: event.sessionId ?? `session-${event.atMs}`,
         sessionStartedAtMs: event.atMs,
         startedAtMs: event.atMs,
@@ -99,12 +129,19 @@ export function reduceSession(state: SessionState, event: SessionEvent): Session
         elapsedMs: elapsedAt(state, event.atMs),
         pausedAtMs: event.atMs,
         phase: "paused",
+        awarenessMode: "paused-manual",
         startedAtMs: null,
       };
 
     case "RESUME":
-      if (state.phase !== "paused") return state;
-      return { ...state, pausedAtMs: null, phase: "focus", startedAtMs: event.atMs };
+      if (state.phase !== "paused" && state.phase !== "notes-pause") return state;
+      return {
+        ...state,
+        awarenessMode: "active",
+        pausedAtMs: null,
+        phase: "focus",
+        startedAtMs: event.atMs,
+      };
 
     case "TICK": {
       if (state.phase !== "focus") return state;
@@ -125,6 +162,58 @@ export function reduceSession(state: SessionState, event: SessionEvent): Session
     case "END":
       if (state.phase !== "focus" && state.phase !== "paused") return state;
       return finish(state, event.atMs, "ended");
+
+    case "END_SESSION":
+      if (state.phase !== "focus" && state.phase !== "paused") return state;
+      return finish(state, event.atMs, "ended");
+
+    case "AWARENESS_EVENT":
+      if (state.phase !== "focus" || state.awarenessMode !== "active") return state;
+      return {
+        ...state,
+        awarenessCount: state.awarenessCount + 1,
+        awarenessMode: "paused-manual",
+        elapsedMs: elapsedAt(state, event.atMs),
+        pausedAtMs: event.atMs,
+        phase: "gentle-reset",
+        startedAtMs: null,
+      };
+
+    case "CONTINUE_STUDYING":
+      if (state.phase !== "gentle-reset") return state;
+      return {
+        ...state,
+        awarenessMode: "active",
+        pausedAtMs: null,
+        phase: "focus",
+        startedAtMs: event.atMs,
+      };
+
+    case "OPEN_QUICK_REVIEW":
+      if (state.phase !== "gentle-reset") return state;
+      return { ...state, phase: "quick-review" };
+
+    case "COMPLETE_REVIEW":
+      if (state.phase !== "quick-review") return state;
+      return { ...state, awarenessMode: "active", phase: "focus", startedAtMs: event.atMs };
+
+    case "TAKING_NOTES":
+      if (state.phase !== "gentle-reset") return state;
+      return {
+        ...state,
+        awarenessMode: "paused-manual",
+        pausedAtMs: event.atMs,
+        phase: "notes-pause",
+        startedAtMs: null,
+      };
+
+    case "PAGE_HIDDEN":
+      if (state.phase !== "focus" && state.phase !== "paused") return state;
+      return { ...state, awarenessMode: "paused-hidden" };
+
+    case "PAGE_VISIBLE":
+      if (state.awarenessMode !== "paused-hidden") return state;
+      return { ...state, awarenessMode: "active" };
 
     case "REFLECT":
       if (state.phase !== "reflection") return state;

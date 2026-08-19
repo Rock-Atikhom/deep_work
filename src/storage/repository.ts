@@ -114,7 +114,11 @@ function initialRoot(): StoredRoot {
 
 function toStoredSession(session: SessionState): StoredSession {
   if (
-    (session.phase !== "focus" && session.phase !== "paused" && session.phase !== "reflection") ||
+    (session.phase !== "focus" &&
+      session.phase !== "paused" &&
+      session.phase !== "notes-pause" &&
+      session.phase !== "gentle-reset" &&
+      session.phase !== "reflection") ||
     session.sessionStartedAtMs === null
   ) {
     throw new Error("Only an active session can be persisted");
@@ -138,7 +142,7 @@ function toSummary(session: SessionState): SessionSummary {
   }
 
   const summary: SessionSummary = {
-    awarenessCount: 0,
+    awarenessCount: session.awarenessCount,
     durationMs: session.config.durationMs,
     elapsedMs: session.elapsedMs,
     finishedAtMs: session.finishedAtMs ?? session.sessionStartedAtMs + session.elapsedMs,
@@ -188,10 +192,27 @@ export async function openDeepWorkRepository(
       ? {
           ...emptyRoot(),
           ...record,
+          active: record.active
+            ? {
+                ...record.active,
+                awarenessCount:
+                  typeof record.active.awarenessCount === "number"
+                    ? record.active.awarenessCount
+                    : 0,
+                awarenessMode: record.active.awarenessMode ?? "active",
+              }
+            : null,
           decks: Array.isArray(record.decks)
             ? record.decks.map((deck: unknown) => validateQuestionDeck(deck))
             : [sampleQuestionDeck()],
           preferences: { ...defaultPreferences, ...record.preferences },
+          summaries: Array.isArray(record.summaries)
+            ? record.summaries.map((summary: SessionSummary) => ({
+                ...summary,
+                awarenessCount:
+                  typeof summary.awarenessCount === "number" ? summary.awarenessCount : 0,
+              }))
+            : [],
         }
       : initialRoot();
     return { ...root, garden: deriveGarden(root.summaries) };

@@ -99,6 +99,7 @@ export function useCameraSession(
     start: () => camera?.start() ?? Promise.resolve(),
     retry: () => camera?.retry() ?? Promise.resolve(),
     stop: () => camera?.stop(),
+    subscribe: (listener: (next: CameraSnapshot) => void) => camera.subscribe(listener),
     videoRef,
   };
 }

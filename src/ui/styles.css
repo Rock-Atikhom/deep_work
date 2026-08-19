@@ -28,6 +28,18 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 :focus-visible {
   outline: 3px solid var(--botanical);
   outline-offset: 3px;
@@ -110,6 +122,67 @@ h2 {
 .mode-note strong {
   color: var(--ink);
   font-size: 1.05rem;
+}
+
+.mode-choice-button {
+  justify-self: start;
+  width: fit-content;
+  margin-top: 10px;
+}
+
+.camera-setup-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+.camera-setup-panel h2 {
+  font-size: 1.6rem;
+}
+
+.camera-setup-panel p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.camera-video {
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.static-skeleton {
+  display: grid;
+  gap: 12px;
+}
+
+.static-skeleton p {
+  color: var(--botanical-dark);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.skeleton-blocks {
+  display: grid;
+  gap: 7px;
+}
+
+.skeleton-block {
+  display: block;
+  height: 12px;
+  background: var(--paper-deep);
+}
+
+.skeleton-block:nth-child(2) {
+  width: 78%;
+}
+
+.skeleton-block:nth-child(3) {
+  width: 58%;
 }
 
 .intention-form,
@@ -705,6 +778,82 @@ h2 {
   padding: 28px;
 }
 
+.gentle-reset-dialog {
+  display: grid;
+  gap: 16px;
+  width: min(560px, 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-light);
+  padding: 30px;
+}
+
+.gentle-reset-dialog::backdrop {
+  background: rgba(24, 48, 66, 0.28);
+}
+
+.gentle-reset-dialog h2,
+.gentle-reset-dialog p:not(.section-kicker) {
+  margin: 0;
+}
+
+.gentle-reset-dialog p:not(.section-kicker) {
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.calibration-screen,
+.quick-review-screen,
+.welcome-screen,
+.session-setup-screen {
+  display: grid;
+  gap: 16px;
+}
+
+.calibration-screen p,
+.quick-review-screen p,
+.welcome-screen p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.calibration-screen progress {
+  width: 100%;
+  accent-color: var(--botanical);
+}
+
+.calibration-note {
+  font-size: 0.86rem;
+}
+
+.quick-review-screen,
+.welcome-screen {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: clamp(28px, 7vw, 80px);
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+}
+
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.review-prompt {
+  color: var(--ink) !important;
+  font-family: "Newsreader", Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+.review-explanation {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
 .delete-dialog h2,
 .delete-dialog p {
   margin: 0;
@@ -786,6 +935,10 @@ h2 {
   }
 
   .delete-dialog {
+    padding: 22px;
+  }
+
+  .gentle-reset-dialog {
     padding: 22px;
   }
 

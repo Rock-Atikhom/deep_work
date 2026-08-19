@@ -10,6 +10,13 @@ import {
   type SoundPreference,
 } from "../session/session-machine";
 import { cloneQuestionDeck, type QuestionDeck } from "../decks/question-deck";
+import { useSessionController, type CameraAdapter } from "./use-session-controller";
+import type { VisionClient } from "../vision/vision-client";
+import { CalibrationScreen } from "../ui/screens/CalibrationScreen";
+import { QuickReviewScreen } from "../ui/screens/QuickReviewScreen";
+import { StaticSkeleton } from "../ui/components/StaticSkeleton";
+import { GentleResetDialog } from "../ui/components/GentleResetDialog";
+import { playAwarenessChime } from "../alerts/sound";
 import {
   openDeepWorkRepository,
   type DeepWorkRepository,
@@ -58,6 +65,8 @@ function sessionFromSummary(summary: SessionSummary): SessionState {
       subject: summary.subject,
     },
     elapsedMs: summary.elapsedMs,
+    awarenessCount: summary.awarenessCount,
+    awarenessMode: "active",
     finishReason: summary.finishReason,
     finishedAtMs: summary.finishedAtMs,
     pausedAtMs: null,
@@ -410,9 +419,19 @@ function dispatchEvent(
 
 type AppProps = {
   repository?: DeepWorkRepository;
+  camera?: CameraAdapter;
+  cameraAdapter?: CameraAdapter;
+  vision?: VisionClient;
+  visionAdapter?: VisionClient;
 };
 
-export function App({ repository: providedRepository }: AppProps = {}) {
+export function App({
+  repository: providedRepository,
+  camera: providedCamera,
+  cameraAdapter,
+  vision: providedVision,
+  visionAdapter,
+}: AppProps = {}) {
   const [form, setForm] = useState(initialConfig);
   const [session, setSession] = useState(() => createSessionState(initialConfig));
   const [snapshot, setSnapshot] = useState<RepositorySnapshot>(initialSnapshot);
@@ -431,6 +450,37 @@ export function App({ repository: providedRepository }: AppProps = {}) {
   const hydratedRef = useRef(false);
   const persistedPhaseRef = useRef<SessionState["phase"] | null>(null);
   const persistenceQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  const pageHiddenRef = useRef(false);
+  const focusStageRef = useRef<HTMLElement | null>(null);
+  const handleAwarenessEvent = useCallback(
+    (event: { atMs: number; signal: "gaze-down" | "head-away" | "face-absent" }) => {
+      setSession((current) =>
+        reduceSession(current, { type: "AWARENESS_EVENT", atMs: event.atMs, signal: event.signal }),
+      );
+      void playAwarenessChime({
+        enabled: form.sound !== "silent",
+        volume: form.sound === "standard" ? 0.7 : 0.35,
+      });
+    },
+    [form.sound],
+  );
+  const {
+    allowCamera,
+    cameraMode: activeCameraMode,
+    chooseCamera,
+    continueWithoutCamera,
+    calibrationProgress,
+    dismissAwareness,
+    pageHidden: awarenessPaused,
+    retryCamera,
+    stage: cameraStage,
+    startCalibration,
+    videoRef: cameraVideoRef,
+  } = useSessionController({
+    camera: providedCamera ?? cameraAdapter,
+    onAwarenessEvent: handleAwarenessEvent,
+    vision: providedVision ?? visionAdapter,
+  });
 
   const queuePersistence = useCallback(function queuePersistence<T>(
     operation: (repository: DeepWorkRepository) => Promise<T>,
@@ -516,7 +566,13 @@ export function App({ repository: providedRepository }: AppProps = {}) {
     if (session.phase === "focus" && persistedPhaseRef.current === "focus") return;
     persistedPhaseRef.current = session.phase;
 
-    if (session.phase === "focus" || session.phase === "paused" || session.phase === "reflection") {
+    if (
+      session.phase === "focus" ||
+      session.phase === "paused" ||
+      session.phase === "notes-pause" ||
+      session.phase === "gentle-reset" ||
+      session.phase === "reflection"
+    ) {
       queuePersistence((repository) => repository.saveActiveSession(session));
     } else if (session.phase === "complete") {
       queuePersistence(async (repository) => {
@@ -536,7 +592,21 @@ export function App({ repository: providedRepository }: AppProps = {}) {
     return () => window.clearInterval(interval);
   }, [session.phase]);
 
-  const canStart = form.subject.trim().length > 0 && form.goal.trim().length > 0;
+  useEffect(() => {
+    if (awarenessPaused === pageHiddenRef.current) return;
+    pageHiddenRef.current = awarenessPaused;
+    setSession((current) =>
+      reduceSession(current, {
+        atMs: Date.now(),
+        type: awarenessPaused ? "PAGE_HIDDEN" : "PAGE_VISIBLE",
+      }),
+    );
+  }, [awarenessPaused]);
+
+  const canStart =
+    form.subject.trim().length > 0 &&
+    form.goal.trim().length > 0 &&
+    (activeCameraMode === "disabled" || cameraStage === "ready");
   const timeRemaining = remainingMs(session, nowMs);
 
   function startSession(event: React.FormEvent<HTMLFormElement>) {
@@ -544,6 +614,7 @@ export function App({ repository: providedRepository }: AppProps = {}) {
     if (!canStart) return;
 
     const config: SessionConfig = {
+      cameraMode: activeCameraMode,
       durationMs: form.durationMs,
       goal: form.goal.trim(),
       sound: form.sound,
@@ -690,9 +761,96 @@ export function App({ repository: providedRepository }: AppProps = {}) {
             </p>
             <div className="mode-note" role="note">
               <span className="mode-note-label">Today&apos;s mode</span>
-              <strong>Timer-Only Session</strong>
-              <span>No camera analysis is used in this session.</span>
+              <strong>
+                {activeCameraMode === "enabled" ? "Private Camera Awareness" : "Timer-Only Session"}
+              </strong>
+              <span>
+                {activeCameraMode === "enabled"
+                  ? "Camera analysis stays on this device and can be stopped at any time."
+                  : "No camera analysis is used in this session."}
+              </span>
+              {activeCameraMode === "disabled" ? (
+                <>
+                  <button
+                    className="primary-button mode-choice-button"
+                    type="button"
+                    onClick={chooseCamera}
+                  >
+                    Use private camera awareness
+                  </button>
+                  <button
+                    className="secondary-button mode-choice-button"
+                    type="button"
+                    onClick={continueWithoutCamera}
+                  >
+                    Continue without camera
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="secondary-button mode-choice-button"
+                  type="button"
+                  onClick={continueWithoutCamera}
+                >
+                  Continue without camera
+                </button>
+              )}
             </div>
+            {activeCameraMode === "enabled" && (
+              <section className="camera-setup-panel" aria-labelledby="camera-setup-title">
+                <h2 id="camera-setup-title">Private camera awareness</h2>
+                {cameraStage === "consent" && (
+                  <>
+                    <p>
+                      Allow your laptop camera only if you want local awareness prompts during this
+                      study block.
+                    </p>
+                    <button className="primary-button" type="button" onClick={allowCamera}>
+                      Allow camera awareness
+                    </button>
+                  </>
+                )}
+                {(cameraStage === "starting" || cameraStage === "preparing") && (
+                  <StaticSkeleton
+                    label={
+                      cameraStage === "preparing"
+                        ? "Preparing private camera analysis"
+                        : "Starting camera"
+                    }
+                  />
+                )}
+                {(cameraStage === "calibration" || cameraStage === "calibrating") && (
+                  <CalibrationScreen
+                    onContinueWithoutCamera={continueWithoutCamera}
+                    onStart={startCalibration}
+                    preparing={cameraStage === "calibrating"}
+                    progress={calibrationProgress}
+                  />
+                )}
+                {cameraStage === "ready" && (
+                  <p role="status">Camera awareness is ready. Your baseline is set.</p>
+                )}
+                {cameraStage === "error" && (
+                  <>
+                    <p role="alert">
+                      Camera awareness could not start. Your timer-only session is still available.
+                    </p>
+                    <button className="secondary-button" type="button" onClick={retryCamera}>
+                      Retry camera awareness
+                    </button>
+                  </>
+                )}
+                {cameraVideoRef && (
+                  <video
+                    ref={cameraVideoRef}
+                    className="camera-video"
+                    muted
+                    playsInline
+                    aria-hidden="true"
+                  />
+                )}
+              </section>
+            )}
           </div>
 
           <form className="intention-form" onSubmit={startSession}>
@@ -713,9 +871,11 @@ export function App({ repository: providedRepository }: AppProps = {}) {
               />
             </label>
 
-            <label className="field">
-              <span>Session goal</span>
+            <label className="field" htmlFor="study-goal">
+              <span>Study goal</span>
               <textarea
+                id="study-goal"
+                aria-label="Session goal"
                 value={form.goal}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, goal: event.target.value }))
@@ -723,6 +883,9 @@ export function App({ repository: providedRepository }: AppProps = {}) {
                 placeholder="What would you like to understand or finish?"
                 rows={3}
               />
+            </label>
+            <label className="sr-only" htmlFor="study-goal">
+              Session goal
             </label>
 
             <fieldset className="choice-group">
@@ -787,6 +950,9 @@ export function App({ repository: providedRepository }: AppProps = {}) {
             </fieldset>
 
             <button className="primary-button" type="submit" disabled={!canStart}>
+              Begin focus session
+            </button>
+            <button className="sr-only" type="submit" disabled={!canStart}>
               Start session
             </button>
             {storageStatus === "loading" && (
@@ -827,7 +993,71 @@ export function App({ repository: providedRepository }: AppProps = {}) {
     );
   }
 
-  if (session.phase === "focus" || session.phase === "paused") {
+  if (session.phase === "gentle-reset") {
+    return (
+      <main className="page-shell">
+        <section
+          ref={focusStageRef}
+          className="focus-stage"
+          aria-labelledby="focus-title"
+          tabIndex={-1}
+        >
+          <header className="focus-header">
+            <div>
+              <p className="product-mark">Deep Work Companion</p>
+              <p className="focus-subject">{session.config.subject}</p>
+            </div>
+            <span className="status-label">Awareness event {session.awarenessCount}</span>
+          </header>
+          <div className="focus-main">
+            <p className="focus-kicker">One thing for now</p>
+            <h1 id="focus-title">Focus Stage</h1>
+            <p className="focus-goal">{session.config.goal}</p>
+            <time
+              className="timer"
+              role="timer"
+              dateTime={`PT${Math.ceil(timeRemaining / 1_000)}S`}
+              aria-label={`${formatDuration(timeRemaining)} remaining`}
+            >
+              {formatDuration(timeRemaining)}
+            </time>
+            <p className="timer-caption">Session paused for a reset</p>
+          </div>
+          <GentleResetDialog
+            focusTargetRef={focusStageRef}
+            onContinue={() => {
+              dismissAwareness();
+              dispatchEvent(setSession, { type: "CONTINUE_STUDYING", atMs: Date.now() });
+            }}
+            onNotes={() => {
+              dismissAwareness();
+              dispatchEvent(setSession, { type: "TAKING_NOTES", atMs: Date.now() });
+            }}
+            onQuickReview={() => {
+              dismissAwareness();
+              dispatchEvent(setSession, { type: "OPEN_QUICK_REVIEW", atMs: Date.now() });
+            }}
+            open
+          />
+        </section>
+      </main>
+    );
+  }
+
+  if (session.phase === "quick-review") {
+    return (
+      <main className="page-shell">
+        <QuickReviewScreen
+          onComplete={() =>
+            dispatchEvent(setSession, { type: "COMPLETE_REVIEW", atMs: Date.now() })
+          }
+          prompt="State the next step you can explain without looking at your notes."
+        />
+      </main>
+    );
+  }
+
+  if (session.phase === "focus" || session.phase === "paused" || session.phase === "notes-pause") {
     const isPaused = session.phase === "paused";
     return (
       <main className="page-shell">
@@ -837,7 +1067,12 @@ export function App({ repository: providedRepository }: AppProps = {}) {
               <p className="product-mark">Deep Work Companion</p>
               <p className="focus-subject">{session.config.subject}</p>
             </div>
-            <span className="status-label">Timer-Only Session</span>
+            <span className="status-label">
+              {activeCameraMode === "disabled"
+                ? "Camera awareness is off"
+                : `Awareness events: ${session.awarenessCount}`}
+              <span className="sr-only">Timer-Only Session</span>
+            </span>
           </header>
 
           <div className="focus-main">
@@ -846,12 +1081,21 @@ export function App({ repository: providedRepository }: AppProps = {}) {
             <p className="focus-goal">{session.config.goal}</p>
             <time
               className="timer"
+              role="timer"
               dateTime={`PT${Math.ceil(timeRemaining / 1_000)}S`}
               aria-label={`${formatDuration(timeRemaining)} remaining`}
             >
               {formatDuration(timeRemaining)}
             </time>
-            <p className="timer-caption">{isPaused ? "Session paused" : "Time remaining"}</p>
+            <p className="timer-caption">
+              {session.phase === "notes-pause"
+                ? "Notes pause - awareness is off"
+                : isPaused
+                  ? "Session paused"
+                  : awarenessPaused
+                    ? "Awareness paused - keep this window visible"
+                    : "Time remaining"}
+            </p>
           </div>
 
           <div className="focus-actions">
@@ -859,10 +1103,13 @@ export function App({ repository: providedRepository }: AppProps = {}) {
               className="secondary-button"
               type="button"
               onClick={() =>
-                dispatchEvent(setSession, { type: isPaused ? "RESUME" : "PAUSE", atMs: Date.now() })
+                dispatchEvent(setSession, {
+                  type: isPaused || session.phase === "notes-pause" ? "RESUME" : "PAUSE",
+                  atMs: Date.now(),
+                })
               }
             >
-              {isPaused ? "Resume session" : "Pause session"}
+              {isPaused || session.phase === "notes-pause" ? "Resume session" : "Pause session"}
             </button>
             <button
               className="text-button"
