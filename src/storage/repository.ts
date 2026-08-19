@@ -4,6 +4,13 @@ import type {
   SessionState,
   SoundPreference,
 } from "../session/session-machine";
+import {
+  cloneQuestionDeck,
+  parseQuestionDeckDocument,
+  sampleQuestionDeck,
+  validateQuestionDeck,
+  type QuestionDeck,
+} from "../decks/question-deck";
 import { deriveGarden, type GardenState } from "../garden/garden";
 import { formatLocalExport } from "./export";
 
@@ -14,6 +21,7 @@ const ROOT_KEY = "root";
 
 export interface SessionPreferences {
   durationMs: number;
+  selectedDeckId: string | null;
   sound: SoundPreference;
 }
 
@@ -38,6 +46,7 @@ export interface SessionSummary {
 
 export interface RepositorySnapshot {
   active: StoredSession | null;
+  decks: QuestionDeck[];
   garden: GardenState;
   preferences: SessionPreferences;
   schemaVersion: typeof STORAGE_SCHEMA_VERSION;
@@ -48,8 +57,11 @@ export interface DeepWorkRepository {
   close(): void;
   completeSession(session: SessionState): Promise<RepositorySnapshot>;
   deleteAllData(): Promise<RepositorySnapshot>;
+  deleteDeck(deckId: string): Promise<RepositorySnapshot>;
   exportData(): Promise<string>;
+  importDeck(content: string): Promise<RepositorySnapshot>;
   load(): Promise<RepositorySnapshot>;
+  saveDeck(deck: QuestionDeck): Promise<RepositorySnapshot>;
   saveActiveSession(session: SessionState): Promise<void>;
   savePreferences(preferences: SessionPreferences): Promise<void>;
 }
@@ -60,6 +72,7 @@ interface StoredRoot extends RepositorySnapshot {
 
 const defaultPreferences: SessionPreferences = {
   durationMs: 25 * 60_000,
+  selectedDeckId: null,
   sound: "silent",
 };
 
@@ -83,11 +96,19 @@ function transactionDone(transaction: IDBTransaction): Promise<void> {
 function emptyRoot(): StoredRoot {
   return {
     active: null,
+    decks: [],
     garden: { plants: [], schemaVersion: 1 },
     key: ROOT_KEY,
     preferences: { ...defaultPreferences },
     schemaVersion: STORAGE_SCHEMA_VERSION,
     summaries: [],
+  };
+}
+
+function initialRoot(): StoredRoot {
+  return {
+    ...emptyRoot(),
+    decks: [sampleQuestionDeck()],
   };
 }
 
@@ -163,7 +184,16 @@ export async function openDeepWorkRepository(
     const transaction = database.transaction(STORE_NAME, "readonly");
     const record = await requestResult(transaction.objectStore(STORE_NAME).get(ROOT_KEY));
     await transactionDone(transaction);
-    const root = record ? { ...emptyRoot(), ...record } : emptyRoot();
+    const root = record
+      ? {
+          ...emptyRoot(),
+          ...record,
+          decks: Array.isArray(record.decks)
+            ? record.decks.map((deck: unknown) => validateQuestionDeck(deck))
+            : [sampleQuestionDeck()],
+          preferences: { ...defaultPreferences, ...record.preferences },
+        }
+      : initialRoot();
     return { ...root, garden: deriveGarden(root.summaries) };
   }
 
@@ -204,11 +234,45 @@ export async function openDeepWorkRepository(
       return root;
     },
 
+    async deleteDeck(deckId) {
+      const root = await readRoot();
+      root.decks = root.decks.filter((deck) => deck.id !== deckId);
+      if (root.preferences.selectedDeckId === deckId) {
+        root.preferences.selectedDeckId = null;
+      }
+      await writeRoot(root);
+      return root;
+    },
+
     async exportData() {
       return formatLocalExport(await readRoot());
     },
 
+    async importDeck(content) {
+      const deck = parseQuestionDeckDocument(content);
+      const root = await readRoot();
+      if (root.decks.some((candidate) => candidate.id === deck.id)) {
+        throw new Error(`A Question Deck with id "${deck.id}" already exists.`);
+      }
+      root.decks = [...root.decks, deck];
+      await writeRoot(root);
+      return root;
+    },
+
     load: readRoot,
+
+    async saveDeck(deck) {
+      const validatedDeck = validateQuestionDeck(deck);
+      const root = await readRoot();
+      const existingIndex = root.decks.findIndex((candidate) => candidate.id === validatedDeck.id);
+      if (existingIndex >= 0) {
+        root.decks[existingIndex] = cloneQuestionDeck(validatedDeck);
+      } else {
+        root.decks.push(cloneQuestionDeck(validatedDeck));
+      }
+      await writeRoot(root);
+      return root;
+    },
 
     async saveActiveSession(session) {
       const root = await readRoot();
@@ -218,7 +282,7 @@ export async function openDeepWorkRepository(
 
     async savePreferences(preferences) {
       const root = await readRoot();
-      root.preferences = { ...preferences };
+      root.preferences = { ...defaultPreferences, ...preferences };
       await writeRoot(root);
     },
   };

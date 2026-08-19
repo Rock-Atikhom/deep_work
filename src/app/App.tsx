@@ -9,11 +9,11 @@ import {
   type SessionState,
   type SoundPreference,
 } from "../session/session-machine";
+import { cloneQuestionDeck, type QuestionDeck } from "../decks/question-deck";
 import {
   openDeepWorkRepository,
   type DeepWorkRepository,
   type RepositorySnapshot,
-  type SessionPreferences,
   type SessionSummary,
 } from "../storage/repository";
 
@@ -27,8 +27,9 @@ const initialConfig: SessionConfig = {
 
 const initialSnapshot: RepositorySnapshot = {
   active: null,
+  decks: [],
   garden: { plants: [], schemaVersion: 1 },
-  preferences: { durationMs: 25 * MINUTE, sound: "silent" },
+  preferences: { durationMs: 25 * MINUTE, selectedDeckId: null, sound: "silent" },
   schemaVersion: 1,
   summaries: [],
 };
@@ -68,7 +69,7 @@ function sessionFromSummary(summary: SessionSummary): SessionState {
   };
 }
 
-function sessionPreferences(snapshot: RepositorySnapshot): SessionPreferences {
+function sessionPreferences(snapshot: RepositorySnapshot) {
   return {
     durationMs: snapshot.preferences.durationMs,
     sound: snapshot.preferences.sound,
@@ -90,6 +91,209 @@ function summaryStatus(finishReason: "completed" | "ended"): string {
 function formatHistoryDuration(elapsedMs: number): string {
   const minutes = Math.max(1, Math.round(elapsedMs / MINUTE));
   return `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+}
+
+function newQuestionDeck(): QuestionDeck {
+  const id = `deck-${newSessionId()}`;
+  return {
+    id,
+    name: "",
+    questions: [{ explanation: "", id: `${id}-question-1`, prompt: "" }],
+    schemaVersion: 1,
+    subject: "",
+  };
+}
+
+type DeckWorkspaceProps = {
+  draft: QuestionDeck | null;
+  message: { kind: "error" | "success"; text: string } | null;
+  onAddQuestion: () => void;
+  onDelete: () => void;
+  onDraftChange: (draft: QuestionDeck) => void;
+  onImport: (file: File) => void;
+  onNew: () => void;
+  onSave: () => void;
+  onSelect: (deckId: string | null) => void;
+  selectedDeckId: string | null;
+  decks: QuestionDeck[];
+};
+
+function DeckWorkspace({
+  draft,
+  message,
+  onAddQuestion,
+  onDelete,
+  onDraftChange,
+  onImport,
+  onNew,
+  onSave,
+  onSelect,
+  selectedDeckId,
+  decks,
+}: DeckWorkspaceProps) {
+  function updateDraft(changes: Partial<QuestionDeck>) {
+    if (draft) onDraftChange({ ...draft, ...changes });
+  }
+
+  return (
+    <section className="deck-workspace" aria-labelledby="deck-title">
+      <div className="deck-heading">
+        <div>
+          <p className="section-kicker">Optional local support</p>
+          <h2 id="deck-title">Question Deck</h2>
+        </div>
+        <p>Keep prompts and explanations on this device for a future Quick Review.</p>
+      </div>
+
+      <label className="field" htmlFor="question-deck-select">
+        <span>Question Deck</span>
+        <select
+          id="question-deck-select"
+          value={selectedDeckId ?? ""}
+          onChange={(event) => onSelect(event.target.value || null)}
+        >
+          <option value="">Continue without a deck</option>
+          {decks.map((deck) => (
+            <option key={deck.id} value={deck.id}>
+              {deck.name} · {deck.subject}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="deck-actions">
+        <button className="secondary-button" type="button" onClick={onNew}>
+          New deck
+        </button>
+        <label className="file-button secondary-button">
+          Import Question Deck
+          <input
+            aria-label="Import Question Deck"
+            type="file"
+            accept="application/json,.json"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onImport(file);
+              event.currentTarget.value = "";
+            }}
+          />
+        </label>
+      </div>
+
+      {message && (
+        <p
+          className={`deck-message deck-message-${message.kind}`}
+          role={message.kind === "error" ? "alert" : "status"}
+        >
+          {message.text}
+        </p>
+      )}
+
+      {draft ? (
+        <form
+          className="deck-editor"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSave();
+          }}
+        >
+          <div className="deck-editor-heading">
+            <h3>{decks.some((deck) => deck.id === draft.id) ? "Edit deck" : "New deck"}</h3>
+            <span>{draft.questions.length} questions</span>
+          </div>
+          <label className="field">
+            <span>Deck name</span>
+            <input
+              value={draft.name}
+              onChange={(event) => updateDraft({ name: event.target.value })}
+              placeholder="For example, Cell biology review"
+            />
+          </label>
+          <label className="field">
+            <span>Deck subject</span>
+            <input
+              value={draft.subject}
+              onChange={(event) => updateDraft({ subject: event.target.value })}
+              placeholder="For example, Biology"
+            />
+          </label>
+
+          <div className="question-list">
+            {draft.questions.map((question, index) => (
+              <fieldset className="question-editor" key={question.id}>
+                <legend>Question {index + 1}</legend>
+                <label className="field">
+                  <span>Prompt</span>
+                  <textarea
+                    aria-label={`Question ${index + 1}`}
+                    value={question.prompt}
+                    onChange={(event) => {
+                      const questions = draft.questions.map((candidate) =>
+                        candidate.id === question.id
+                          ? { ...candidate, prompt: event.target.value }
+                          : candidate,
+                      );
+                      updateDraft({ questions });
+                    }}
+                    rows={2}
+                  />
+                </label>
+                <label className="field">
+                  <span>Explanation</span>
+                  <textarea
+                    aria-label={`Explanation ${index + 1}`}
+                    value={question.explanation}
+                    onChange={(event) => {
+                      const questions = draft.questions.map((candidate) =>
+                        candidate.id === question.id
+                          ? { ...candidate, explanation: event.target.value }
+                          : candidate,
+                      );
+                      updateDraft({ questions });
+                    }}
+                    rows={2}
+                  />
+                </label>
+                {draft.questions.length > 1 && (
+                  <button
+                    className="text-button"
+                    type="button"
+                    onClick={() =>
+                      updateDraft({
+                        questions: draft.questions.filter(
+                          (candidate) => candidate.id !== question.id,
+                        ),
+                      })
+                    }
+                  >
+                    Remove question
+                  </button>
+                )}
+              </fieldset>
+            ))}
+          </div>
+
+          <div className="deck-editor-actions">
+            <button className="secondary-button" type="button" onClick={onAddQuestion}>
+              Add question
+            </button>
+            <button className="primary-button" type="submit">
+              Save deck
+            </button>
+            {decks.some((deck) => deck.id === draft.id) && (
+              <button className="text-button" type="button" onClick={onDelete}>
+                Delete deck
+              </button>
+            )}
+          </div>
+        </form>
+      ) : (
+        <p className="empty-deck">
+          Choose a deck to edit it, or create a new one for this subject.
+        </p>
+      )}
+    </section>
+  );
 }
 
 type ProgressShelfProps = {
@@ -212,6 +416,12 @@ export function App({ repository: providedRepository }: AppProps = {}) {
   const [form, setForm] = useState(initialConfig);
   const [session, setSession] = useState(() => createSessionState(initialConfig));
   const [snapshot, setSnapshot] = useState<RepositorySnapshot>(initialSnapshot);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
+  const [deckDraft, setDeckDraft] = useState<QuestionDeck | null>(null);
+  const [deckMessage, setDeckMessage] = useState<{
+    kind: "error" | "success";
+    text: string;
+  } | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [storageStatus, setStorageStatus] = useState<"loading" | "ready" | "unavailable">(
     "loading",
@@ -220,24 +430,26 @@ export function App({ repository: providedRepository }: AppProps = {}) {
   const repositoryRef = useRef<DeepWorkRepository | null>(providedRepository ?? null);
   const hydratedRef = useRef(false);
   const persistedPhaseRef = useRef<SessionState["phase"] | null>(null);
-  const persistenceQueueRef = useRef(Promise.resolve());
+  const persistenceQueueRef = useRef<Promise<unknown>>(Promise.resolve());
 
-  const queuePersistence = useCallback(
-    (operation: (repository: DeepWorkRepository) => Promise<unknown>) => {
-      persistenceQueueRef.current = persistenceQueueRef.current
-        .then(async () => {
-          const repository = repositoryRef.current;
-          if (!repository) return;
-          try {
-            await operation(repository);
-          } catch {
-            setStorageStatus("unavailable");
-          }
-        })
-        .catch(() => undefined);
-    },
-    [],
-  );
+  const queuePersistence = useCallback(function queuePersistence<T>(
+    operation: (repository: DeepWorkRepository) => Promise<T>,
+    onError?: (error: unknown) => void,
+  ): Promise<T | undefined> {
+    const queued = persistenceQueueRef.current.then(async () => {
+      const repository = repositoryRef.current;
+      if (!repository) return undefined;
+      try {
+        return await operation(repository);
+      } catch (error) {
+        if (onError) onError(error);
+        else setStorageStatus("unavailable");
+        return undefined;
+      }
+    });
+    persistenceQueueRef.current = queued.catch(() => undefined);
+    return queued;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -256,6 +468,11 @@ export function App({ repository: providedRepository }: AppProps = {}) {
 
         repositoryRef.current = repository;
         setSnapshot(snapshot);
+        setSelectedDeckId(snapshot.preferences.selectedDeckId);
+        const selectedDeck = snapshot.decks.find(
+          (deck) => deck.id === snapshot.preferences.selectedDeckId,
+        );
+        setDeckDraft(selectedDeck ? cloneQuestionDeck(selectedDeck) : null);
         const recoveredSession =
           snapshot.active ??
           (snapshot.summaries.length > 0
@@ -286,9 +503,13 @@ export function App({ repository: providedRepository }: AppProps = {}) {
   useEffect(() => {
     if (!hydratedRef.current || storageStatus === "unavailable") return;
     queuePersistence((repository) =>
-      repository.savePreferences({ durationMs: form.durationMs, sound: form.sound }),
+      repository.savePreferences({
+        durationMs: form.durationMs,
+        selectedDeckId,
+        sound: form.sound,
+      }),
     );
-  }, [form.durationMs, form.sound, queuePersistence, storageStatus]);
+  }, [form.durationMs, form.sound, queuePersistence, selectedDeckId, storageStatus]);
 
   useEffect(() => {
     if (!hydratedRef.current || storageStatus === "unavailable") return;
@@ -343,6 +564,93 @@ export function App({ repository: providedRepository }: AppProps = {}) {
     dispatchEvent(setSession, { atMs: nowMs, type: "REFLECT", value });
   }
 
+  function selectDeck(deckId: string | null) {
+    setSelectedDeckId(deckId);
+    setSnapshot((current) => ({
+      ...current,
+      preferences: { ...current.preferences, selectedDeckId: deckId },
+    }));
+    const selectedDeck = snapshot.decks.find((deck) => deck.id === deckId);
+    setDeckDraft(selectedDeck ? cloneQuestionDeck(selectedDeck) : null);
+    setDeckMessage(null);
+  }
+
+  function startNewDeck() {
+    setDeckDraft(newQuestionDeck());
+    setDeckMessage(null);
+  }
+
+  function addQuestionToDraft() {
+    if (!deckDraft) return;
+    setDeckDraft({
+      ...deckDraft,
+      questions: [
+        ...deckDraft.questions,
+        {
+          explanation: "",
+          id: `${deckDraft.id}-question-${newSessionId()}`,
+          prompt: "",
+        },
+      ],
+    });
+  }
+
+  async function saveDeckDraft() {
+    if (!deckDraft) return;
+    const draft = cloneQuestionDeck(deckDraft);
+    const nextSnapshot = await queuePersistence(
+      (repository) => repository.saveDeck(draft),
+      (error) =>
+        setDeckMessage({
+          kind: "error",
+          text: error instanceof Error ? error.message : "Question Deck could not be saved.",
+        }),
+    );
+    if (!nextSnapshot) return;
+    setSnapshot(nextSnapshot);
+    setSelectedDeckId(draft.id);
+    setDeckDraft(cloneQuestionDeck(draft));
+    setDeckMessage({ kind: "success", text: "Question Deck saved on this device." });
+  }
+
+  async function deleteDeck() {
+    if (!deckDraft) return;
+    const deckId = deckDraft.id;
+    const nextSnapshot = await queuePersistence(
+      (repository) => repository.deleteDeck(deckId),
+      (error) =>
+        setDeckMessage({
+          kind: "error",
+          text: error instanceof Error ? error.message : "Question Deck could not be deleted.",
+        }),
+    );
+    if (!nextSnapshot) return;
+    setSnapshot(nextSnapshot);
+    setSelectedDeckId(nextSnapshot.preferences.selectedDeckId);
+    setDeckDraft(null);
+    setDeckMessage({ kind: "success", text: "Question Deck deleted from this device." });
+  }
+
+  async function importDeck(file: File) {
+    const content = await file.text();
+    const nextSnapshot = await queuePersistence(
+      (repository) => repository.importDeck(content),
+      (error) =>
+        setDeckMessage({
+          kind: "error",
+          text: error instanceof Error ? error.message : "Question Deck import could not be used.",
+        }),
+    );
+    if (!nextSnapshot) return;
+    const importedDeck = nextSnapshot.decks[nextSnapshot.decks.length - 1];
+    setSnapshot(nextSnapshot);
+    setDeckMessage({ kind: "success", text: "Question Deck imported on this device." });
+    if (importedDeck) {
+      setDeckDraft(cloneQuestionDeck(importedDeck));
+      setSelectedDeckId(importedDeck.id);
+    }
+  }
+
   function exportData() {
     queuePersistence(async (repository) => {
       const content = await repository.exportData();
@@ -362,6 +670,9 @@ export function App({ repository: providedRepository }: AppProps = {}) {
     setForm({ ...initialConfig });
     setSession(createSessionState(initialConfig));
     setSnapshot(initialSnapshot);
+    setSelectedDeckId(null);
+    setDeckDraft(null);
+    setDeckMessage(null);
     queuePersistence(async (repository) => {
       setSnapshot(await repository.deleteAllData());
     });
@@ -491,6 +802,19 @@ export function App({ repository: providedRepository }: AppProps = {}) {
             <p className="form-footnote">You can pause or end the session whenever you need.</p>
           </form>
         </section>
+        <DeckWorkspace
+          decks={snapshot.decks}
+          draft={deckDraft}
+          message={deckMessage}
+          onAddQuestion={addQuestionToDraft}
+          onDelete={deleteDeck}
+          onDraftChange={setDeckDraft}
+          onImport={importDeck}
+          onNew={startNewDeck}
+          onSave={saveDeckDraft}
+          onSelect={selectDeck}
+          selectedDeckId={selectedDeckId}
+        />
         <ProgressShelf
           onDelete={() => setDeleteDialogOpen(true)}
           onExport={exportData}

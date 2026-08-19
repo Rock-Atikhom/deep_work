@@ -413,6 +413,140 @@ h2 {
   margin-top: 12px;
 }
 
+.deck-workspace {
+  width: min(980px, 100%);
+  margin: 28px auto 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 28px 0;
+}
+
+.deck-heading,
+.deck-editor-heading,
+.deck-actions,
+.deck-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px 18px;
+}
+
+.deck-heading {
+  justify-content: space-between;
+}
+
+.deck-heading h2 {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.deck-heading p,
+.empty-deck,
+.deck-editor-heading span,
+.deck-message {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.deck-workspace > .field {
+  max-width: 520px;
+  margin-top: 22px;
+}
+
+.field select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0 12px;
+}
+
+.deck-actions {
+  margin-top: 16px;
+}
+
+.file-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.deck-message {
+  margin-top: 14px;
+}
+
+.deck-message-error {
+  color: var(--danger);
+}
+
+.deck-message-success {
+  color: var(--botanical-dark);
+}
+
+.deck-editor {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
+}
+
+.deck-editor-heading {
+  justify-content: space-between;
+}
+
+.deck-editor-heading h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.deck-editor > .field {
+  max-width: 520px;
+}
+
+.question-list {
+  display: grid;
+  gap: 14px;
+}
+
+.question-editor {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  border: 1px solid var(--line);
+  padding: 16px;
+}
+
+.question-editor legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+
+.question-editor .text-button {
+  justify-self: start;
+}
+
+.deck-editor-actions {
+  align-items: center;
+}
+
+.deck-editor-actions .text-button {
+  margin-left: auto;
+}
+
 .progress-shelf {
   width: min(980px, 100%);
   margin: 28px auto 0;
@@ -618,6 +752,21 @@ h2 {
   .progress-shelf {
     margin-top: 18px;
     padding: 20px;
+  }
+
+  .deck-workspace {
+    margin-top: 18px;
+    padding: 22px 0;
+  }
+
+  .deck-heading,
+  .deck-editor-heading {
+    display: grid;
+    align-items: start;
+  }
+
+  .deck-editor-actions .text-button {
+    margin-left: 0;
   }
 
   .progress-header,

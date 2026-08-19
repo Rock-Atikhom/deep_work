@@ -26,8 +26,11 @@ function failingRepository(): DeepWorkRepository {
     close() {},
     completeSession: unavailable,
     deleteAllData: unavailable,
+    deleteDeck: unavailable,
     exportData: unavailable,
+    importDeck: unavailable,
     load: unavailable,
+    saveDeck: unavailable,
     saveActiveSession: unavailable,
     savePreferences: unavailable,
   };
@@ -82,7 +85,11 @@ describe("Timer-Only persistence", () => {
 
   it("hydrates saved preferences and falls back to memory when storage fails", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
-    const preferences: SessionPreferences = { durationMs: 50 * 60_000, sound: "soft" };
+    const preferences: SessionPreferences = {
+      durationMs: 50 * 60_000,
+      selectedDeckId: null,
+      sound: "soft",
+    };
     await repository.savePreferences(preferences);
     render(<App repository={repository} />);
 

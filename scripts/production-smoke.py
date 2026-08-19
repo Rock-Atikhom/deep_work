@@ -16,7 +16,14 @@ def run_smoke(page: Page) -> None:
     assert page.get_by_role("heading", name="Make room for focused learning").is_visible()
     assert page.get_by_text("No camera analysis is used in this session.").is_visible()
 
-    page.get_by_label("Subject").fill("Biology")
+    deck_selector = page.get_by_role("combobox", name="Question Deck")
+    deck_selector.select_option("sample-sql")
+    page.get_by_label("Deck name").fill("SQL focus prompts")
+    page.get_by_label("Question 1").fill("When would you use an INNER JOIN?")
+    page.get_by_role("button", name="Save deck").click()
+    page.get_by_text("Question Deck saved on this device.").wait_for(state="visible")
+
+    page.get_by_label("Subject", exact=True).fill("Biology")
     page.get_by_label("Session goal").fill("Review cell respiration notes")
     page.get_by_role("radio", name="25 minutes").check()
     page.get_by_role("button", name="Start session").click()

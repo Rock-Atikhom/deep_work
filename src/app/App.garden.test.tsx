@@ -39,6 +39,7 @@ describe("Learning Garden and local history", () => {
       ).toBeInTheDocument(),
     );
     expect(screen.getByText("No completed sessions yet.")).toBeInTheDocument();
+    await waitFor(async () => expect((await repository.load()).decks).toHaveLength(0));
 
     fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "Math" } });
     fireEvent.change(screen.getByLabelText("Session goal"), {
