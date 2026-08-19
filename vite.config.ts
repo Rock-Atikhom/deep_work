@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   base: process.env.GITHUB_ACTIONS === "true" ? "/deep_work/" : "/",
+  build: { target: "es2022" },
   plugins: [react(), tailwindcss()],
   test: {
     environment: "jsdom",

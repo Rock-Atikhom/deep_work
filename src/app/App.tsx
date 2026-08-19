@@ -26,6 +26,8 @@ import { DeckLibraryScreen } from "../ui/screens/DeckLibraryScreen";
 import { StaticSkeleton } from "../ui/components/StaticSkeleton";
 import { BotanicalProgress } from "../ui/components/BotanicalProgress";
 import { GentleResetDialog } from "../ui/components/GentleResetDialog";
+import { LegalFooter, LegalScreen } from "../ui/screens/LegalScreen";
+import { parseHashRoute } from "./hash-route";
 import { playAwarenessChime } from "../alerts/sound";
 import {
   openDeepWorkRepository,
@@ -443,6 +445,7 @@ export function App({
   const [deleteStatus, setDeleteStatus] = useState<string | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [route, setRoute] = useState(() => parseHashRoute(window.location.hash));
   const repositoryRef = useRef<DeepWorkRepository | null>(providedRepository ?? null);
   const hydratedRef = useRef(false);
   const persistedPhaseRef = useRef<SessionState["phase"] | null>(null);
@@ -549,6 +552,12 @@ export function App({
       if (ownsRepository) repositoryRef.current?.close();
     };
   }, [providedRepository]);
+
+  useEffect(() => {
+    const updateRoute = () => setRoute(parseHashRoute(window.location.hash));
+    window.addEventListener("hashchange", updateRoute);
+    return () => window.removeEventListener("hashchange", updateRoute);
+  }, []);
 
   useEffect(() => {
     if (!hydratedRef.current || storageStatus === "unavailable") return;
@@ -791,6 +800,15 @@ export function App({
     setReducedMotion(false);
   }
 
+  if (route === "privacy" || route === "terms") {
+    return (
+      <main className="page-shell">
+        <LegalScreen document={route} />
+        <LegalFooter />
+      </main>
+    );
+  }
+
   if (session.phase === "setup") {
     return (
       <main className="page-shell">
@@ -806,6 +824,10 @@ export function App({
                 {settingsOpen ? "Close settings" : "Open settings"}
               </button>
             </div>
+            <nav className="legal-links" aria-label="Legal">
+              <a href="#/privacy">Privacy Policy</a>
+              <a href="#/terms">Terms of Use</a>
+            </nav>
             <h1 id="setup-title">Make room for focused learning</h1>
             <p className="intro-copy">
               Choose one subject and one goal. The timer keeps the next study block clear.
@@ -1061,6 +1083,7 @@ export function App({
         {deleteDialogOpen && (
           <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
         )}
+        <LegalFooter />
       </main>
     );
   }
@@ -1112,6 +1135,7 @@ export function App({
             open
           />
         </section>
+        <LegalFooter />
       </main>
     );
   }
@@ -1131,6 +1155,7 @@ export function App({
             "State the next step you can explain without looking at your notes."
           }
         />
+        <LegalFooter />
       </main>
     );
   }
@@ -1198,6 +1223,7 @@ export function App({
             </button>
           </div>
         </section>
+        <LegalFooter />
       </main>
     );
   }
@@ -1213,6 +1239,7 @@ export function App({
           quickReviewCompleted={session.quickReviewCompleted}
           subject={session.config.subject}
         />
+        <LegalFooter />
       </main>
     );
   }
@@ -1248,6 +1275,7 @@ export function App({
       {deleteDialogOpen && (
         <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
       )}
+      <LegalFooter />
     </main>
   );
 }

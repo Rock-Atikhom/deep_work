@@ -7,7 +7,9 @@ export type AppRoute =
   | "reflection"
   | "history"
   | "decks"
-  | "settings";
+  | "settings"
+  | "privacy"
+  | "terms";
 
 const ROUTES: readonly AppRoute[] = [
   "welcome",
@@ -19,6 +21,8 @@ const ROUTES: readonly AppRoute[] = [
   "history",
   "decks",
   "settings",
+  "privacy",
+  "terms",
 ];
 
 export function parseHashRoute(hash: string): AppRoute {

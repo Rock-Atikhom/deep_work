@@ -16,6 +16,10 @@ export function WelcomeScreen({ onCamera, onTimerOnly }: WelcomeScreenProps) {
           Continue without camera
         </button>
       </div>
+      <nav className="legal-links" aria-label="Legal">
+        <a href="#/privacy">Privacy Policy</a>
+        <a href="#/terms">Terms of Use</a>
+      </nav>
     </section>
   );
 }
