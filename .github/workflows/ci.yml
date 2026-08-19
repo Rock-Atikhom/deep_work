@@ -24,5 +24,4 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - run: npx --yes playwright@1.62.0 install --with-deps chromium
       - run: npx --yes playwright@1.62.0 test --pass-with-no-tests --config=tests/e2e
