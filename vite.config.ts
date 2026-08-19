@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   worker: {
     rollupOptions: {
-      output: { entryFileNames: "assets/sw.js" },
+      output: { entryFileNames: "assets/[name].js" },
     },
   },
   test: {
