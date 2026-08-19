@@ -6,6 +6,11 @@ export default defineConfig({
   base: process.env.GITHUB_ACTIONS === "true" ? "/deep_work/" : "/",
   build: { target: "es2022" },
   plugins: [react(), tailwindcss()],
+  worker: {
+    rollupOptions: {
+      output: { entryFileNames: "assets/sw.js" },
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
