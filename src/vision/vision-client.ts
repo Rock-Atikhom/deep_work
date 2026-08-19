@@ -46,9 +46,9 @@ export function createVisionClient(options: VisionClientOptions = {}): VisionCli
   const createWorker =
     options.createWorker ??
     (() =>
-      new Worker(new URL("./worker.ts", import.meta.url), {
-        type: "module",
-      }) as unknown as VisionWorkerPort);
+      // The bundled worker is a classic script. MediaPipe's loader uses
+      // importScripts() to install its WASM ModuleFactory in that worker.
+      new Worker(new URL("./worker.ts", import.meta.url)) as unknown as VisionWorkerPort);
   const manifest = options.manifest ?? VISION_MANIFEST;
   const manifestUrl = options.manifestUrl ?? VISION_MANIFEST_URL;
   let current: VisionRuntimeSnapshot = frozen({

@@ -334,6 +334,28 @@ export async function matchCompletedVisionAsset(
   }
 }
 
+/**
+ * Uses the verified cache when it is ready, but keeps first-use online flows
+ * usable while the background release download is still warming up.
+ */
+export async function matchVisionAssetOrFetchNetwork(
+  request: RequestInfo | URL,
+  releaseId: string,
+  dependencies: VisionCacheDependencies,
+): Promise<Response | undefined> {
+  const cached = await matchCompletedVisionAsset(request, releaseId, dependencies);
+  if (cached) return cached;
+  try {
+    const response = await dependencies.fetch(request, {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    return response.ok ? response : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** The runtime cache is deliberately limited to generated build and vision assets. */
 export function isCacheableOfflineRequest(request: Request): boolean {
   const path = new URL(request.url).pathname.toLowerCase();

@@ -3,6 +3,7 @@ import type { VisionAsset, VisionReleaseManifest } from "../vision/manifest";
 import {
   cacheVisionRelease,
   isCacheableOfflineRequest,
+  matchVisionAssetOrFetchNetwork,
   visionCacheName,
   type CacheLike,
   type CacheStorageLike,
@@ -63,6 +64,27 @@ class MemoryCacheStorage implements CacheStorageLike {
 }
 
 describe("verified vision cache", () => {
+  it("uses the network while a verified release cache is still warming", async () => {
+    const cacheStorage = new MemoryCacheStorage();
+    const fetch = vi.fn(async () => new Response("license", { status: 200 }));
+
+    const response = await matchVisionAssetOrFetchNetwork(
+      "https://example.test/deep_work/vision/mediapipe-0.10.35-face-landmarker-float16-v1/LICENSE.txt",
+      manifest.releaseId,
+      {
+        cacheStorage,
+        fetch,
+        manifest,
+        scope: "https://example.test/deep_work/",
+        verifyResponse: async (value) => new Uint8Array(await value.arrayBuffer()),
+      },
+    );
+
+    expect(response).toBeInstanceOf(Response);
+    expect(await response?.text()).toBe("license");
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
   it("verifies every required manifest asset before the release is ready", async () => {
     const cacheStorage = new MemoryCacheStorage();
     const verifyResponse = vi.fn(

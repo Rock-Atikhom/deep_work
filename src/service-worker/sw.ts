@@ -6,7 +6,7 @@ import { VISION_MANIFEST } from "../vision/release";
 import {
   cacheVisionRelease,
   isCacheableOfflineRequest,
-  matchCompletedVisionAsset,
+  matchVisionAssetOrFetchNetwork,
   type CacheReleaseCommand,
   type VisionCacheDependencies,
 } from "./vision-cache";
@@ -79,7 +79,7 @@ self.addEventListener("fetch", (event) => {
       return;
     }
     event.respondWith(
-      matchCompletedVisionAsset(event.request, VISION_MANIFEST.releaseId, dependencies).then(
+      matchVisionAssetOrFetchNetwork(event.request, VISION_MANIFEST.releaseId, dependencies).then(
         (cached) =>
           cached ??
           new Response(null, {

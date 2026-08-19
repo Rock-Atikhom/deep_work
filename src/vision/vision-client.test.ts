@@ -24,6 +24,30 @@ function bitmap() {
 }
 
 describe("VisionClient", () => {
+  it("creates a classic worker for the MediaPipe importScripts loader", async () => {
+    const worker = new FakeWorker();
+    const WorkerConstructor = vi.fn(function WorkerConstructor() {
+      return worker;
+    });
+    vi.stubGlobal("Worker", WorkerConstructor);
+    try {
+      const client = createVisionClient();
+      const preparing = client.prepare();
+      expect(WorkerConstructor).toHaveBeenCalledOnce();
+      expect(WorkerConstructor.mock.calls[0]).toHaveLength(1);
+      worker.dispatch({
+        type: "READY",
+        generation: 1,
+        releaseId: "977cdb653fa4d787",
+        wasmTier: "simd",
+      });
+      await preparing;
+      client.dispose();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("prepares only through the worker, starts calibration, and transfers bitmaps", async () => {
     const worker = new FakeWorker();
     const client = createVisionClient({ createWorker: () => worker });
