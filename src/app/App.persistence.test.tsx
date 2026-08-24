@@ -136,6 +136,33 @@ describe("Timer-Only persistence", () => {
     repository.close();
   });
 
+  it("does not award a hydrated legacy session with an empty session ID", async () => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    const sessionStartedAtMs = 1_725_000_000_000;
+    let session = createSessionState(config);
+    session = reduceSession(session, {
+      atMs: sessionStartedAtMs,
+      sessionId: "",
+      type: "START",
+    });
+    session = reduceSession(session, { atMs: sessionStartedAtMs + 25 * 60_000, type: "TICK" });
+    await repository.saveActiveSession(session);
+
+    render(<App repository={repository} />);
+
+    await screen.findByRole("heading", { name: "Reflect on this session" });
+    fireEvent.click(screen.getByRole("button", { name: "Yes" }));
+
+    expect(await screen.findByRole("heading", { name: /Momo is proud/i })).toBeInTheDocument();
+    expect(screen.getByText("+0 growth")).toBeInTheDocument();
+    await waitFor(async () => {
+      const snapshot = await repository.load();
+      expect(snapshot.plaza.courseGuardSessions).toHaveLength(0);
+      expect(snapshot.plaza.companion.growthPoints).toBe(0);
+    });
+    repository.close();
+  });
+
   it("hydrates saved preferences and falls back to memory when storage fails", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     const preferences: SessionPreferences = {

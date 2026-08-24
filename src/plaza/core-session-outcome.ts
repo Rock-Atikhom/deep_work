@@ -3,7 +3,8 @@ import type { PlazaSessionOutcome } from "./plaza-types";
 
 export function plazaOutcomeFromCoreSession(session: SessionState): PlazaSessionOutcome | null {
   if (
-    session.sessionId === null ||
+    typeof session.sessionId !== "string" ||
+    session.sessionId.length === 0 ||
     session.sessionStartedAtMs === null ||
     session.finishedAtMs === null ||
     session.finishReason === null

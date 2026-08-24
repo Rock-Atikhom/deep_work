@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSessionState, reduceSession } from "../session/session-machine";
+import { createSessionState, reduceSession, type SessionState } from "../session/session-machine";
 import { plazaOutcomeFromCoreSession } from "./core-session-outcome";
 
 describe("plazaOutcomeFromCoreSession", () => {
@@ -27,7 +27,10 @@ describe("plazaOutcomeFromCoreSession", () => {
     });
   });
 
-  it("rejects a terminal state without a stable session identifier", () => {
+  it.each([
+    ["an undefined", undefined],
+    ["an empty", ""],
+  ])("rejects a terminal state with %s legacy session identifier", (_label, sessionId) => {
     const state = {
       ...createSessionState({
         durationMs: 1,
@@ -35,8 +38,13 @@ describe("plazaOutcomeFromCoreSession", () => {
         sound: "silent",
         subject: "Math",
       }),
+      elapsedMs: 1,
+      finishReason: "completed" as const,
+      finishedAtMs: 2,
       phase: "complete" as const,
-    };
+      sessionId,
+      sessionStartedAtMs: 1,
+    } as unknown as SessionState;
 
     expect(plazaOutcomeFromCoreSession(state)).toBeNull();
   });
