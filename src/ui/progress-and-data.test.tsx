@@ -44,7 +44,7 @@ describe("reflection, garden, and data controls", () => {
       expect(snapshot.summaries[0]?.elapsedMs).toBeGreaterThanOrEqual(0);
       expect(snapshot.summaries[0]).not.toHaveProperty("frames");
     });
-    expect(screen.getByRole("img", { name: /learning garden/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /momo sprout planter/i })).toBeInTheDocument();
     repository.close();
   });
 
