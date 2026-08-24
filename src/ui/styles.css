@@ -2631,3 +2631,33 @@ html[data-reduced-motion="true"] *::after {
     transition: none;
   }
 }
+
+/* Session reward: Momo's toy-town celebration */
+.session-reward-shell {
+  display: grid;
+  gap: clamp(18px, 3vw, 32px);
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: clamp(18px, 4vw, 44px) 0;
+}
+
+.session-reward-card {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  border: 4px solid var(--momo-ink);
+  border-radius: 28px;
+  padding: clamp(24px, 6vw, 64px);
+  background: var(--momo-cream);
+  box-shadow: 8px 8px 0 var(--momo-ink);
+  text-align: center;
+}
+
+@media (max-width: 540px) {
+  .session-reward-shell {
+    width: min(100% - 24px, 460px);
+  }
+  .session-reward-card {
+    padding: 24px 18px;
+  }
+}

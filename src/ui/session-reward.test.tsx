@@ -34,4 +34,23 @@ describe("SessionRewardScreen", () => {
 
     expect(onReturnToPlaza).toHaveBeenCalledOnce();
   });
+
+  it("explains when every reward is unlocked and saving is session-only", () => {
+    render(
+      <SessionRewardScreen
+        companion={createInitialPlazaState().companion}
+        earnedGrowth={25}
+        goal="Review joins"
+        nextUnlock={null}
+        onReturnToPlaza={vi.fn()}
+        reflection="Yes"
+        rewardCount={4}
+        savedLocally={false}
+        subject="SQL"
+      />,
+    );
+
+    expect(screen.getByText("Every Plaza reward is unlocked.")).toBeInTheDocument();
+    expect(screen.getByText(/available for this visit only/i)).toBeInTheDocument();
+  });
 });
