@@ -12,11 +12,7 @@ function gardenStageLabel(stage: "sprout" | "leaf" | "bloom"): string {
   return stage === "bloom" ? "Bloom" : stage === "leaf" ? "Leaf" : "Sprout";
 }
 
-export function MomoMemoryGarden({
-  onDelete,
-  onExport,
-  snapshot,
-}: MomoMemoryGardenProps) {
+export function MomoMemoryGarden({ onDelete, onExport, snapshot }: MomoMemoryGardenProps) {
   const sproutCount = snapshot.garden.plants.length;
 
   return (
@@ -41,7 +37,9 @@ export function MomoMemoryGarden({
             <ul className="momo-collected-sprout-list">
               {snapshot.garden.plants.map((plant) => (
                 <li key={plant.sessionId}>
-                  <span className={`momo-collected-sprout-stage momo-collected-sprout-stage-${plant.stage}`}>
+                  <span
+                    className={`momo-collected-sprout-stage momo-collected-sprout-stage-${plant.stage}`}
+                  >
                     {gardenStageLabel(plant.stage)}
                   </span>
                   <span>{plant.subject}</span>

@@ -907,17 +907,7 @@ h2 {
   margin-left: auto;
 }
 
-.progress-shelf {
-  width: min(980px, 100%);
-  margin: 28px auto 0;
-  padding: 24px;
-  border: 1px solid var(--line);
-  background: var(--paper-light);
-}
-
-.progress-header,
-.history-heading,
-.data-actions {
+.history-heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -933,18 +923,6 @@ h2 {
   text-transform: uppercase;
 }
 
-.progress-header h2 {
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-}
-
-.garden-count {
-  margin: 0;
-  color: var(--botanical-dark);
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-
-.garden-list,
 .history-list {
   display: grid;
   gap: 8px;
@@ -953,38 +931,11 @@ h2 {
   list-style: none;
 }
 
-.garden-list {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-}
-
-.garden-list li,
 .history-list li {
   display: grid;
   gap: 8px;
   border-top: 1px solid var(--line);
   padding: 12px 0;
-}
-
-.garden-list li {
-  grid-template-columns: auto 1fr;
-  align-items: center;
-}
-
-.garden-stage {
-  display: inline-flex;
-  min-width: 62px;
-  justify-content: center;
-  border: 1px solid var(--botanical);
-  padding: 4px 7px;
-  color: var(--botanical-dark);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.garden-stage-bloom {
-  background: rgba(61, 90, 64, 0.12);
 }
 
 .history-heading {
@@ -1031,11 +982,235 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 
-.data-actions {
-  justify-content: flex-start;
-  margin-top: 22px;
-  border-top: 1px solid var(--line);
-  padding-top: 18px;
+.momo-memory-garden {
+  width: min(1120px, calc(100% - 32px));
+  margin: 32px auto 0;
+  overflow: clip;
+  border: 4px solid var(--momo-ink);
+  border-radius: 28px;
+  background: var(--momo-cream);
+  box-shadow: 8px 8px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
+}
+
+.momo-memory-garden-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px;
+  border-bottom: 4px solid var(--momo-ink);
+  background: var(--momo-leaf);
+}
+
+.momo-memory-garden-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  padding: 22px;
+}
+
+.momo-memory-garden button:focus-visible {
+  outline: 3px solid var(--momo-ink);
+  outline-offset: 4px;
+}
+
+.momo-memory-garden-header > div,
+.momo-memory-garden-grid > *,
+.momo-memory-garden .history-panel,
+.momo-memory-garden .history-list li,
+.momo-memory-garden .history-main,
+.momo-memory-garden .history-meta {
+  min-width: 0;
+}
+
+.momo-memory-garden h2,
+.momo-memory-garden h3,
+.momo-memory-garden p,
+.momo-memory-garden strong,
+.momo-memory-garden span,
+.momo-memory-garden button {
+  color: inherit;
+}
+
+.momo-memory-garden-header h2,
+.momo-memory-garden .momo-collected-sprouts h3,
+.momo-memory-garden .history-heading h3 {
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.momo-memory-garden-header h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.momo-memory-garden-kicker {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.momo-memory-garden-header p,
+.momo-memory-garden .history-heading p,
+.momo-memory-garden .empty-progress,
+.momo-memory-garden .momo-empty-progress,
+.momo-memory-garden .history-main span,
+.momo-memory-garden .history-meta {
+  margin: 0;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.momo-memory-garden .history-heading {
+  margin-top: 0;
+  padding: 22px 22px 0;
+  border-top: 0;
+}
+
+.momo-sprout-count {
+  display: inline-flex;
+  align-self: start;
+  justify-content: center;
+  min-width: 124px;
+  padding: 10px 14px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 999px;
+  background: var(--momo-lemon);
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+  font-size: 0.96rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.momo-memory-garden .momo-sprout-planter,
+.momo-memory-garden .momo-collected-sprouts,
+.momo-memory-garden .history-panel {
+  border: 3px solid var(--momo-ink);
+  border-radius: 18px;
+  background: #fffdf5;
+}
+
+.momo-memory-garden .momo-collected-sprouts {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: 18px;
+  box-shadow: 5px 5px 0 var(--momo-shadow);
+}
+
+.momo-memory-garden .momo-collected-sprouts h3 {
+  margin: 0;
+  font-size: 1.45rem;
+}
+
+.momo-memory-garden .momo-collected-sprout-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.momo-memory-garden .momo-collected-sprout-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  border-top: 2px solid rgb(22 55 99 / 14%);
+  padding-top: 10px;
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.momo-memory-garden .momo-collected-sprout-list li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.momo-memory-garden .history-panel {
+  border-radius: 0;
+  border-width: 3px 0 0;
+}
+
+.momo-memory-garden .history-list {
+  margin: 0;
+  padding: 16px 22px 22px;
+}
+
+.momo-memory-garden .history-list li {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 16px;
+  padding: 14px 0;
+  border-top-color: rgb(22 55 99 / 14%);
+}
+
+.momo-memory-garden .history-main strong {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.momo-memory-garden .history-meta {
+  justify-content: flex-end;
+  gap: 8px 14px;
+  text-align: right;
+}
+
+.momo-memory-garden .empty-progress {
+  padding: 0 22px 22px;
+}
+
+.momo-memory-garden .momo-collected-sprout-stage {
+  border: 2px solid var(--momo-ink);
+  border-radius: 8px;
+  background: var(--momo-pink);
+}
+
+.momo-memory-garden .momo-collected-sprout-stage {
+  display: inline-flex;
+  min-width: 72px;
+  justify-content: center;
+  padding: 5px 8px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.momo-memory-garden .momo-export-button {
+  border: 3px solid var(--momo-ink);
+  border-radius: 12px;
+  background: var(--momo-lemon);
+  color: var(--momo-ink);
+}
+
+.momo-memory-garden .momo-delete-button {
+  border: 0;
+  background: transparent;
+  color: #9b4534;
+  text-decoration: underline;
+}
+
+.momo-memory-garden .momo-export-button,
+.momo-memory-garden .momo-delete-button {
+  min-height: 50px;
+  font-weight: 900;
+}
+
+.momo-memory-garden .momo-export-button {
+  padding: 0 16px;
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+}
+
+.momo-memory-garden .momo-device-keepsakes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: center;
+  padding: 0 22px 22px;
 }
 
 .danger-button {
@@ -1193,11 +1368,6 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .progress-shelf {
-    margin-top: 18px;
-    padding: 20px;
-  }
-
   .deck-workspace {
     margin-top: 18px;
     padding: 22px 0;
@@ -1213,9 +1383,7 @@ h2 {
     margin-left: 0;
   }
 
-  .progress-header,
-  .history-heading,
-  .data-actions {
+  .history-heading {
     display: grid;
     align-items: start;
   }
@@ -1225,6 +1393,37 @@ h2 {
   }
 
   .history-meta {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .momo-memory-garden {
+    width: min(100% - 24px, 560px);
+  }
+
+  .momo-memory-garden-header {
+    display: grid;
+    padding: 18px 18px 16px;
+  }
+
+  .momo-memory-garden-grid {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .momo-memory-garden .history-heading,
+  .momo-memory-garden .history-list,
+  .momo-memory-garden .momo-device-keepsakes,
+  .momo-memory-garden .empty-progress {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .momo-memory-garden .history-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .momo-memory-garden .history-meta {
     justify-content: flex-start;
     text-align: left;
   }
@@ -2773,6 +2972,10 @@ html[data-reduced-motion="true"] *::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .momo-memory-garden .momo-export-button {
+    transition: none;
+  }
+
   .session-reward-shell .plaza-primary-button {
     transition: none;
   }

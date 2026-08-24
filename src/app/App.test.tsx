@@ -7,9 +7,7 @@ describe("Timer-Only Focus Session", () => {
     render(<App />);
 
     expect(screen.queryByRole("heading", { name: "Deck Library" })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Momo's Memory Garden" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Momo's Memory Garden" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "More study tools" }));
 
