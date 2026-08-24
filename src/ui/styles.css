@@ -994,7 +994,7 @@ h2 {
   font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
 }
 
-.momo-memory-garden-header {
+.momo-memory-garden .momo-memory-garden-header {
   display: flex;
   justify-content: space-between;
   gap: 16px;
@@ -1003,7 +1003,7 @@ h2 {
   background: var(--momo-leaf);
 }
 
-.momo-memory-garden-grid {
+.momo-memory-garden .momo-memory-garden-grid {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 18px;
@@ -1015,8 +1015,8 @@ h2 {
   outline-offset: 4px;
 }
 
-.momo-memory-garden-header > div,
-.momo-memory-garden-grid > *,
+.momo-memory-garden .momo-memory-garden-header > div,
+.momo-memory-garden .momo-memory-garden-grid > *,
 .momo-memory-garden .history-panel,
 .momo-memory-garden .history-list li,
 .momo-memory-garden .history-main,
@@ -1033,7 +1033,7 @@ h2 {
   color: inherit;
 }
 
-.momo-memory-garden-header h2,
+.momo-memory-garden .momo-memory-garden-header h2,
 .momo-memory-garden .momo-collected-sprouts h3,
 .momo-memory-garden .history-heading h3 {
   font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
@@ -1041,11 +1041,11 @@ h2 {
   letter-spacing: -0.03em;
 }
 
-.momo-memory-garden-header h2 {
+.momo-memory-garden .momo-memory-garden-header h2 {
   font-size: clamp(2rem, 4vw, 3rem);
 }
 
-.momo-memory-garden-kicker {
+.momo-memory-garden .momo-memory-garden-kicker {
   margin: 0 0 6px;
   font-size: 0.78rem;
   font-weight: 900;
@@ -1053,7 +1053,7 @@ h2 {
   text-transform: uppercase;
 }
 
-.momo-memory-garden-header p,
+.momo-memory-garden .momo-memory-garden-header p,
 .momo-memory-garden .history-heading p,
 .momo-memory-garden .empty-progress,
 .momo-memory-garden .momo-empty-progress,
@@ -1092,6 +1092,65 @@ h2 {
   border: 3px solid var(--momo-ink);
   border-radius: 18px;
   background: #fffdf5;
+}
+
+.momo-memory-garden .momo-sprout-planter {
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  padding: 1rem;
+  border-radius: 24px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--momo-sky) 70%, white) 0%,
+    var(--momo-cream) 100%
+  );
+  box-shadow: 5px 5px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+.momo-memory-garden .momo-sprout-planter-art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0.5rem;
+  border: 2px solid var(--momo-ink);
+  border-radius: 20px;
+  background: radial-gradient(
+    circle at top,
+    color-mix(in srgb, var(--momo-cream) 85%, white) 0%,
+    var(--momo-sky) 100%
+  );
+}
+
+.momo-memory-garden .momo-sprout-planter-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.momo-memory-garden .momo-sprout-planter-copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.momo-memory-garden .momo-sprout-planter-kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.momo-memory-garden .momo-sprout-planter-total {
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+
+.momo-memory-garden .momo-sprout-planter-detail {
+  font-size: 0.98rem;
 }
 
 .momo-memory-garden .momo-collected-sprouts {
@@ -1401,12 +1460,12 @@ h2 {
     width: min(100% - 24px, 560px);
   }
 
-  .momo-memory-garden-header {
+  .momo-memory-garden .momo-memory-garden-header {
     display: grid;
     padding: 18px 18px 16px;
   }
 
-  .momo-memory-garden-grid {
+  .momo-memory-garden .momo-memory-garden-grid {
     grid-template-columns: 1fr;
     padding: 14px;
   }
