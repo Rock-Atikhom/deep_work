@@ -41,6 +41,7 @@ describe("Learning Garden and local history", () => {
         screen.getByRole("heading", { name: "Make room for focused learning" }),
       ).toBeInTheDocument(),
     );
+    fireEvent.click(screen.getByRole("button", { name: "More study tools" }));
     expect(screen.getByText("No completed sessions yet.")).toBeInTheDocument();
     await waitFor(async () => expect((await repository.load()).decks).toHaveLength(0));
 

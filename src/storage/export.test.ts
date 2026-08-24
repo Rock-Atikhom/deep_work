@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatLocalExport } from "./export";
 import type { RepositorySnapshot } from "./repository";
+import { createInitialPlazaState } from "../plaza/plaza-machine";
 
 const snapshot: RepositorySnapshot = {
   active: null,
@@ -23,6 +24,7 @@ const snapshot: RepositorySnapshot = {
     plants: [],
     schemaVersion: 1,
   },
+  plaza: createInitialPlazaState(),
   preferences: { durationMs: 25 * 60_000, selectedDeckId: "sample-sql", sound: "silent" },
   schemaVersion: 1,
   summaries: [

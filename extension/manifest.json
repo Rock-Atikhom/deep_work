@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Deep Work Course Guard",
+  "version": "0.1.0",
+  "description": "Interrupts unwanted tab switching while you study an online course.",
+  "permissions": ["storage", "tabs"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Deep Work Course Guard",
+    "default_popup": "popup.html"
+  },
+  "externally_connectable": {
+    "matches": [
+      "https://rock-atikhom.github.io/deep_work/*",
+      "http://localhost:5173/*",
+      "http://127.0.0.1:5173/*"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

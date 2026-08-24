@@ -32,7 +32,10 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - run: npx --yes playwright@1.62.0 test --pass-with-no-tests --config=tests/e2e
+        env:
+          VITE_COURSE_GUARD_EXTENSION_ID: ${{ vars.COURSE_GUARD_EXTENSION_ID }}
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --pass-with-no-tests --config=tests/e2e
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

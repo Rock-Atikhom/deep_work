@@ -12,6 +12,7 @@ describe("Question Deck setup", () => {
   it("lets a student select and edit the local sample deck", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     render(<App repository={repository} />);
+    fireEvent.click(screen.getByRole("button", { name: "More study tools" }));
 
     await waitFor(() =>
       expect(screen.getByRole("option", { name: /SQL study prompts/ })).toBeInTheDocument(),
@@ -64,6 +65,7 @@ describe("Question Deck setup", () => {
   it("reports a failed import without replacing the sample deck", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     render(<App repository={repository} />);
+    fireEvent.click(screen.getByRole("button", { name: "More study tools" }));
 
     await waitFor(() => expect(screen.getByLabelText("Import Question Deck")).toBeInTheDocument());
     const input = screen.getByLabelText("Import Question Deck") as HTMLInputElement;

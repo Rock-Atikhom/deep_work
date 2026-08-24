@@ -3,6 +3,25 @@ import { describe, expect, it } from "vitest";
 import { App } from "./App";
 
 describe("Timer-Only Focus Session", () => {
+  it("keeps advanced study tools out of the first setup view", () => {
+    render(<App />);
+
+    expect(screen.queryByRole("heading", { name: "Deck Library" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Learning Garden" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "More study tools" }));
+
+    expect(screen.getByRole("heading", { name: "Deck Library" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Learning Garden" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hide study tools" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide study tools" }));
+    expect(screen.queryByRole("heading", { name: "Deck Library" })).not.toBeInTheDocument();
+  });
+
   it("opens with a clear setup for one subject and one goal", () => {
     render(<App />);
 

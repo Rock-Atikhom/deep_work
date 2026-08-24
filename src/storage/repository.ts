@@ -13,6 +13,14 @@ import {
   type QuestionDeck,
 } from "../decks/question-deck";
 import { deriveGarden, type GardenState } from "../garden/garden";
+import { createInitialPlazaState } from "../plaza/plaza-machine";
+import {
+  PLAZA_SCHEMA_VERSION,
+  type CompanionState,
+  type CourseGuardSessionRecord,
+  type PlazaState,
+} from "../plaza/plaza-types";
+import { PLAZA_COSMETICS } from "../plaza/plaza-rewards";
 import { formatLocalExport } from "./export";
 
 export const STORAGE_SCHEMA_VERSION = 1 as const;
@@ -52,6 +60,7 @@ export interface RepositorySnapshot {
   active: StoredSession | null;
   decks: QuestionDeck[];
   garden: GardenState;
+  plaza: PlazaState;
   preferences: SessionPreferences;
   schemaVersion: typeof STORAGE_SCHEMA_VERSION;
   summaries: SessionSummary[];
@@ -65,6 +74,7 @@ export interface DeepWorkRepository {
   exportData(): Promise<string>;
   importDeck(content: string): Promise<RepositorySnapshot>;
   load(): Promise<RepositorySnapshot>;
+  savePlaza(plaza: PlazaState): Promise<RepositorySnapshot>;
   saveDeck(deck: QuestionDeck): Promise<RepositorySnapshot>;
   saveActiveSession(session: SessionState): Promise<void>;
   savePreferences(preferences: SessionPreferences): Promise<void>;
@@ -102,10 +112,92 @@ function emptyRoot(): StoredRoot {
     active: null,
     decks: [],
     garden: { plants: [], schemaVersion: 1 },
+    plaza: createInitialPlazaState(),
     key: ROOT_KEY,
     preferences: { ...defaultPreferences },
     schemaVersion: STORAGE_SCHEMA_VERSION,
     summaries: [],
+  };
+}
+
+function finiteNonNegative(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
+function normalizeCompanion(value: unknown): CompanionState {
+  const initial = createInitialPlazaState().companion;
+  const candidate = value && typeof value === "object" ? (value as Partial<CompanionState>) : {};
+  const cosmeticIds = new Set(PLAZA_COSMETICS.map((cosmetic) => cosmetic.id));
+  const normalizeIds = (ids: unknown): string[] =>
+    Array.isArray(ids)
+      ? [
+          ...new Set(
+            ids.filter((id): id is string => typeof id === "string" && cosmeticIds.has(id)),
+          ),
+        ]
+      : [];
+  const growthPoints = finiteNonNegative(candidate.growthPoints, initial.growthPoints);
+  const energy = Math.min(100, finiteNonNegative(candidate.energy, initial.energy));
+  const level = Math.max(1, Math.floor(finiteNonNegative(candidate.level, initial.level)));
+  const mood =
+    candidate.mood === "resting" ||
+    candidate.mood === "ready" ||
+    candidate.mood === "focusing" ||
+    candidate.mood === "proud" ||
+    candidate.mood === "encouraging"
+      ? candidate.mood
+      : initial.mood;
+  return {
+    name:
+      typeof candidate.name === "string" && candidate.name.trim()
+        ? candidate.name.trim()
+        : initial.name,
+    mood,
+    energy,
+    growthPoints,
+    level,
+    equippedCosmeticIds: normalizeIds(candidate.equippedCosmeticIds),
+    unlockedCosmeticIds: normalizeIds(candidate.unlockedCosmeticIds),
+    unlockedPlazaItemIds: Array.isArray(candidate.unlockedPlazaItemIds)
+      ? [
+          ...new Set(
+            candidate.unlockedPlazaItemIds.filter((id): id is string => typeof id === "string"),
+          ),
+        ]
+      : [],
+  };
+}
+
+function normalizePlazaState(value: unknown): PlazaState {
+  const candidate = value && typeof value === "object" ? (value as Partial<PlazaState>) : {};
+  const sessions = Array.isArray(candidate.courseGuardSessions)
+    ? candidate.courseGuardSessions.filter(
+        (record): record is CourseGuardSessionRecord =>
+          !!record &&
+          typeof record === "object" &&
+          typeof record.id === "string" &&
+          typeof record.courseOrigin === "string" &&
+          typeof record.courseLabel === "string" &&
+          typeof record.startedAtMs === "number" &&
+          typeof record.finishedAtMs === "number" &&
+          typeof record.elapsedMs === "number" &&
+          typeof record.returnCount === "number" &&
+          (record.completionStatus === "completed" || record.completionStatus === "incomplete") &&
+          typeof record.growthPoints === "number" &&
+          (record.rewardId === null || typeof record.rewardId === "string"),
+      )
+    : [];
+  return {
+    schemaVersion: PLAZA_SCHEMA_VERSION,
+    companion: normalizeCompanion(candidate.companion),
+    courseGuardSessions: sessions.map((record) => ({
+      ...record,
+      elapsedMs: finiteNonNegative(record.elapsedMs, 0),
+      finishedAtMs: finiteNonNegative(record.finishedAtMs, record.startedAtMs),
+      growthPoints: finiteNonNegative(record.growthPoints, 0),
+      returnCount: Math.floor(finiteNonNegative(record.returnCount, 0)),
+      startedAtMs: finiteNonNegative(record.startedAtMs, 0),
+    })),
   };
 }
 
@@ -214,6 +306,7 @@ export async function openDeepWorkRepository(
           decks: Array.isArray(record.decks)
             ? record.decks.map((deck: unknown) => validateQuestionDeck(deck))
             : [sampleQuestionDeck()],
+          plaza: normalizePlazaState(record.plaza),
           preferences: { ...defaultPreferences, ...record.preferences },
           summaries: Array.isArray(record.summaries)
             ? record.summaries.map((summary: SessionSummary) => ({
@@ -290,6 +383,13 @@ export async function openDeepWorkRepository(
     },
 
     load: readRoot,
+
+    async savePlaza(plaza) {
+      const root = await readRoot();
+      root.plaza = normalizePlazaState(plaza);
+      await writeRoot(root);
+      return root;
+    },
 
     async saveDeck(deck) {
       const validatedDeck = validateQuestionDeck(deck);

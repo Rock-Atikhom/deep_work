@@ -30,6 +30,7 @@ function failingRepository(): DeepWorkRepository {
     exportData: unavailable,
     importDeck: unavailable,
     load: unavailable,
+    savePlaza: unavailable,
     saveDeck: unavailable,
     saveActiveSession: unavailable,
     savePreferences: unavailable,
