@@ -1,6 +1,36 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Momo's Plaza", () => {
+  test("turns a reflected timer session into a Momo reward and returns to Plaza", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByLabel("Subject").fill("SQL");
+    await page.getByLabel("Session goal").fill("Review joins");
+    await page.getByRole("button", { name: "Start session" }).press("Enter");
+    await page.getByRole("button", { name: "End session" }).click();
+    await page.getByRole("button", { name: "Yes" }).click();
+
+    await expect(page.getByRole("heading", { name: /Momo is proud/i })).toBeVisible();
+    await expect(page.getByText("Session complete", { exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Back to Momo's Plaza" }).click();
+    await expect(page).toHaveURL(/#\/plaza$/);
+    await expect(page.getByRole("heading", { name: "Momo's Plaza" })).toBeVisible();
+  });
+
+  test("keeps the Momo reward return path reachable on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page.getByLabel("Subject").fill("SQL");
+    await page.getByLabel("Session goal").fill("Review joins");
+    await page.getByRole("button", { name: "Start session" }).press("Enter");
+    await page.getByRole("button", { name: "End session" }).click();
+    await page.getByRole("button", { name: "Yes" }).click();
+
+    await page.getByRole("button", { name: "Back to Momo's Plaza" }).focus();
+    await expect(page.locator(":focus")).toBeVisible();
+  });
+
   test("shows the game dashboard and routes Study into Course Guard", async ({ page }) => {
     await page.goto("/#/plaza");
     await expect(page.getByRole("heading", { name: "Momo's Plaza" })).toBeVisible();
