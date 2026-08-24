@@ -21,6 +21,53 @@ function databaseName() {
 }
 
 describe("Deep Work local repository", () => {
+  it("hydrates plaza defaults when reading a legacy root", async () => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    const snapshot = await repository.load();
+
+    expect(snapshot.plaza).toMatchObject({
+      schemaVersion: 1,
+      companion: { mood: "ready", energy: 100, growthPoints: 0, level: 1 },
+      courseGuardSessions: [],
+    });
+    repository.close();
+  });
+
+  it("persists companion cosmetics and Course Guard history independently of legacy summaries", async () => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    const snapshot = await repository.load();
+    const next = {
+      ...snapshot.plaza,
+      companion: {
+        ...snapshot.plaza.companion,
+        growthPoints: 50,
+        level: 2,
+        equippedCosmeticIds: ["hat-leaf"],
+      },
+      courseGuardSessions: [
+        {
+          completionStatus: "completed" as const,
+          courseLabel: "learn.example.com",
+          courseOrigin: "https://learn.example.com",
+          elapsedMs: 1_500,
+          finishedAtMs: 2_500,
+          growthPoints: 2,
+          id: "guard-1",
+          returnCount: 1,
+          rewardId: "sticker-sun",
+          startedAtMs: 1_000,
+        },
+      ],
+    };
+
+    await repository.savePlaza(next);
+    await expect(repository.load()).resolves.toMatchObject({ plaza: next });
+    const cleared = await repository.deleteAllData();
+    expect(cleared.plaza.companion.growthPoints).toBe(0);
+    expect(cleared.plaza.courseGuardSessions).toEqual([]);
+    repository.close();
+  });
+
   it("persists only the recoverable timer contract", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     let session = createSessionState(config);

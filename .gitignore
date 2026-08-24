@@ -1,6 +1,7 @@
 .superpowers/
 node_modules/
 dist/
+dist-extension/
 coverage/
 playwright-report/
 test-results/
@@ -8,4 +9,3 @@ test-results/
 .env.*
 !.env.example
 .DS_Store
-

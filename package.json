@@ -16,6 +16,7 @@
     "test": "vitest run",
     "vision:manifest:check": "node scripts/generate-vision-manifest.mjs --check",
     "build": "tsc -b && vite build",
+    "extension:build": "vite build -c vite.extension.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {

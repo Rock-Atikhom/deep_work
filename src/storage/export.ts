@@ -8,6 +8,7 @@ export function formatLocalExport(snapshot: RepositorySnapshot): string {
       currentSession: snapshot.active,
       decks: snapshot.decks,
       garden: snapshot.garden,
+      plaza: snapshot.plaza,
       preferences: snapshot.preferences,
       summaries: snapshot.summaries,
     },

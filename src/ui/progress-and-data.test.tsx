@@ -72,6 +72,7 @@ describe("reflection, garden, and data controls", () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     render(<App repository={repository} />);
 
+    fireEvent.click(screen.getByRole("button", { name: "More study tools" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete my data" }));
     const deleteButton = screen.getByRole("button", { name: "Delete all local data" });
     expect(deleteButton).toBeDisabled();

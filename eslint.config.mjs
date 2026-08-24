@@ -5,7 +5,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "public/vision"] },
+  { ignores: ["dist", "dist-extension", "**/dist-extension", "node_modules", "public/vision"] },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {

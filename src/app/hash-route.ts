@@ -1,5 +1,10 @@
 export type AppRoute =
   | "welcome"
+  | "plaza"
+  | "course-guard"
+  | "archive"
+  | "wardrobe"
+  | "town-hall"
   | "setup"
   | "calibration"
   | "focus"
@@ -13,6 +18,11 @@ export type AppRoute =
 
 const ROUTES: readonly AppRoute[] = [
   "welcome",
+  "plaza",
+  "course-guard",
+  "archive",
+  "wardrobe",
+  "town-hall",
   "setup",
   "calibration",
   "focus",

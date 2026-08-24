@@ -35,6 +35,28 @@ import {
   type RepositorySnapshot,
   type SessionSummary,
 } from "../storage/repository";
+import {
+  createChromeCourseGuardBridge,
+  type CourseGuardBridge,
+  type CourseGuardBridgeEvent,
+} from "../course-guard/bridge";
+import {
+  courseGuardOriginFromUrl,
+  isCourseGuardCourseUrl,
+  type CourseGuardSnapshot,
+} from "../course-guard/bridge-contract";
+import {
+  companionMoodForGuardState,
+  createInitialPlazaState,
+  reducePlazaState,
+} from "../plaza/plaza-machine";
+import type { PlazaEvent } from "../plaza/plaza-machine";
+import type { CourseGuardSessionRecord } from "../plaza/plaza-types";
+import { CourseGuardScreen } from "../ui/screens/CourseGuardScreen";
+import { PlazaHomeScreen } from "../ui/screens/PlazaHomeScreen";
+import { SessionArchiveScreen } from "../ui/screens/SessionArchiveScreen";
+import { TownHallScreen } from "../ui/screens/TownHallScreen";
+import { WardrobeScreen } from "../ui/screens/WardrobeScreen";
 
 const MINUTE = 60_000;
 const initialConfig: SessionConfig = {
@@ -49,6 +71,7 @@ const initialSnapshot: RepositorySnapshot = {
   active: null,
   decks: [],
   garden: { plants: [], schemaVersion: 1 },
+  plaza: createInitialPlazaState(),
   preferences: { durationMs: 25 * MINUTE, selectedDeckId: null, sound: "silent" },
   schemaVersion: 1,
   summaries: [],
@@ -117,6 +140,53 @@ function newQuestionDeck(): QuestionDeck {
     schemaVersion: 1,
     subject: "",
   };
+}
+
+const defaultCourseGuardBridge = createChromeCourseGuardBridge();
+
+function CourseGuardConnectionStatus({
+  connection,
+  permissionNeeded,
+  state,
+}: {
+  connection: "connected" | "disconnected";
+  permissionNeeded: boolean;
+  state: CourseGuardSnapshot | null;
+}) {
+  const label =
+    connection === "disconnected"
+      ? "Extension disconnected"
+      : permissionNeeded
+        ? "Permission needed"
+        : state?.phase === "watching"
+          ? "Guarding course"
+          : state?.phase === "interruption"
+            ? "Return to course"
+            : "Extension connected";
+  const detail =
+    connection === "disconnected"
+      ? "Install or open the Chrome extension to connect Course Guard."
+      : permissionNeeded
+        ? "Allow access from the extension popup so Course Guard can detect when you leave the course website."
+        : state?.phase === "watching"
+          ? "The extension is the source of truth for this active guard."
+          : state?.phase === "interruption"
+            ? "The extension is waiting for you to return to your course."
+            : "The extension is reachable. Start state will be confirmed by Chrome.";
+
+  return (
+    <section
+      className={`course-guard-connection course-guard-connection-${connection}`}
+      aria-label="Course Guard connection status"
+      aria-live="polite"
+    >
+      <div className="course-guard-connection-heading">
+        <span className="mode-note-label">Course Guard</span>
+        <strong>{label}</strong>
+      </div>
+      <p>{detail}</p>
+    </section>
+  );
 }
 
 type DeckWorkspaceProps = {
@@ -417,6 +487,7 @@ type AppProps = {
   repository?: DeepWorkRepository;
   camera?: CameraAdapter;
   cameraAdapter?: CameraAdapter;
+  courseGuardBridge?: CourseGuardBridge;
   vision?: VisionClient;
   visionAdapter?: VisionClient;
 };
@@ -425,12 +496,14 @@ export function App({
   repository: providedRepository,
   camera: providedCamera,
   cameraAdapter,
+  courseGuardBridge: providedCourseGuardBridge,
   vision: providedVision,
   visionAdapter,
 }: AppProps = {}) {
   const [form, setForm] = useState(initialConfig);
   const [session, setSession] = useState(() => createSessionState(initialConfig));
   const [snapshot, setSnapshot] = useState<RepositorySnapshot>(initialSnapshot);
+  const [plazaState, setPlazaState] = useState(initialSnapshot.plaza);
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [deckDraft, setDeckDraft] = useState<QuestionDeck | null>(null);
   const [deckMessage, setDeckMessage] = useState<{
@@ -445,13 +518,28 @@ export function App({
   const [deleteStatus, setDeleteStatus] = useState<string | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [studyToolsOpen, setStudyToolsOpen] = useState(false);
+  const [courseGuardConnection, setCourseGuardConnection] = useState<"connected" | "disconnected">(
+    "disconnected",
+  );
+  const [courseGuardState, setCourseGuardState] = useState<CourseGuardSnapshot | null>(null);
+  const [courseGuardPermissionNeeded, setCourseGuardPermissionNeeded] = useState(false);
+  const [courseGuardCommandStatus, setCourseGuardCommandStatus] = useState<{
+    kind: "error" | "success";
+    text: string;
+  } | null>(null);
+  const [courseGuardCommandPending, setCourseGuardCommandPending] = useState(false);
+  const [courseUrl, setCourseUrl] = useState("");
   const [route, setRoute] = useState(() => parseHashRoute(window.location.hash));
+  const courseGuardBridge = providedCourseGuardBridge ?? defaultCourseGuardBridge;
   const repositoryRef = useRef<DeepWorkRepository | null>(providedRepository ?? null);
   const hydratedRef = useRef(false);
+  const plazaHydratedRef = useRef(false);
   const persistedPhaseRef = useRef<SessionState["phase"] | null>(null);
   const persistenceQueueRef = useRef<Promise<unknown>>(Promise.resolve());
   const pageHiddenRef = useRef(false);
   const focusStageRef = useRef<HTMLElement | null>(null);
+  const courseGuardStateRef = useRef<CourseGuardSnapshot | null>(null);
   const handleAwarenessEvent = useCallback(
     (event: { atMs: number; signal: "gaze-down" | "head-away" | "face-absent" }) => {
       setSession((current) =>
@@ -520,6 +608,8 @@ export function App({
 
         repositoryRef.current = repository;
         setSnapshot(snapshot);
+        setPlazaState(snapshot.plaza);
+        plazaHydratedRef.current = true;
         setSelectedDeckId(snapshot.preferences.selectedDeckId);
         const selectedDeck = snapshot.decks.find(
           (deck) => deck.id === snapshot.preferences.selectedDeckId,
@@ -554,10 +644,93 @@ export function App({
   }, [providedRepository]);
 
   useEffect(() => {
+    if (!plazaHydratedRef.current || storageStatus === "unavailable") return;
+    queuePersistence(async (repository) => {
+      const nextSnapshot = await repository.savePlaza(plazaState);
+      setSnapshot((current) => ({ ...current, plaza: nextSnapshot.plaza }));
+      return nextSnapshot;
+    });
+  }, [plazaState, queuePersistence, storageStatus]);
+
+  useEffect(() => {
     const updateRoute = () => setRoute(parseHashRoute(window.location.hash));
     window.addEventListener("hashchange", updateRoute);
     return () => window.removeEventListener("hashchange", updateRoute);
   }, []);
+
+  useEffect(() => {
+    return courseGuardBridge.connect((event: CourseGuardBridgeEvent) => {
+      if (event.type === "connection") {
+        setCourseGuardConnection(event.status);
+        if (event.status === "disconnected") {
+          courseGuardStateRef.current = null;
+          setCourseGuardState(null);
+          setCourseGuardPermissionNeeded(false);
+          setCourseGuardCommandStatus(null);
+          setPlazaState((current) =>
+            reducePlazaState(current, { mood: "resting", type: "SET_MOOD" }),
+          );
+        }
+      } else {
+        const previous = courseGuardStateRef.current;
+        courseGuardStateRef.current = event.state;
+        setCourseGuardState(event.state);
+        setCourseGuardPermissionNeeded(event.state.phase === "permission-lost");
+        setPlazaState((current) => {
+          let next = current;
+          if (
+            event.state.phase === "watching" &&
+            (previous === null || previous.phase === "idle" || previous.phase === "permission-lost")
+          ) {
+            next = reducePlazaState(next, { type: "SESSION_STARTED" });
+          } else if (event.state.phase === "interruption" && previous?.phase === "watching") {
+            next = reducePlazaState(next, { type: "DISTRACTION_DETECTED" });
+          } else if (
+            event.state.phase === "watching" &&
+            (previous?.phase === "interruption" ||
+              (previous?.returnCount ?? 0) < event.state.returnCount)
+          ) {
+            next = reducePlazaState(next, { type: "RETURNED_TO_COURSE" });
+          }
+
+          const newSession = event.state.lastSession;
+          const previousSessionId = previous?.lastSession?.id ?? null;
+          if (newSession && newSession.id !== previousSessionId) {
+            const outcome: CourseGuardSessionRecord = {
+              ...newSession,
+              courseLabel: (() => {
+                try {
+                  return new URL(newSession.courseOrigin).hostname;
+                } catch {
+                  return newSession.courseOrigin;
+                }
+              })(),
+              growthPoints: 0,
+              rewardId: null,
+            };
+            const terminalEvent: PlazaEvent =
+              newSession.completionStatus === "completed"
+                ? { outcome, type: "SESSION_COMPLETED" }
+                : { outcome, type: "SESSION_ENDED" };
+            next = reducePlazaState(next, terminalEvent);
+          }
+
+          if (!newSession) {
+            next = reducePlazaState(next, {
+              mood: companionMoodForGuardState({
+                connection: "connected",
+                phase: event.state.phase,
+              }),
+              type: "SET_MOOD",
+            });
+          } else if (event.state.phase === "permission-lost") {
+            next = reducePlazaState(next, { mood: "encouraging", type: "SET_MOOD" });
+          }
+          return next;
+        });
+      }
+    });
+  }, [courseGuardBridge]);
 
   useEffect(() => {
     if (!hydratedRef.current || storageStatus === "unavailable") return;
@@ -631,6 +804,48 @@ export function App({
     form.goal.trim().length > 0 &&
     (activeCameraMode === "disabled" || cameraStage === "ready");
   const timeRemaining = remainingMs(session, nowMs);
+  const normalizedCourseUrl = courseUrl.trim();
+  const courseWebsite = courseGuardOriginFromUrl(normalizedCourseUrl);
+  const canStartCourseGuard =
+    courseGuardConnection === "connected" &&
+    courseGuardState?.phase === "idle" &&
+    isCourseGuardCourseUrl(normalizedCourseUrl) &&
+    form.goal.trim().length > 0 &&
+    !courseGuardCommandPending;
+
+  async function startCourseGuard() {
+    if (!canStartCourseGuard) return;
+    setCourseGuardCommandPending(true);
+    setCourseGuardCommandStatus(null);
+    const result = await courseGuardBridge.startGuard(normalizedCourseUrl);
+    if (result.ok) {
+      setCourseGuardPermissionNeeded(false);
+      setCourseGuardCommandStatus({
+        kind: "success",
+        text: "Course Guard started by the extension.",
+      });
+    } else {
+      setCourseGuardPermissionNeeded(result.code === "permission-needed");
+      setCourseGuardCommandStatus({ kind: "error", text: result.message });
+      if (result.code === "disconnected") setCourseGuardConnection("disconnected");
+    }
+    setCourseGuardCommandPending(false);
+  }
+
+  async function stopCourseGuard() {
+    if (courseGuardCommandPending) return;
+    setCourseGuardCommandPending(true);
+    setCourseGuardCommandStatus(null);
+    const result = await courseGuardBridge.stopGuard();
+    if (result.ok) {
+      setCourseGuardPermissionNeeded(false);
+      setCourseGuardCommandStatus({ kind: "success", text: "Course Guard stopped." });
+    } else {
+      setCourseGuardCommandStatus({ kind: "error", text: result.message });
+      if (result.code === "disconnected") setCourseGuardConnection("disconnected");
+    }
+    setCourseGuardCommandPending(false);
+  }
 
   function startSession(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -774,10 +989,14 @@ export function App({
     setDeleteStatus(null);
     persistedPhaseRef.current = "setup";
     setForm({ ...initialConfig });
+    setCourseUrl("");
+    setCourseGuardPermissionNeeded(false);
+    setCourseGuardCommandStatus(null);
     setReducedMotion(false);
     setSettingsOpen(false);
     setSession(createSessionState(initialConfig));
     setSnapshot(initialSnapshot);
+    setPlazaState(createInitialPlazaState());
     setSelectedDeckId(null);
     setDeckDraft(null);
     setDeckMessage(null);
@@ -806,6 +1025,140 @@ export function App({
         <LegalScreen document={route} />
         <LegalFooter />
       </main>
+    );
+  }
+
+  if (session.phase === "setup" && route === "plaza") {
+    return (
+      <PlazaHomeScreen
+        companion={plazaState.companion}
+        connection={courseGuardConnection}
+        guardPhase={courseGuardState?.phase ?? "idle"}
+        onStartFocus={() => {
+          window.location.hash = "#/course-guard";
+        }}
+        recentSessions={plazaState.courseGuardSessions}
+      />
+    );
+  }
+
+  if (session.phase === "setup" && route === "archive") {
+    return <SessionArchiveScreen sessions={plazaState.courseGuardSessions} />;
+  }
+
+  if (session.phase === "setup" && route === "wardrobe") {
+    return (
+      <WardrobeScreen
+        companion={plazaState.companion}
+        onEquip={(cosmeticId) =>
+          setPlazaState((current) =>
+            reducePlazaState(current, { cosmeticId, type: "EQUIP_COSMETIC" }),
+          )
+        }
+      />
+    );
+  }
+
+  if (session.phase === "setup" && route === "town-hall") {
+    return (
+      <TownHallScreen connection={courseGuardConnection}>
+        <SettingsScreen
+          durationMs={form.durationMs}
+          onDeleteData={() => setDeleteDialogOpen(true)}
+          onDurationChange={(durationMs) => setForm((current) => ({ ...current, durationMs }))}
+          onExportData={exportData}
+          onPresetChange={(preset: PresetName) => setForm((current) => ({ ...current, preset }))}
+          onReset={resetSettings}
+          onSoundChange={(sound) => setForm((current) => ({ ...current, sound }))}
+          onReducedMotionChange={setReducedMotion}
+          preset={form.preset ?? "balanced"}
+          reducedMotion={reducedMotion}
+          sound={form.sound}
+        />
+        {deleteStatus && (
+          <p className="data-status" role="status">
+            {deleteStatus}
+          </p>
+        )}
+        {deleteDialogOpen && (
+          <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
+        )}
+      </TownHallScreen>
+    );
+  }
+
+  if (session.phase === "setup" && route === "course-guard") {
+    return (
+      <CourseGuardScreen
+        commandPending={courseGuardCommandPending}
+        commandStatus={courseGuardCommandStatus}
+        connection={courseGuardConnection}
+        courseUrl={courseUrl}
+        courseWebsite={courseWebsite}
+        onCourseUrlChange={(value) => {
+          setCourseUrl(value);
+          setCourseGuardPermissionNeeded(false);
+          setCourseGuardCommandStatus(null);
+        }}
+        onStart={() => void startCourseGuard()}
+        onStop={() => void stopCourseGuard()}
+        permissionNeeded={courseGuardPermissionNeeded}
+        state={courseGuardState}
+        startDisabled={!canStartCourseGuard}
+      >
+        <form className="plaza-form-panel plaza-study-form" onSubmit={startSession}>
+          <div className="plaza-section-heading">
+            <div>
+              <p className="section-kicker">Study intention</p>
+              <h2>Give this session a small direction</h2>
+            </div>
+          </div>
+          <label className="field" htmlFor="plaza-subject">
+            <span>Subject</span>
+            <input
+              id="plaza-subject"
+              value={form.subject}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, subject: event.target.value }))
+              }
+              placeholder="For example, SQL"
+              autoComplete="off"
+            />
+          </label>
+          <label className="field" htmlFor="plaza-study-goal">
+            <span>Study goal</span>
+            <textarea
+              id="plaza-study-goal"
+              aria-label="Plaza session goal"
+              value={form.goal}
+              onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))}
+              placeholder="What would you like to understand or finish?"
+              rows={3}
+            />
+          </label>
+          <fieldset className="choice-group">
+            <legend>Time available</legend>
+            <div className="choice-row">
+              {[25, 50].map((minutes) => (
+                <label className="choice" key={minutes}>
+                  <input
+                    type="radio"
+                    name="plaza-duration"
+                    checked={form.durationMs === minutes * MINUTE}
+                    onChange={() =>
+                      setForm((current) => ({ ...current, durationMs: minutes * MINUTE }))
+                    }
+                  />
+                  <span>{minutes} minutes</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <button className="plaza-primary-button" type="submit" disabled={!canStart}>
+            Begin focus session
+          </button>
+        </form>
+      </CourseGuardScreen>
     );
   }
 
@@ -869,6 +1222,11 @@ export function App({
                 </button>
               )}
             </div>
+            <CourseGuardConnectionStatus
+              connection={courseGuardConnection}
+              permissionNeeded={courseGuardPermissionNeeded}
+              state={courseGuardState}
+            />
             {activeCameraMode === "enabled" && (
               <section className="camera-setup-panel" aria-labelledby="camera-setup-title">
                 <h2 id="camera-setup-title">Private camera awareness</h2>
@@ -927,6 +1285,68 @@ export function App({
           </div>
 
           <form className="intention-form" onSubmit={startSession}>
+            <section className="course-guard-panel" aria-labelledby="course-guard-title">
+              <div className="form-heading">
+                <h2 id="course-guard-title">Course Guard</h2>
+                <p>Keep one online course easy to return to when another website pulls you away.</p>
+              </div>
+              <label className="field" htmlFor="course-url">
+                <span>Course URL</span>
+                <input
+                  id="course-url"
+                  type="url"
+                  value={courseUrl}
+                  onChange={(event) => {
+                    setCourseUrl(event.target.value);
+                    setCourseGuardPermissionNeeded(false);
+                    setCourseGuardCommandStatus(null);
+                  }}
+                  placeholder="https://learn.example.com/lesson"
+                  autoComplete="url"
+                  inputMode="url"
+                />
+              </label>
+              {normalizedCourseUrl && !isCourseGuardCourseUrl(normalizedCourseUrl) && (
+                <p className="course-guard-command-error" role="alert">
+                  Enter a valid HTTP(S) Course URL.
+                </p>
+              )}
+              {courseWebsite && (
+                <p className="course-website" role="status">
+                  Course Website: <strong>{courseWebsite}</strong>
+                </p>
+              )}
+              <div className="course-guard-actions">
+                {courseGuardState?.phase === "watching" ||
+                courseGuardState?.phase === "interruption" ? (
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => void stopCourseGuard()}
+                    disabled={courseGuardCommandPending || courseGuardConnection === "disconnected"}
+                  >
+                    Stop Course Guard
+                  </button>
+                ) : (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => void startCourseGuard()}
+                    disabled={!canStartCourseGuard}
+                  >
+                    Start Course Guard
+                  </button>
+                )}
+              </div>
+              {courseGuardCommandStatus && (
+                <p
+                  className={`course-guard-command-${courseGuardCommandStatus.kind}`}
+                  role={courseGuardCommandStatus.kind === "error" ? "alert" : "status"}
+                >
+                  {courseGuardCommandStatus.text}
+                </p>
+              )}
+            </section>
             <div className="form-heading">
               <h2>Set your intention</h2>
               <p>A small, specific goal gives the session somewhere to return to.</p>
@@ -1041,6 +1461,14 @@ export function App({
             <p className="form-footnote">You can pause or end the session whenever you need.</p>
           </form>
         </section>
+        <button
+          className="text-button study-tools-toggle"
+          type="button"
+          aria-expanded={studyToolsOpen}
+          onClick={() => setStudyToolsOpen((open) => !open)}
+        >
+          {studyToolsOpen ? "Hide study tools" : "More study tools"}
+        </button>
         {settingsOpen && (
           <SettingsScreen
             durationMs={form.durationMs}
@@ -1061,25 +1489,29 @@ export function App({
             {deleteStatus}
           </p>
         )}
-        <DeckWorkspace
-          decks={snapshot.decks}
-          draft={deckDraft}
-          message={deckMessage}
-          onAddQuestion={addQuestionToDraft}
-          onDelete={deleteDeck}
-          onDraftChange={setDeckDraft}
-          onExport={exportDeck}
-          onImport={importDeck}
-          onNew={startNewDeck}
-          onSave={saveDeckDraft}
-          onSelect={selectDeck}
-          selectedDeckId={selectedDeckId}
-        />
-        <ProgressShelf
-          onDelete={() => setDeleteDialogOpen(true)}
-          onExport={exportData}
-          snapshot={snapshot}
-        />
+        {studyToolsOpen && (
+          <>
+            <DeckWorkspace
+              decks={snapshot.decks}
+              draft={deckDraft}
+              message={deckMessage}
+              onAddQuestion={addQuestionToDraft}
+              onDelete={deleteDeck}
+              onDraftChange={setDeckDraft}
+              onExport={exportDeck}
+              onImport={importDeck}
+              onNew={startNewDeck}
+              onSave={saveDeckDraft}
+              onSelect={selectDeck}
+              selectedDeckId={selectedDeckId}
+            />
+            <ProgressShelf
+              onDelete={() => setDeleteDialogOpen(true)}
+              onExport={exportData}
+              snapshot={snapshot}
+            />
+          </>
+        )}
         {deleteDialogOpen && (
           <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
         )}
