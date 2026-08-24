@@ -8,7 +8,7 @@ describe("MomoMemoryGarden", () => {
     const onExport = vi.fn();
     const onDelete = vi.fn();
 
-    render(
+    const { container } = render(
       <MomoMemoryGarden
         onDelete={onDelete}
         onExport={onExport}
@@ -57,6 +57,16 @@ describe("MomoMemoryGarden", () => {
       screen.getByText(/Only subjects, goals, timing, reflections, and session status/i),
     ).toBeInTheDocument();
     expect(screen.getAllByText("SQL")).toHaveLength(2);
+    const root = container.querySelector(".momo-memory-garden");
+    expect(root).not.toBeNull();
+    expect(root).not.toHaveClass("progress-shelf");
+    expect(root?.querySelector(".momo-memory-garden-header")).not.toHaveClass("progress-header");
+    expect(root?.querySelector(".momo-memory-garden-kicker")).not.toHaveClass("section-kicker");
+    expect(root?.querySelector(".momo-sprout-count")).not.toHaveClass("garden-count");
+    expect(root?.querySelector(".momo-collected-sprout-list")).not.toHaveClass("garden-list");
+    expect(root?.querySelector(".momo-collected-sprout-stage")).not.toHaveClass("garden-stage");
+    expect(root?.querySelector(".momo-empty-progress")).toBeNull();
+    expect(root?.querySelector(".momo-device-keepsakes")).not.toHaveClass("data-actions");
     fireEvent.click(screen.getByRole("button", { name: "Export my data" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete my data" }));
     expect(onExport).toHaveBeenCalledOnce();

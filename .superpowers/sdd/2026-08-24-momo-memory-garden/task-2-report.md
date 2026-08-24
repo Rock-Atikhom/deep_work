@@ -75,3 +75,57 @@ Full suite result:
 ## Concerns
 
 - None at hand. The deferred Task 1 note about duplicate planter label ids was left untouched as instructed because the current integration still mounts one archive/planter at a time.
+
+## Fix round: scoped Momo markup
+
+### What changed
+
+- Removed the remaining generic layout classes from `src/ui/screens/MomoMemoryGarden.tsx`.
+- Aligned the component markup to the Momo-scoped structure from the Task 2 brief:
+  - `.momo-memory-garden`
+  - `.momo-memory-garden-header`
+  - `.momo-memory-garden-kicker`
+  - `.momo-sprout-count`
+  - `.momo-memory-garden-grid`
+  - `.momo-collected-sprouts`
+  - `.momo-collected-sprout-list`
+  - `.momo-collected-sprout-stage`
+  - `.momo-empty-progress`
+  - `.momo-device-keepsakes`
+- Kept `HistoryScreen` generic and unchanged internally, still rendered under the Momo root.
+- Added a regression assertion in `src/ui/momo-memory-garden.test.tsx` that fails if the Momo root or its scoped sub-elements reuse the old generic class hooks.
+
+### Fix-round RED evidence
+
+Command:
+
+```bash
+npm test -- src/ui/momo-memory-garden.test.tsx
+```
+
+Result:
+
+- Exit code: `1`
+- Failure proved the bug:
+
+```text
+Error: expect(element).not.toHaveClass("progress-shelf")
+Expected the element not to have class:
+  progress-shelf
+Received:
+  progress-shelf momo-memory-garden
+```
+
+### Fix-round verification
+
+Command:
+
+```bash
+npm test -- src/ui/momo-memory-garden.test.tsx src/ui/progress-and-data.test.tsx src/app/App.garden.test.tsx
+```
+
+Result:
+
+- Exit code: `0`
+- `Test Files  3 passed (3)`
+- `Tests  6 passed (6)`
