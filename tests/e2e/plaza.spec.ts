@@ -71,9 +71,12 @@ test.describe("Momo's Plaza", () => {
     await page.getByRole("button", { name: "More study tools" }).click();
 
     await expect(page.getByRole("heading", { name: "Momo's Memory Garden" })).toBeVisible();
+    await expect(page.getByRole("img", { name: /Momo sprout planter/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Learning Garden", exact: true })).toHaveCount(
       0,
     );
+    await expect(page.getByRole("heading", { name: "Quest Log" })).toBeVisible();
+    await expect(page.locator(".momo-memory-garden")).toHaveCSS("border-top-width", "4px");
 
     const exportButton = page.getByRole("button", { name: "Export my data" });
     for (let attempt = 0; attempt < 12; attempt += 1) {
