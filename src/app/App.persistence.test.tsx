@@ -85,14 +85,22 @@ describe("Timer-Only persistence", () => {
     repository.close();
   });
 
-  it("keeps one summary when the student completes a session", async () => {
+  it("persists one completed core-session Plaza reward through a remount", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    const sessionStartedAtMs = 1_725_000_000_000;
+    const finishedAtMs = sessionStartedAtMs + 25 * 60_000;
+    let session = createSessionState(config);
+    session = reduceSession(session, {
+      atMs: sessionStartedAtMs,
+      sessionId: "core-session-reward",
+      type: "START",
+    });
+    session = reduceSession(session, { atMs: finishedAtMs, type: "TICK" });
+    await repository.saveActiveSession(session);
+
     const rendered = render(<App repository={repository} />);
 
-    fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "SQL" } });
-    fireEvent.change(screen.getByLabelText("Session goal"), { target: { value: "Review joins" } });
-    fireEvent.click(screen.getByRole("button", { name: "Start session" }));
-    fireEvent.click(screen.getByRole("button", { name: "End session" }));
+    await screen.findByRole("heading", { name: "Reflect on this session" });
     fireEvent.click(screen.getByRole("button", { name: "Yes" }));
 
     await waitFor(async () => {
@@ -100,13 +108,31 @@ describe("Timer-Only persistence", () => {
       expect(snapshot.active).toBeNull();
       expect(snapshot.summaries).toHaveLength(1);
       expect(snapshot.summaries[0]?.reflection).toBe("yes");
+      expect(snapshot.plaza.courseGuardSessions).toHaveLength(1);
+      expect(snapshot.plaza.courseGuardSessions[0]).toMatchObject({
+        completionStatus: "completed",
+        courseLabel: "SQL",
+        courseOrigin: "deep-work://local",
+        elapsedMs: 25 * 60_000,
+        growthPoints: 25,
+        id: "core-session-reward",
+      });
+      expect(snapshot.plaza.companion.growthPoints).toBe(25);
     });
+
+    expect(screen.getByRole("heading", { name: /Momo is proud/i })).toBeInTheDocument();
     rendered.unmount();
     render(<App repository={repository} />);
-    await waitFor(() =>
-      expect(screen.getByRole("heading", { name: "Session complete" })).toBeInTheDocument(),
-    );
-    expect(screen.getAllByText("Reflection: Yes").length).toBeGreaterThan(0);
+    await screen.findByRole("heading", { name: /Momo is proud/i });
+    await waitFor(async () => {
+      const snapshot = await repository.load();
+      expect(snapshot.plaza.courseGuardSessions).toHaveLength(1);
+      expect(snapshot.plaza.companion.growthPoints).toBe(25);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to Momo's Plaza" }));
+    await screen.findByRole("heading", { name: "Momo's Plaza" });
+    expect(window.location.hash).toBe("#/plaza");
     repository.close();
   });
 
