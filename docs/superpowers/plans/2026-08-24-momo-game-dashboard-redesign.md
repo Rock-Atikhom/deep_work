@@ -389,11 +389,11 @@ test("keeps care controls and the Plaza map reachable on a small viewport", asyn
 });
 ```
 
-- [ ] **Step 2: Run the browser suite and confirm it fails until the new dashboard is complete**
+- [ ] **Step 2: Run the browser suite and confirm the completed dashboard behavior passes**
 
 Run: `npx playwright test --config=tests/e2e`
 
-Expected: failures for absent game-dashboard labels before Tasks 2–4 are implemented.
+Expected: both game-dashboard browser tests pass after Tasks 2–4 are implemented.
 
 - [ ] **Step 3: Run all required verification commands**
 
