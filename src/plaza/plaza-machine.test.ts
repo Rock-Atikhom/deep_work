@@ -45,4 +45,44 @@ describe("plaza companion state", () => {
     expect(state.companion.energy).toBeGreaterThanOrEqual(0);
     expect(state.companion.growthPoints).toBe(0);
   });
+
+  it("applies each care action without granting study growth", () => {
+    const initial = {
+      ...createInitialPlazaState(),
+      companion: { ...createInitialPlazaState().companion, energy: 50 },
+    };
+
+    expect(
+      reducePlazaState(initial, { action: "feed", type: "CARE_ACTION" }).companion,
+    ).toMatchObject({
+      energy: 60,
+      growthPoints: 0,
+      mood: "ready",
+    });
+    expect(
+      reducePlazaState(initial, { action: "play", type: "CARE_ACTION" }).companion,
+    ).toMatchObject({
+      energy: 54,
+      growthPoints: 0,
+      mood: "proud",
+    });
+    expect(
+      reducePlazaState(initial, { action: "rest", type: "CARE_ACTION" }).companion,
+    ).toMatchObject({
+      energy: 56,
+      growthPoints: 0,
+      mood: "resting",
+    });
+  });
+
+  it("caps care energy at one hundred", () => {
+    const state = {
+      ...createInitialPlazaState(),
+      companion: { ...createInitialPlazaState().companion, energy: 94 },
+    };
+
+    expect(reducePlazaState(state, { action: "feed", type: "CARE_ACTION" }).companion.energy).toBe(
+      100,
+    );
+  });
 });
