@@ -52,9 +52,12 @@ import {
 } from "../plaza/plaza-machine";
 import type { PlazaEvent } from "../plaza/plaza-machine";
 import type { CourseGuardSessionRecord } from "../plaza/plaza-types";
+import { plazaOutcomeFromCoreSession } from "../plaza/core-session-outcome";
+import { nextUnlock, rewardForSession } from "../plaza/plaza-rewards";
 import { CourseGuardScreen } from "../ui/screens/CourseGuardScreen";
 import { PlazaHomeScreen } from "../ui/screens/PlazaHomeScreen";
 import { SessionArchiveScreen } from "../ui/screens/SessionArchiveScreen";
+import { SessionRewardScreen } from "../ui/screens/SessionRewardScreen";
 import { TownHallScreen } from "../ui/screens/TownHallScreen";
 import { WardrobeScreen } from "../ui/screens/WardrobeScreen";
 
@@ -871,7 +874,20 @@ export function App({
   }
 
   function chooseReflection(value: Reflection) {
+    const outcome = plazaOutcomeFromCoreSession(session);
+    if (outcome) {
+      const event: PlazaEvent =
+        outcome.completionStatus === "completed"
+          ? { outcome, type: "SESSION_COMPLETED" }
+          : { outcome, type: "SESSION_ENDED" };
+      setPlazaState((current) => reducePlazaState(current, event));
+    }
     dispatchEvent(setSession, { atMs: nowMs, type: "REFLECT", value });
+  }
+
+  function returnToPlaza() {
+    setSession((current) => reduceSession(current, { type: "RESET" }));
+    window.location.hash = "#/plaza";
   }
 
   function selectDeck(deckId: string | null) {
@@ -1679,29 +1695,29 @@ export function App({
     );
   }
 
+  const outcome = plazaOutcomeFromCoreSession(session);
+  const earnedGrowth = outcome ? rewardForSession(outcome).growthPoints : 0;
+  const upcomingUnlock = nextUnlock({
+    growthPoints: plazaState.companion.growthPoints,
+    unlockedCosmeticIds: plazaState.companion.unlockedCosmeticIds,
+  });
+  const rewardCount = plazaState.courseGuardSessions.filter(
+    (record) => record.rewardId !== null,
+  ).length;
+
   return (
-    <main className="page-shell">
-      <section className="complete-card" aria-labelledby="complete-title">
-        <p className="product-mark">Deep Work Companion</p>
-        <h1 id="complete-title">Session complete</h1>
-        <p className="complete-subject">{session.config.subject}</p>
-        <p className="complete-goal">{session.config.goal}</p>
-        {session.reflection && (
-          <p className="complete-reflection">Reflection: {reflectionLabel(session.reflection)}</p>
-        )}
-        <p>
-          {storageStatus === "ready"
-            ? "Your goal reflection is saved on this device for your private review."
-            : "Your goal reflection is available for this session only."}
-        </p>
-        <button
-          className="primary-button"
-          type="button"
-          onClick={() => dispatchEvent(setSession, { type: "RESET" })}
-        >
-          Start another session
-        </button>
-      </section>
+    <>
+      <SessionRewardScreen
+        companion={plazaState.companion}
+        earnedGrowth={earnedGrowth}
+        goal={session.config.goal}
+        nextUnlock={upcomingUnlock}
+        onReturnToPlaza={returnToPlaza}
+        reflection={reflectionLabel(session.reflection ?? "not-yet")}
+        rewardCount={rewardCount}
+        savedLocally={storageStatus === "ready"}
+        subject={session.config.subject}
+      />
       <ProgressShelf
         onDelete={() => setDeleteDialogOpen(true)}
         onExport={exportData}
@@ -1711,6 +1727,6 @@ export function App({
         <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
       )}
       <LegalFooter />
-    </main>
+    </>
   );
 }

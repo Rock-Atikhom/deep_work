@@ -23,7 +23,7 @@ describe("Learning Garden and local history", () => {
       expect(screen.getByRole("heading", { name: "Learning Garden" })).toBeInTheDocument(),
     );
     expect(screen.getByText("Session history")).toBeInTheDocument();
-    expect(screen.getByText("Review joins")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Review joins")).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText("Ended early")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "Delete my data" }));

@@ -68,13 +68,13 @@ export function companionMoodForGuardState(input: GuardMoodInput): CompanionMood
 }
 
 function terminalState(state: PlazaState, outcome: PlazaSessionOutcome): PlazaState {
+  if (state.courseGuardSessions.some((session) => session.id === outcome.id)) {
+    return state;
+  }
+
   const reward = rewardForSession(outcome);
   const growthPoints = state.companion.growthPoints + reward.growthPoints;
   const record = { ...outcome, ...reward };
-  const existingIndex = state.courseGuardSessions.findIndex((session) => session.id === outcome.id);
-  const sessions = [...state.courseGuardSessions];
-  if (existingIndex === -1) sessions.push(record);
-  else sessions[existingIndex] = record;
 
   return {
     ...state,
@@ -89,7 +89,7 @@ function terminalState(state: PlazaState, outcome: PlazaSessionOutcome): PlazaSt
         state.companion.unlockedCosmeticIds,
       ),
     },
-    courseGuardSessions: sessions,
+    courseGuardSessions: [...state.courseGuardSessions, record],
   };
 }
 
