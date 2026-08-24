@@ -1,12 +1,13 @@
 import "fake-indexeddb/auto";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { createSessionState, reduceSession, type SessionConfig } from "../session/session-machine";
 import {
   openDeepWorkRepository,
   type DeepWorkRepository,
   type SessionPreferences,
 } from "../storage/repository";
+import { createInitialPlazaState } from "../plaza/plaza-machine";
 import { App } from "./App";
 
 const config: SessionConfig = {
@@ -19,6 +20,10 @@ const config: SessionConfig = {
 function databaseName() {
   return `deep-work-app-test-${crypto.randomUUID()}`;
 }
+
+afterEach(() => {
+  window.location.hash = "";
+});
 
 function failingRepository(): DeepWorkRepository {
   const unavailable = () => Promise.reject(new Error("Storage blocked"));
@@ -38,6 +43,27 @@ function failingRepository(): DeepWorkRepository {
 }
 
 describe("Timer-Only persistence", () => {
+  it("persists a Momo care action from the Plaza dashboard", async () => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    const initialPlaza = createInitialPlazaState();
+    await repository.savePlaza({
+      ...initialPlaza,
+      companion: { ...initialPlaza.companion, energy: 94 },
+    });
+    window.location.hash = "#/plaza";
+    render(<App repository={repository} />);
+
+    await screen.findByRole("heading", { name: "Momo's Plaza" });
+    await waitFor(() => expect(screen.getByLabelText("Energy")).toHaveValue(94));
+    fireEvent.click(screen.getByRole("button", { name: "Let Momo rest" }));
+
+    await waitFor(async () => {
+      const snapshot = await repository.load();
+      expect(snapshot.plaza.companion).toMatchObject({ energy: 100, mood: "resting" });
+    });
+    repository.close();
+  });
+
   it("recovers an active session after the app mounts again", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     const startedAtMs = Date.now() - 60_000;
