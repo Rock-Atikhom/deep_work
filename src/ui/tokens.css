@@ -24,6 +24,14 @@
   --plaza-line: rgba(36, 51, 71, 0.18);
   --plaza-radius-card: 20px;
   --plaza-radius-pill: 999px;
+  --momo-sky: #9ddcff;
+  --momo-pink: #ff9fc4;
+  --momo-lemon: #ffd95a;
+  --momo-leaf: #79c779;
+  --momo-ink: #24324a;
+  --momo-cream: #fff9ea;
+  --momo-blue: #62c9f5;
+  --momo-shadow: #24324a;
   --radius: 2px;
   font-family: "IBM Plex Sans", sans-serif;
   color: var(--ink);
