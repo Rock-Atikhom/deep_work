@@ -1034,6 +1034,9 @@ export function App({
         companion={plazaState.companion}
         connection={courseGuardConnection}
         guardPhase={courseGuardState?.phase ?? "idle"}
+        onCare={(action) =>
+          setPlazaState((current) => reducePlazaState(current, { action, type: "CARE_ACTION" }))
+        }
         onStartFocus={() => {
           window.location.hash = "#/course-guard";
         }}

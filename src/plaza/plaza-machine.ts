@@ -6,6 +6,8 @@ import {
 } from "./plaza-types";
 import { rewardForSession, unlockedCosmeticIdsForGrowth } from "./plaza-rewards";
 
+export type CareAction = "feed" | "play" | "rest";
+
 export type PlazaEvent =
   | { type: "SESSION_STARTED" }
   | { type: "DISTRACTION_DETECTED" }
@@ -13,6 +15,7 @@ export type PlazaEvent =
   | { type: "BREAK_TAKEN" }
   | { type: "SESSION_COMPLETED"; outcome: PlazaSessionOutcome }
   | { type: "SESSION_ENDED"; outcome: PlazaSessionOutcome }
+  | { type: "CARE_ACTION"; action: CareAction }
   | { type: "EQUIP_COSMETIC"; cosmeticId: string }
   | { type: "SET_MOOD"; mood: CompanionMood }
   | { type: "RENAME_COMPANION"; name: string };
@@ -23,6 +26,12 @@ export interface GuardMoodInput {
 }
 
 const MAX_ENERGY = 100;
+
+const careEffects: Record<CareAction, { energy: number; mood: CompanionMood }> = {
+  feed: { energy: 10, mood: "ready" },
+  play: { energy: 4, mood: "proud" },
+  rest: { energy: 6, mood: "resting" },
+};
 
 function clampEnergy(value: number): number {
   return Math.max(0, Math.min(MAX_ENERGY, value));
@@ -111,6 +120,17 @@ export function reducePlazaState(state: PlazaState, event: PlazaEvent): PlazaSta
     case "SESSION_COMPLETED":
     case "SESSION_ENDED":
       return terminalState(state, event.outcome);
+    case "CARE_ACTION": {
+      const effect = careEffects[event.action];
+      return {
+        ...state,
+        companion: {
+          ...state.companion,
+          energy: clampEnergy(state.companion.energy + effect.energy),
+          mood: effect.mood,
+        },
+      };
+    }
     case "EQUIP_COSMETIC":
       if (!state.companion.unlockedCosmeticIds.includes(event.cosmeticId)) return state;
       return {
