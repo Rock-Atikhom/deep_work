@@ -1470,19 +1470,19 @@ h2 {
     padding: 14px;
   }
 
-  .momo-memory-garden .history-heading,
-  .momo-memory-garden .history-list,
+  .momo-memory-garden .history-panel .history-heading,
+  .momo-memory-garden .history-panel .history-list,
   .momo-memory-garden .momo-device-keepsakes,
-  .momo-memory-garden .empty-progress {
+  .momo-memory-garden .history-panel .empty-progress {
     padding-left: 14px;
     padding-right: 14px;
   }
 
-  .momo-memory-garden .history-list li {
+  .momo-memory-garden .history-panel .history-list li {
     grid-template-columns: 1fr;
   }
 
-  .momo-memory-garden .history-meta {
+  .momo-memory-garden .history-panel .history-meta {
     justify-content: flex-start;
     text-align: left;
   }
