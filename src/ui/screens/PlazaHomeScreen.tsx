@@ -10,6 +10,7 @@ import { FocusFriend } from "../components/FocusFriend";
 import { PlazaGameHud } from "../components/PlazaGameHud";
 import { PlazaMap } from "../components/PlazaMap";
 import { PlazaMeter } from "../components/PlazaMeter";
+import { TodayQuest } from "../components/TodayQuest";
 
 export interface PlazaHomeScreenProps {
   companion: CompanionState;
@@ -68,6 +69,7 @@ export function PlazaHomeScreen({
       )
     : 100;
   const status = guardStatus(connection, guardPhase);
+  const statusClass = connection === "disconnected" ? "disconnected" : guardPhase;
   const rewardCount = recentSessions.filter((session) => session.rewardId !== null).length;
 
   return (
@@ -103,7 +105,7 @@ export function PlazaHomeScreen({
               <p className="section-kicker">Companion status</p>
               <h2>{companion.name}</h2>
             </div>
-            <span className={`plaza-status-pill plaza-status-${guardPhase}`}>{status}</span>
+            <span className={`plaza-status-pill plaza-status-${statusClass}`}>{status}</span>
           </div>
           <PlazaMeter label="Energy" tone="energy" value={companion.energy} />
           <PlazaMeter
@@ -121,6 +123,8 @@ export function PlazaHomeScreen({
       </section>
 
       <CareActionBar onCare={onCare} onStudy={onStartFocus} />
+
+      <TodayQuest growthPoints={companion.growthPoints} unlock={unlock} />
 
       <section className="plaza-destinations" aria-labelledby="destinations-title">
         <div className="plaza-section-heading">

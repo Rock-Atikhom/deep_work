@@ -51,6 +51,29 @@ describe("Learning Plaza dashboard", () => {
     expect(screen.getByRole("img", { name: /momo, ready/i })).toBeInTheDocument();
   });
 
+  it("shows a Course Guard quest with next-unlock progress", () => {
+    render(
+      <PlazaHomeScreen
+        companion={createInitialPlazaState().companion}
+        connection="disconnected"
+        guardPhase="idle"
+        onCare={() => undefined}
+        onStartFocus={() => undefined}
+        recentSessions={[]}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: "Today's quest" })).toHaveTextContent(
+      "Complete a Course Guard session to grow Momo.",
+    );
+    expect(
+      screen.getByRole("progressbar", { name: "Sun sticker unlock progress" }),
+    ).toHaveAttribute("value", "0");
+    expect(screen.getByText("Disconnected", { selector: ".plaza-status-pill" })).toHaveClass(
+      "plaza-status-disconnected",
+    );
+  });
+
   it("shows an inviting empty archive and a locked wardrobe", () => {
     render(<SessionArchiveScreen sessions={[]} />);
     expect(screen.getByRole("heading", { name: /no sessions/i })).toBeInTheDocument();
