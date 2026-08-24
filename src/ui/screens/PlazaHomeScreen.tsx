@@ -1,18 +1,21 @@
-import type { AppRoute } from "../../app/hash-route";
+import type { CareAction } from "../../plaza/plaza-machine";
 import { nextUnlock } from "../../plaza/plaza-rewards";
 import type {
   CompanionMood,
   CompanionState,
   CourseGuardSessionRecord,
 } from "../../plaza/plaza-types";
+import { CareActionBar } from "../components/CareActionBar";
 import { FocusFriend } from "../components/FocusFriend";
-import { PlazaDestinationCard } from "../components/PlazaDestinationCard";
+import { PlazaGameHud } from "../components/PlazaGameHud";
+import { PlazaMap } from "../components/PlazaMap";
 import { PlazaMeter } from "../components/PlazaMeter";
 
 export interface PlazaHomeScreenProps {
   companion: CompanionState;
   connection: "connected" | "disconnected";
   guardPhase: "idle" | "watching" | "interruption" | "permission-lost";
+  onCare: (action: CareAction) => void;
   onStartFocus: () => void;
   recentSessions: CourseGuardSessionRecord[];
 }
@@ -47,6 +50,7 @@ export function PlazaHomeScreen({
   companion,
   connection,
   guardPhase,
+  onCare,
   onStartFocus,
   recentSessions,
 }: PlazaHomeScreenProps) {
@@ -63,14 +67,18 @@ export function PlazaHomeScreen({
           100,
       )
     : 100;
+  const status = guardStatus(connection, guardPhase);
+  const rewardCount = recentSessions.filter((session) => session.rewardId !== null).length;
 
   return (
     <main className="plaza-shell" aria-labelledby="plaza-title">
+      <PlazaGameHud companion={companion} guardStatus={status} rewardCount={rewardCount} />
+
       <header className="plaza-header">
         <div>
-          <p className="plaza-eyebrow">Learning Plaza</p>
-          <h1 id="plaza-title">Learning Plaza</h1>
-          <p className="plaza-header-copy">A little town for focused learning.</p>
+          <p className="plaza-eyebrow">A tiny town for focused learning</p>
+          <h1 id="plaza-title">Momo&apos;s Plaza</h1>
+          <p className="plaza-header-copy">Care for Momo, then learn together.</p>
         </div>
         <a className="plaza-header-link" href="#/town-hall">
           Town Hall
@@ -95,13 +103,7 @@ export function PlazaHomeScreen({
               <p className="section-kicker">Companion status</p>
               <h2>{companion.name}</h2>
             </div>
-            <span className={`plaza-status-pill plaza-status-${guardPhase}`}>
-              {guardStatus(connection, guardPhase)}
-            </span>
-          </div>
-          <div className="plaza-level-row">
-            <span>Level {companion.level}</span>
-            <span>{companion.growthPoints} growth</span>
+            <span className={`plaza-status-pill plaza-status-${guardPhase}`}>{status}</span>
           </div>
           <PlazaMeter label="Energy" tone="energy" value={companion.energy} />
           <PlazaMeter
@@ -112,11 +114,13 @@ export function PlazaHomeScreen({
               unlock ? `${companion.growthPoints} / ${unlock.requiredGrowthPoints}` : "All found"
             }
           />
-          <button className="plaza-primary-button" type="button" onClick={onStartFocus}>
-            Start a focus session
-          </button>
+          <p className="plaza-next-unlock">
+            {unlock ? `Next unlock: ${unlock.label}` : "Every Plaza reward is unlocked."}
+          </p>
         </div>
       </section>
+
+      <CareActionBar onCare={onCare} onStudy={onStartFocus} />
 
       <section className="plaza-destinations" aria-labelledby="destinations-title">
         <div className="plaza-section-heading">
@@ -124,33 +128,9 @@ export function PlazaHomeScreen({
             <p className="section-kicker">Explore the town</p>
             <h2 id="destinations-title">Where would you like to go?</h2>
           </div>
-          <span className="plaza-section-note">{guardStatus(connection, guardPhase)}</span>
+          <span className="plaza-section-note">{status}</span>
         </div>
-        <div className="plaza-destination-grid">
-          <PlazaDestinationCard
-            description="Choose a course and keep it close."
-            label="Course Guard"
-            route={"course-guard" satisfies AppRoute}
-            status={guardStatus(connection, guardPhase)}
-          />
-          <PlazaDestinationCard
-            description="See sessions, returns, and rewards."
-            label="Session Archive"
-            route={"archive" satisfies AppRoute}
-            status={`${recentSessions.length} records`}
-          />
-          <PlazaDestinationCard
-            description="Dress Momo and decorate the plaza."
-            label="Wardrobe & Plaza"
-            route={"wardrobe" satisfies AppRoute}
-            status={`${companion.unlockedCosmeticIds.length} unlocked`}
-          />
-          <PlazaDestinationCard
-            description="Permissions, privacy, and local data."
-            label="Town Hall"
-            route={"town-hall" satisfies AppRoute}
-          />
-        </div>
+        <PlazaMap />
       </section>
 
       <section className="plaza-recent-card" aria-labelledby="recent-title">
