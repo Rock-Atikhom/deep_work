@@ -27,8 +27,14 @@ describe("SessionRewardScreen", () => {
     );
 
     expect(screen.getByRole("heading", { name: /Momo is proud/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Momo, proud" })).toBeInTheDocument();
+    expect(screen.getByText("SQL · Review joins")).toBeInTheDocument();
+    expect(screen.getByText("Reflection: Yes")).toBeInTheDocument();
     expect(screen.getByText("+25 growth")).toBeInTheDocument();
     expect(screen.getByText(/Next unlock: Leaf cap/i)).toBeInTheDocument();
+    expect(
+      screen.getByText("Your session and Momo's progress are saved on this device."),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Back to Momo's Plaza" }));
 

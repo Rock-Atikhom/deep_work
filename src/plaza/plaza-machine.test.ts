@@ -31,6 +31,29 @@ describe("plaza companion state", () => {
     expect(state.companion.growthPoints).toBeGreaterThan(0);
   });
 
+  it("does not apply growth twice for a repeated terminal session outcome", () => {
+    const event = {
+      outcome: {
+        completionStatus: "completed" as const,
+        courseLabel: "SQL",
+        courseOrigin: "deep-work://local",
+        elapsedMs: 25 * 60_000,
+        finishedAtMs: 1_501_000,
+        id: "core-session-reward",
+        returnCount: 0,
+        startedAtMs: 1_000,
+      },
+      type: "SESSION_COMPLETED" as const,
+    };
+
+    const awarded = reducePlazaState(createInitialPlazaState(), event);
+    const replayed = reducePlazaState(awarded, event);
+
+    expect(replayed.courseGuardSessions).toHaveLength(1);
+    expect(replayed.companion.growthPoints).toBe(25);
+    expect(replayed).toEqual(awarded);
+  });
+
   it("maps disconnected and permission-lost states without claiming focus", () => {
     expect(companionMoodForGuardState({ connection: "disconnected", phase: "idle" })).toBe(
       "resting",

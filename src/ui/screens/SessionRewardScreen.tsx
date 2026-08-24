@@ -37,15 +37,17 @@ export function SessionRewardScreen({
         />
         <p className="plaza-eyebrow">Focus reward</p>
         <h1 id="session-reward-title">Momo is proud of you!</h1>
-        <p>
+        <p className="session-reward-summary">
           {subject} · {goal}
         </p>
-        <p>Reflection: {reflection}</p>
-        <section aria-label="Session reward">
+        <p className="session-reward-reflection">Reflection: {reflection}</p>
+        <section className="session-reward-growth" aria-label="Session reward">
           <strong>+{earnedGrowth} growth</strong>
         </section>
-        <p>{nextUnlock ? `Next unlock: ${nextUnlock.label}` : "Every Plaza reward is unlocked."}</p>
-        <p>
+        <p className="session-reward-unlock">
+          {nextUnlock ? `Next unlock: ${nextUnlock.label}` : "Every Plaza reward is unlocked."}
+        </p>
+        <p className="session-reward-saving">
           {savedLocally
             ? "Your session and Momo's progress are saved on this device."
             : "Your session and Momo's progress are available for this visit only."}

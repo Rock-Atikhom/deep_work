@@ -136,6 +136,90 @@ describe("Timer-Only persistence", () => {
     repository.close();
   });
 
+  it("does not award an already-persisted Plaza outcome when reflection is retried", async () => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    const sessionStartedAtMs = 1_725_000_000_000;
+    const finishedAtMs = sessionStartedAtMs + 25 * 60_000;
+    let session = createSessionState(config);
+    session = reduceSession(session, {
+      atMs: sessionStartedAtMs,
+      sessionId: "interrupted-core-reward",
+      type: "START",
+    });
+    session = reduceSession(session, { atMs: finishedAtMs, type: "TICK" });
+
+    const initialPlaza = createInitialPlazaState();
+    await repository.savePlaza({
+      ...initialPlaza,
+      companion: {
+        ...initialPlaza.companion,
+        growthPoints: 25,
+        mood: "proud",
+        unlockedCosmeticIds: ["sticker-sun"],
+      },
+      courseGuardSessions: [
+        {
+          completionStatus: "completed",
+          courseLabel: "SQL",
+          courseOrigin: "deep-work://local",
+          elapsedMs: 25 * 60_000,
+          finishedAtMs,
+          growthPoints: 25,
+          id: "interrupted-core-reward",
+          returnCount: 0,
+          rewardId: "sticker-sun",
+          startedAtMs: sessionStartedAtMs,
+        },
+      ],
+    });
+    await repository.saveActiveSession(session);
+
+    render(<App repository={repository} />);
+
+    await screen.findByRole("heading", { name: "Reflect on this session" });
+    fireEvent.click(screen.getByRole("button", { name: "Yes" }));
+
+    await screen.findByRole("heading", { name: /Momo is proud/i });
+    expect(screen.getByText("1 rewards")).toBeInTheDocument();
+    await waitFor(async () => {
+      const snapshot = await repository.load();
+      expect(snapshot.active).toBeNull();
+      expect(snapshot.plaza.courseGuardSessions).toHaveLength(1);
+      expect(snapshot.plaza.companion.growthPoints).toBe(25);
+    });
+    repository.close();
+  });
+
+  it("does not count a growth-only session as a cosmetic reward", async () => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    const sessionStartedAtMs = 1_725_000_000_000;
+    let session = createSessionState(config);
+    session = reduceSession(session, {
+      atMs: sessionStartedAtMs,
+      sessionId: "early-ended-core-session",
+      type: "START",
+    });
+    session = reduceSession(session, { atMs: sessionStartedAtMs + 60_000, type: "END" });
+    await repository.saveActiveSession(session);
+
+    render(<App repository={repository} />);
+
+    await screen.findByRole("heading", { name: "Reflect on this session" });
+    fireEvent.click(screen.getByRole("button", { name: "Yes" }));
+
+    await screen.findByRole("heading", { name: /Momo is proud/i });
+    expect(screen.getByText("0 rewards")).toBeInTheDocument();
+    await waitFor(async () => {
+      const snapshot = await repository.load();
+      expect(snapshot.plaza.courseGuardSessions).toHaveLength(1);
+      expect(snapshot.plaza.courseGuardSessions[0]).toMatchObject({
+        growthPoints: 1,
+        rewardId: null,
+      });
+    });
+    repository.close();
+  });
+
   it("does not award a hydrated legacy session with an empty session ID", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     const sessionStartedAtMs = 1_725_000_000_000;

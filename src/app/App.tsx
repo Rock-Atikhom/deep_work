@@ -1701,6 +1701,9 @@ export function App({
     growthPoints: plazaState.companion.growthPoints,
     unlockedCosmeticIds: plazaState.companion.unlockedCosmeticIds,
   });
+  const rewardCount = plazaState.courseGuardSessions.filter(
+    (record) => record.rewardId !== null,
+  ).length;
 
   return (
     <>
@@ -1711,7 +1714,7 @@ export function App({
         nextUnlock={upcomingUnlock}
         onReturnToPlaza={returnToPlaza}
         reflection={reflectionLabel(session.reflection ?? "not-yet")}
-        rewardCount={plazaState.courseGuardSessions.length}
+        rewardCount={rewardCount}
         savedLocally={storageStatus === "ready"}
         subject={session.config.subject}
       />
