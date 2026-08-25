@@ -3061,3 +3061,269 @@ html[data-reduced-motion="true"] *::after {
     transition: none;
   }
 }
+
+/* Momo's Town Hall: a controlled home for focus and local data choices */
+.momo-town-hall {
+  display: grid;
+  gap: 16px;
+  width: min(620px, calc(100% - 32px));
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 20px 0 40px;
+  color: var(--momo-ink);
+  background:
+    radial-gradient(circle at 12% 8%, rgb(255 255 255 / 70%) 0 3px, transparent 3.5px),
+    linear-gradient(180deg, var(--momo-sky) 0 27%, var(--momo-cream) 27% 100%);
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
+}
+
+.momo-town-hall .momo-town-hall-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.momo-town-hall .momo-town-hall-header a,
+.momo-town-hall .momo-town-hall-legal a {
+  color: var(--momo-ink);
+  font-weight: 900;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
+.momo-town-hall .momo-town-hall-header > p {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.momo-town-hall .momo-town-hall-connection {
+  margin-left: auto;
+  padding: 6px 10px;
+  border: 2px solid var(--momo-ink);
+  border-radius: 999px;
+  background: var(--momo-leaf);
+  box-shadow: 2px 2px 0 var(--momo-shadow);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.momo-town-hall .momo-town-hall-connection-disconnected {
+  background: var(--momo-pink);
+}
+
+.momo-town-hall .momo-town-hall-hero,
+.momo-town-hall .momo-town-hall-card,
+.momo-town-hall .momo-town-hall-status {
+  border: 4px solid var(--momo-ink);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--momo-shadow);
+}
+
+.momo-town-hall .momo-town-hall-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 20px;
+  background: var(--momo-pink);
+}
+
+.momo-town-hall .focus-friend {
+  width: 132px;
+  height: 132px;
+}
+
+.momo-town-hall .focus-friend-body,
+.momo-town-hall .focus-friend-ear,
+.momo-town-hall .focus-friend-face,
+.momo-town-hall .focus-friend-sticker,
+.momo-town-hall .focus-friend-hat,
+.momo-town-hall .focus-friend-mood-dot {
+  border-color: var(--momo-ink);
+}
+
+.momo-town-hall .focus-friend-body,
+.momo-town-hall .focus-friend-ear {
+  background: var(--momo-pink);
+}
+
+.momo-town-hall .focus-friend-face {
+  background: var(--momo-cream);
+}
+
+.momo-town-hall .focus-friend-sticker,
+.momo-town-hall .focus-friend-mood-dot {
+  background: var(--momo-lemon);
+}
+
+.momo-town-hall .focus-friend-hat {
+  background: var(--momo-leaf);
+}
+
+.momo-town-hall .momo-town-hall-hero p,
+.momo-town-hall .momo-town-hall-data p {
+  margin: 0;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.momo-town-hall .momo-town-hall-hero p:first-of-type {
+  margin-bottom: 5px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.momo-town-hall h1,
+.momo-town-hall h2 {
+  margin: 0;
+  color: var(--momo-ink);
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+}
+
+.momo-town-hall h1 {
+  margin-bottom: 8px;
+  font-size: clamp(2.1rem, 7vw, 3.6rem);
+  line-height: 0.94;
+}
+
+.momo-town-hall h2 {
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  line-height: 1;
+}
+
+.momo-town-hall .momo-town-hall-status {
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--momo-lemon);
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.momo-town-hall .momo-town-hall-card {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  background: var(--momo-cream);
+}
+
+.momo-town-hall .momo-town-hall-preferences {
+  background: var(--momo-lemon);
+}
+
+.momo-town-hall .momo-town-hall-data {
+  background: var(--momo-leaf);
+}
+
+.momo-town-hall .momo-town-hall-card label {
+  display: grid;
+  gap: 7px;
+  font-weight: 900;
+}
+
+.momo-town-hall .momo-town-hall-card select,
+.momo-town-hall .momo-town-hall-card button {
+  min-height: 46px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 12px;
+  color: var(--momo-ink);
+  font: inherit;
+  font-weight: 900;
+}
+
+.momo-town-hall .momo-town-hall-card select {
+  width: 100%;
+  background: var(--momo-cream);
+  padding: 0 10px;
+}
+
+.momo-town-hall .momo-town-hall-card button {
+  justify-self: start;
+  padding: 0 15px;
+  background: var(--momo-pink);
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+}
+
+.momo-town-hall .momo-town-hall-motion {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  width: fit-content;
+}
+
+.momo-town-hall .momo-town-hall-motion input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--momo-ink);
+}
+
+.momo-town-hall .momo-town-hall-data > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.momo-town-hall .momo-town-hall-data button:first-child {
+  background: var(--momo-lemon);
+}
+
+.momo-town-hall .momo-town-hall-data button:last-child {
+  background: var(--momo-pink);
+}
+
+.momo-town-hall .momo-town-hall-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 4px;
+}
+
+.momo-town-hall a:focus-visible,
+.momo-town-hall input:focus-visible,
+.momo-town-hall select:focus-visible,
+.momo-town-hall button:focus-visible {
+  outline: 3px solid var(--momo-ink);
+  outline-offset: 4px;
+}
+
+@media (max-width: 620px) {
+  .momo-town-hall {
+    gap: 12px;
+    width: min(100% - 24px, 620px);
+    padding: 14px 0 30px;
+  }
+
+  .momo-town-hall .momo-town-hall-header {
+    align-items: flex-start;
+  }
+
+  .momo-town-hall .momo-town-hall-connection {
+    margin-left: 0;
+  }
+
+  .momo-town-hall .momo-town-hall-hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .momo-town-hall .momo-town-hall-card button,
+  .momo-town-hall .momo-town-hall-data > div,
+  .momo-town-hall .momo-town-hall-data button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .momo-town-hall .focus-friend {
+    animation: none;
+  }
+}
