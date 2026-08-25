@@ -1,8 +1,25 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { App } from "./App";
 
 describe("Timer-Only Focus Session", () => {
+  afterEach(() => {
+    window.location.hash = "";
+  });
+
+  it("opens the Plaza archive as Momo's Memory Garden", () => {
+    window.location.hash = "#/archive";
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: "Momo's Memory Garden" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /Momo sprout planter/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "← Plaza" })).toHaveAttribute("href", "#/plaza");
+    expect(screen.queryByRole("heading", { name: "Your learning shelf" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete my data" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
   it("keeps advanced study tools out of the first setup view", () => {
     render(<App />);
 

@@ -54,7 +54,6 @@ import { plazaOutcomeFromCoreSession } from "../plaza/core-session-outcome";
 import { nextUnlock, rewardForSession } from "../plaza/plaza-rewards";
 import { CourseGuardScreen } from "../ui/screens/CourseGuardScreen";
 import { PlazaHomeScreen } from "../ui/screens/PlazaHomeScreen";
-import { SessionArchiveScreen } from "../ui/screens/SessionArchiveScreen";
 import { SessionRewardScreen } from "../ui/screens/SessionRewardScreen";
 import { TownHallScreen } from "../ui/screens/TownHallScreen";
 import { WardrobeScreen } from "../ui/screens/WardrobeScreen";
@@ -1007,7 +1006,21 @@ export function App({
   }
 
   if (session.phase === "setup" && route === "archive") {
-    return <SessionArchiveScreen sessions={plazaState.courseGuardSessions} />;
+    return (
+      <main className="momo-memory-garden-route">
+        <a className="momo-memory-garden-route-back" href="#/plaza">
+          ← Plaza
+        </a>
+        <MomoMemoryGarden
+          onDelete={() => setDeleteDialogOpen(true)}
+          onExport={exportData}
+          snapshot={snapshot}
+        />
+        {deleteDialogOpen && (
+          <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
+        )}
+      </main>
+    );
   }
 
   if (session.phase === "setup" && route === "wardrobe") {
