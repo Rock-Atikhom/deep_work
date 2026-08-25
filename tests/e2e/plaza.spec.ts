@@ -130,4 +130,15 @@ test.describe("Momo's Plaza", () => {
     }));
     expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
   });
+
+  test("keeps the Momo Town Hall back link visibly focused from the keyboard", async ({ page }) => {
+    await page.goto("/#/town-hall");
+
+    const backToPlazaLink = page.getByRole("link", { name: "← Back to Plaza" });
+    await page.keyboard.press("Tab");
+
+    await expect(backToPlazaLink).toBeFocused();
+    await expect(backToPlazaLink).toHaveCSS("outline-style", "solid");
+    await expect(backToPlazaLink).toHaveCSS("outline-width", "3px");
+  });
 });
