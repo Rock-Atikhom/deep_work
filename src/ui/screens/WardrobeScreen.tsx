@@ -9,7 +9,7 @@ export interface WardrobeScreenProps {
 
 export function WardrobeScreen({ companion, onEquip }: WardrobeScreenProps) {
   return (
-    <main className="plaza-inner-screen" aria-labelledby="wardrobe-title">
+    <main className="plaza-inner-screen momo-wardrobe" aria-labelledby="wardrobe-title">
       <header className="plaza-inner-header">
         <a href="#/plaza">← Plaza</a>
         <div>

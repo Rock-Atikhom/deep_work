@@ -981,7 +981,7 @@ export function App({
 
   if (route === "privacy" || route === "terms") {
     return (
-      <main className="page-shell">
+      <main className="momo-town-notice-shell">
         <LegalScreen document={route} />
         <LegalFooter />
       </main>
@@ -1139,7 +1139,7 @@ export function App({
 
   if (session.phase === "setup") {
     return (
-      <main className="page-shell">
+      <main className="page-shell momo-plaza-gate">
         <section className="setup-layout" aria-labelledby="setup-title">
           <div className="intro-column">
             <div className="product-row">
@@ -1497,7 +1497,7 @@ export function App({
 
   if (session.phase === "gentle-reset") {
     return (
-      <main className="page-shell">
+      <main className="page-shell momo-study-room">
         <section
           ref={focusStageRef}
           className="focus-stage"
@@ -1551,7 +1551,7 @@ export function App({
     const selectedDeck = snapshot.decks.find((deck) => deck.id === selectedDeckId);
     const reviewCard = selectedDeck?.questions[0];
     return (
-      <main className="page-shell">
+      <main className="page-shell momo-study-room">
         <QuickReviewScreen
           onComplete={() =>
             dispatchEvent(setSession, { type: "COMPLETE_REVIEW", atMs: Date.now() })
@@ -1570,7 +1570,7 @@ export function App({
   if (session.phase === "focus" || session.phase === "paused" || session.phase === "notes-pause") {
     const isPaused = session.phase === "paused";
     return (
-      <main className="page-shell">
+      <main className="page-shell momo-study-room">
         <section className="focus-stage" aria-labelledby="focus-title">
           <header className="focus-header">
             <div>
@@ -1637,7 +1637,7 @@ export function App({
 
   if (session.phase === "reflection") {
     return (
-      <main className="page-shell">
+      <main className="page-shell momo-study-room">
         <ReflectionScreen
           awarenessCount={session.awarenessCount}
           focusTimeLabel={formatDuration(session.elapsedMs)}
@@ -1662,7 +1662,7 @@ export function App({
   ).length;
 
   return (
-    <>
+    <div className="momo-reward-route">
       <SessionRewardScreen
         companion={plazaState.companion}
         earnedGrowth={earnedGrowth}
@@ -1683,6 +1683,6 @@ export function App({
         <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
       )}
       <LegalFooter />
-    </>
+    </div>
   );
 }

@@ -26,8 +26,9 @@ describe("legal pages", () => {
     expect(screen.getByRole("heading", { name: "Privacy Policy" })).toBeInTheDocument();
     expect(screen.getByText(/camera frames are processed locally/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/session summaries, reflections, learning garden/i),
+      screen.getByText(/session summaries, reflections, Momo Memory Garden records/i),
     ).toBeInTheDocument();
+    expect(screen.queryAllByText(/Learning Garden records/i)).toHaveLength(0);
     expect(
       screen.getByText(/do not store camera frames, images, raw landmarks.*biometric identifiers/i),
     ).toBeInTheDocument();
