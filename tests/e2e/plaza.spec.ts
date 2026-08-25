@@ -12,6 +12,13 @@ test.describe("Momo's Plaza", () => {
     await page.getByRole("button", { name: "Yes" }).click();
 
     await expect(page.getByRole("heading", { name: /Momo is proud/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Momo's Memory Garden" })).toBeVisible();
+    await expect(page.getByRole("img", { name: /Momo sprout planter/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Learning Garden", exact: true })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole("heading", { name: "Quest Log" })).toBeVisible();
+    await expect(page.locator(".momo-memory-garden")).toHaveCSS("border-top-width", "4px");
     await expect(page.getByText("Session complete", { exact: true })).toHaveCount(0);
     await expect(page.locator(".session-reward-shell .momo-game-hud")).toHaveCSS(
       "border-top-width",
@@ -54,6 +61,39 @@ test.describe("Momo's Plaza", () => {
     expect(hudBox!.x + hudBox!.width).toBeLessThanOrEqual(viewport.clientWidth);
     expect(rewardCardBox).not.toBeNull();
     expect(rewardCardBox!.width).toBeGreaterThanOrEqual(viewport.clientWidth - 32);
+  });
+
+  test("shows Momo's Memory Garden from More study tools and keeps archive controls reachable on mobile", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "More study tools" }).click();
+
+    await expect(page.getByRole("heading", { name: "Momo's Memory Garden" })).toBeVisible();
+    await expect(page.getByRole("img", { name: /Momo sprout planter/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Learning Garden", exact: true })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole("heading", { name: "Quest Log" })).toBeVisible();
+    await expect(page.locator(".momo-memory-garden")).toHaveCSS("border-top-width", "4px");
+
+    const exportButton = page.getByRole("button", { name: "Export my data" });
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      await page.keyboard.press("Tab");
+      if (await exportButton.evaluate((button) => button === document.activeElement)) {
+        break;
+      }
+    }
+    await expect(exportButton).toBeFocused();
+    await expect(exportButton).toHaveCSS("outline-style", "solid");
+
+    const viewport = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    }));
+
+    expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
   });
 
   test("shows the game dashboard and routes Study into Course Guard", async ({ page }) => {

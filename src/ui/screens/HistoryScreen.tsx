@@ -1,6 +1,9 @@
 import type { SessionSummary } from "../../storage/repository";
 
-type HistoryScreenProps = { summaries: SessionSummary[] };
+type HistoryScreenProps = {
+  summaries: SessionSummary[];
+  title?: string;
+};
 
 function reflectionLabel(value: NonNullable<SessionSummary["reflection"]>): string {
   return value === "not-yet" ? "Not yet" : value.charAt(0).toUpperCase() + value.slice(1);
@@ -11,11 +14,11 @@ function formatDuration(elapsedMs: number): string {
   return `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
 }
 
-export function HistoryScreen({ summaries }: HistoryScreenProps) {
+export function HistoryScreen({ summaries, title = "Session history" }: HistoryScreenProps) {
   return (
     <div className="history-panel" aria-labelledby="history-title">
       <div className="history-heading">
-        <h3 id="history-title">Session history</h3>
+        <h3 id="history-title">{title}</h3>
         <p>Only subjects, goals, timing, reflections, and session status are kept here.</p>
       </div>
       {summaries.length > 0 ? (

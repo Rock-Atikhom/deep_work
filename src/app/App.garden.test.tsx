@@ -8,7 +8,7 @@ function databaseName() {
   return `deep-work-garden-test-${crypto.randomUUID()}`;
 }
 
-describe("Learning Garden and local history", () => {
+describe("Momo Memory Garden and local history", () => {
   it("shows growth and clears all local data without blocking a new session", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     render(<App repository={repository} />);
@@ -20,9 +20,9 @@ describe("Learning Garden and local history", () => {
     fireEvent.click(screen.getByRole("button", { name: "Yes" }));
 
     await waitFor(() =>
-      expect(screen.getByRole("heading", { name: "Learning Garden" })).toBeInTheDocument(),
+      expect(screen.getByRole("heading", { name: "Momo's Memory Garden" })).toBeInTheDocument(),
     );
-    expect(screen.getByText("Session history")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Quest Log" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Review joins")).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText("Ended early")).toBeInTheDocument());
 

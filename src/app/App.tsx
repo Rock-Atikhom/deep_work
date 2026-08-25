@@ -19,12 +19,10 @@ import { useSessionController, type CameraAdapter } from "./use-session-controll
 import type { VisionClient } from "../vision/vision-client";
 import { CalibrationScreen } from "../ui/screens/CalibrationScreen";
 import { QuickReviewScreen } from "../ui/screens/QuickReviewScreen";
-import { HistoryScreen } from "../ui/screens/HistoryScreen";
 import { ReflectionScreen } from "../ui/screens/ReflectionScreen";
 import { SettingsScreen } from "../ui/screens/SettingsScreen";
 import { DeckLibraryScreen } from "../ui/screens/DeckLibraryScreen";
 import { StaticSkeleton } from "../ui/components/StaticSkeleton";
-import { BotanicalProgress } from "../ui/components/BotanicalProgress";
 import { GentleResetDialog } from "../ui/components/GentleResetDialog";
 import { LegalFooter, LegalScreen } from "../ui/screens/LegalScreen";
 import { parseHashRoute } from "./hash-route";
@@ -60,6 +58,7 @@ import { SessionArchiveScreen } from "../ui/screens/SessionArchiveScreen";
 import { SessionRewardScreen } from "../ui/screens/SessionRewardScreen";
 import { TownHallScreen } from "../ui/screens/TownHallScreen";
 import { WardrobeScreen } from "../ui/screens/WardrobeScreen";
+import { MomoMemoryGarden } from "../ui/screens/MomoMemoryGarden";
 
 const MINUTE = 60_000;
 const initialConfig: SessionConfig = {
@@ -93,10 +92,6 @@ function capitalize(value: string): string {
 
 function reflectionLabel(value: Reflection): string {
   return value === "not-yet" ? "Not yet" : capitalize(value);
-}
-
-function gardenStageLabel(stage: "sprout" | "leaf" | "bloom"): string {
-  return stage === "bloom" ? "Bloom" : stage === "leaf" ? "Leaf" : "Sprout";
 }
 
 function sessionFromSummary(summary: SessionSummary): SessionState {
@@ -380,56 +375,6 @@ function DeckWorkspace({
         </p>
       )}
     </DeckLibraryScreen>
-  );
-}
-
-type ProgressShelfProps = {
-  onDelete: () => void;
-  onExport: () => void;
-  snapshot: RepositorySnapshot;
-};
-
-function ProgressShelf({ onDelete, onExport, snapshot }: ProgressShelfProps) {
-  return (
-    <section className="progress-shelf" aria-labelledby="garden-title">
-      <div className="progress-header">
-        <div>
-          <p className="section-kicker">Private progress</p>
-          <h2 id="garden-title">Learning Garden</h2>
-        </div>
-        <p className="garden-count">
-          {snapshot.garden.plants.length} {snapshot.garden.plants.length === 1 ? "plant" : "plants"}
-        </p>
-      </div>
-
-      <BotanicalProgress garden={snapshot.garden} />
-
-      {snapshot.garden.plants.length > 0 ? (
-        <ul className="garden-list">
-          {snapshot.garden.plants.map((plant) => (
-            <li key={plant.sessionId}>
-              <span className={`garden-stage garden-stage-${plant.stage}`}>
-                {gardenStageLabel(plant.stage)}
-              </span>
-              <span>{plant.subject}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="empty-progress">No completed sessions yet.</p>
-      )}
-
-      <HistoryScreen summaries={snapshot.summaries} />
-
-      <div className="data-actions">
-        <button className="secondary-button" type="button" onClick={onExport}>
-          Export my data
-        </button>
-        <button className="text-button" type="button" onClick={onDelete}>
-          Delete my data
-        </button>
-      </div>
-    </section>
   );
 }
 
@@ -1524,7 +1469,7 @@ export function App({
               onSelect={selectDeck}
               selectedDeckId={selectedDeckId}
             />
-            <ProgressShelf
+            <MomoMemoryGarden
               onDelete={() => setDeleteDialogOpen(true)}
               onExport={exportData}
               snapshot={snapshot}
@@ -1718,7 +1663,7 @@ export function App({
         savedLocally={storageStatus === "ready"}
         subject={session.config.subject}
       />
-      <ProgressShelf
+      <MomoMemoryGarden
         onDelete={() => setDeleteDialogOpen(true)}
         onExport={exportData}
         snapshot={snapshot}
