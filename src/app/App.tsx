@@ -55,7 +55,7 @@ import { nextUnlock, rewardForSession } from "../plaza/plaza-rewards";
 import { CourseGuardScreen } from "../ui/screens/CourseGuardScreen";
 import { PlazaHomeScreen } from "../ui/screens/PlazaHomeScreen";
 import { SessionRewardScreen } from "../ui/screens/SessionRewardScreen";
-import { TownHallScreen } from "../ui/screens/TownHallScreen";
+import { MomoTownHallScreen } from "../ui/screens/MomoTownHallScreen";
 import { WardrobeScreen } from "../ui/screens/WardrobeScreen";
 import { MomoMemoryGarden } from "../ui/screens/MomoMemoryGarden";
 
@@ -1038,29 +1038,27 @@ export function App({
 
   if (session.phase === "setup" && route === "town-hall") {
     return (
-      <TownHallScreen connection={courseGuardConnection}>
-        <SettingsScreen
+      <>
+        <MomoTownHallScreen
+          companion={plazaState.companion}
+          connection={courseGuardConnection}
+          dataStatus={deleteStatus}
           durationMs={form.durationMs}
           onDeleteData={() => setDeleteDialogOpen(true)}
           onDurationChange={(durationMs) => setForm((current) => ({ ...current, durationMs }))}
           onExportData={exportData}
           onPresetChange={(preset: PresetName) => setForm((current) => ({ ...current, preset }))}
+          onReducedMotionChange={setReducedMotion}
           onReset={resetSettings}
           onSoundChange={(sound) => setForm((current) => ({ ...current, sound }))}
-          onReducedMotionChange={setReducedMotion}
           preset={form.preset ?? "balanced"}
           reducedMotion={reducedMotion}
           sound={form.sound}
         />
-        {deleteStatus && (
-          <p className="data-status" role="status">
-            {deleteStatus}
-          </p>
-        )}
         {deleteDialogOpen && (
           <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
         )}
-      </TownHallScreen>
+      </>
     );
   }
 
