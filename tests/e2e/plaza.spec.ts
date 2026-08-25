@@ -113,4 +113,21 @@ test.describe("Momo's Plaza", () => {
     await expect(page.locator(":focus")).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Momo's Plaza map" })).toBeVisible();
   });
+
+  test("shows Momo Town Hall controls without mobile overflow", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/#/town-hall");
+
+    await expect(page.getByRole("heading", { name: "Momo's Town Hall" })).toBeVisible();
+    await expect(page.getByRole("img", { name: /Momo, encouraging/i })).toBeVisible();
+    await expect(page.getByLabel("Next session length")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Export my data" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Keep your study world yours" })).toHaveCount(0);
+
+    const viewport = await page.locator("html").evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }));
+    expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
+  });
 });

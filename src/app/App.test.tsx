@@ -20,6 +20,21 @@ describe("Timer-Only Focus Session", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("opens the Plaza Town Hall as Momo's Mayor's Desk", () => {
+    window.location.hash = "#/town-hall";
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: "Momo's Town Hall" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /Momo, encouraging/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("Next session length")).toHaveValue(String(25 * 60_000));
+    expect(
+      screen.queryByRole("heading", { name: "Keep your study world yours" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete my data" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
   it("keeps advanced study tools out of the first setup view", () => {
     render(<App />);
 
