@@ -994,6 +994,24 @@ h2 {
   font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
 }
 
+.momo-memory-garden-route {
+  min-height: 100vh;
+  padding: 24px 0 48px;
+}
+
+.momo-memory-garden-route-back {
+  display: block;
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  color: var(--momo-ink);
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
+  font-weight: 900;
+}
+
+.momo-memory-garden-route .momo-memory-garden {
+  margin-top: 16px;
+}
+
 .momo-memory-garden .momo-memory-garden-header {
   display: flex;
   justify-content: space-between;
@@ -1457,6 +1475,10 @@ h2 {
   }
 
   .momo-memory-garden {
+    width: min(100% - 24px, 560px);
+  }
+
+  .momo-memory-garden-route-back {
     width: min(100% - 24px, 560px);
   }
 
