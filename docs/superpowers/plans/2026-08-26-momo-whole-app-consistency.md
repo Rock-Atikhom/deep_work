@@ -300,18 +300,24 @@ git commit -m "feat: bring study journey into Momo Plaza"
 **Interfaces:**
 - Consumes Task 1–4 CSS hooks and existing headings; adds no state or API surface.
 
-- [ ] **Step 1: Write failing every-page and reduced-motion checks**
+- [ ] **Step 1: Write every-page and reduced-motion checks**
 
-At 390px, loop through:
+At 390px, loop through every valid hash route:
 
 ```ts
 const mobileRoutes = [
-  "/#/plaza", "/#/course-guard", "/#/archive", "/#/wardrobe",
-  "/#/town-hall", "/#/privacy", "/#/terms",
+  "/#/welcome", "/#/plaza", "/#/course-guard", "/#/archive",
+  "/#/wardrobe", "/#/town-hall", "/#/setup", "/#/calibration",
+  "/#/focus", "/#/quick-review", "/#/reflection", "/#/history",
+  "/#/decks", "/#/settings", "/#/privacy", "/#/terms",
 ];
 ```
 
-For each route, assert its main heading then measure:
+For direct destination and legal routes, assert their route-specific main heading.
+For session-only routes (`welcome`, `setup`, `calibration`, `focus`,
+`quick-review`, `reflection`, `history`, `decks`, and `settings`) without an
+active session, assert the safe setup fallback heading `Make room for focused
+learning`. Then measure every route:
 
 ```ts
 const viewport = await page.locator("html").evaluate((html) => ({
