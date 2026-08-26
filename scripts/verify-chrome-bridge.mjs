@@ -43,6 +43,7 @@ async function waitForServer(url, timeoutMs = 30_000) {
 
 async function launchBrowserContext(userDataDir, { withExtension }) {
   const options = {
+    channel: "chromium",
     headless,
     viewport: null,
     timeout: 30_000,
@@ -67,7 +68,26 @@ async function launchBrowserContext(userDataDir, { withExtension }) {
 }
 
 async function getExtensionId(context) {
-  // MV3 workers can idle out; poll before falling back to the event.
+  const [worker] = context.serviceWorkers();
+  if (worker?.url().startsWith("chrome-extension://")) {
+    return new URL(worker.url()).host;
+  }
+
+  const extensionsPage = await context.newPage();
+  try {
+    await extensionsPage.goto("chrome://extensions/", { waitUntil: "domcontentloaded" });
+    const extension = extensionsPage
+      .locator("extensions-item")
+      .filter({ hasText: "Deep Work Course Guard" });
+    await extension.waitFor({ timeout: 5_000 });
+    const extensionId = await extension.getAttribute("id");
+    if (extensionId && /^[a-p]{32}$/.test(extensionId)) return extensionId;
+  } finally {
+    await extensionsPage.close();
+  }
+
+  // MV3 workers can idle out; wait as a final fallback after checking the
+  // browser's loaded-extension registry.
   const deadline = Date.now() + 20_000;
   while (Date.now() < deadline) {
     const [worker] = context.serviceWorkers();
@@ -104,6 +124,50 @@ try {
   const extensionId = await getExtensionId(context);
   record("Unpacked extension loaded, runtime ID discovered", Boolean(extensionId), extensionId);
 
+  const popup = await context.newPage();
+  const popupErrors = [];
+  popup.on("pageerror", (error) => popupErrors.push(error.message));
+  popup.on("console", (entry) => {
+    if (entry.type() === "error") popupErrors.push(entry.text());
+  });
+  await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+  const startedAtMs = Date.now() - 60_000;
+  await popup.evaluate(
+    async ({ startedAtMs }) => {
+      await chrome.storage.local.set({
+        guardState: {
+          courseOrigin: "https://learn.example.com",
+          courseUrl: "https://learn.example.com/lesson",
+          interruptionCount: 0,
+          latestInCourseTabId: 1,
+          latestInCourseUrl: "https://learn.example.com/lesson",
+          lastSession: null,
+          phase: "watching",
+          returnCount: 0,
+          sessionId: `guard-${startedAtMs}`,
+          sessionStartedAtMs: startedAtMs,
+        },
+      });
+    },
+    { startedAtMs },
+  );
+  await popup.reload();
+  await popup.getByRole("button", { name: "Stop guard" }).click();
+  await popup.getByRole("button", { name: "Start guard" }).waitFor();
+  const guardState = await popup.evaluate(async () => {
+    const stored = await chrome.storage.local.get("guardState");
+    return stored.guardState;
+  });
+  const popupStopped =
+    guardState?.phase === "idle" && guardState.lastSession?.completionStatus === "completed";
+  record(
+    "Generated popup: Stop guard persists a completed idle session",
+    popupStopped,
+    popupStopped ? "" : JSON.stringify(guardState),
+  );
+  record("Generated popup has no browser page errors", popupErrors.length === 0, popupErrors.join(" | "));
+  await popup.screenshot({ path: path.join(outDir, "00-popup-stopped.png"), fullPage: true });
+
   log(`starting approved dev server with VITE_COURSE_GUARD_EXTENSION_ID=${extensionId}…`);
   const vite = startViteDev(extensionId);
   viteProcesses.push(vite);
@@ -138,6 +202,7 @@ try {
   await page.locator(".plaza-status-pill", { hasText: "Ready" }).waitFor({ timeout: 15_000 });
   record("Plaza status pill shows Ready (connected, idle)", true);
   await page.screenshot({ path: path.join(outDir, "02-plaza-connected.png") });
+  record("Extension-connected pages have no browser page errors", pageErrors.length === 0, pageErrors.join(" | "));
   await context.close();
 
   // ---- Scenario 2: no extension → honest disconnected state ---------------
@@ -145,6 +210,11 @@ try {
   const dirNoExt = mkdtempSync(path.join(tmpdir(), "dw-ext-off-"));
   const bareContext = await launchBrowserContext(dirNoExt, { withExtension: false });
   const barePage = await bareContext.newPage();
+  const barePageErrors = [];
+  barePage.on("pageerror", (error) => barePageErrors.push(error.message));
+  barePage.on("console", (entry) => {
+    if (entry.type() === "error") barePageErrors.push(entry.text());
+  });
 
   // Reuse the already-running dev server; the ID env stays set, which mirrors a
   // production misinstall (app built with an ID the visitor has not installed).
@@ -161,6 +231,7 @@ try {
     disabled !== false,
     disabled === null ? "control not rendered" : "disabled",
   );
+  record("No-extension pages have no browser page errors", barePageErrors.length === 0, barePageErrors.join(" | "));
   await bareContext.close();
 
   // ---- Summary -------------------------------------------------------------

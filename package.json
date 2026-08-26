@@ -18,7 +18,7 @@
     "build": "tsc -b && vite build",
     "extension:build": "vite build -c vite.extension.config.ts",
     "preview": "vite preview",
-    "verify:chrome": "node scripts/verify-chrome-bridge.mjs"
+    "verify:chrome": "npm run extension:build && node scripts/verify-chrome-bridge.mjs"
   },
   "dependencies": {
     "@fontsource-variable/newsreader": "5.3.0",
