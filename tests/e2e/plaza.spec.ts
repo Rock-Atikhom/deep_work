@@ -114,6 +114,70 @@ test.describe("Momo's Plaza", () => {
     await expect(page.getByRole("navigation", { name: "Momo's Plaza map" })).toBeVisible();
   });
 
+  test("keeps Archive garden panels inside the 390px viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/#/archive");
+
+    const planter = page.locator(".momo-sprout-planter");
+    const seedCount = page.getByText("0 seeds", { exact: true });
+    const collectedSprouts = page.locator(".momo-collected-sprouts");
+
+    await expect(planter).toBeVisible();
+    await expect(seedCount).toBeVisible();
+    await expect(collectedSprouts).toBeVisible();
+
+    const viewport = await page.locator("html").evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }));
+    const boxes = await Promise.all(
+      [planter, seedCount, collectedSprouts].map((element) =>
+        element.evaluate((node) => {
+          const box = node.getBoundingClientRect();
+          return {
+            clientWidth: node.clientWidth,
+            scrollWidth: node.scrollWidth,
+            width: box.width,
+            x: box.x,
+          };
+        }),
+      ),
+    );
+
+    expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
+    for (const box of boxes) {
+      expect(box.scrollWidth).toBeLessThanOrEqual(box.clientWidth);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.clientWidth);
+    }
+  });
+
+  test("keeps keyboard focus on Feed Momo without moving the control", async ({ page }) => {
+    await page.goto("/#/plaza");
+
+    const feedMomo = page.getByRole("button", { name: "Feed Momo" });
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      await page.keyboard.press("Tab");
+      if (await feedMomo.evaluate((button) => button === document.activeElement)) {
+        break;
+      }
+    }
+
+    await expect(feedMomo).toBeFocused();
+    await expect(feedMomo).toHaveCSS("outline-style", "solid");
+    await expect(feedMomo).toHaveCSS("outline-width", "3px");
+    await expect(feedMomo).toHaveCSS("transform", "none");
+  });
+
+  test("keeps pointer hover feedback on Feed Momo", async ({ page }) => {
+    await page.goto("/#/plaza");
+
+    const feedMomo = page.getByRole("button", { name: "Feed Momo" });
+    await feedMomo.hover();
+
+    await expect(feedMomo).toHaveCSS("transform", "matrix(1, 0, 0, 1, -2, -2)");
+  });
+
   test("shows Momo Town Hall controls without mobile overflow", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/#/town-hall");

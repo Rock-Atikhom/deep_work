@@ -21,7 +21,7 @@ const privacySections: readonly LegalSection[] = [
   {
     heading: "Data saved on this device",
     paragraphs: [
-      "The app stores session summaries, reflections, Learning Garden records, Question Deck content, and preferences on this device. These records support your local history, defaults, and exports. The app does not create an account or send these records to a server.",
+      "The app stores session summaries, reflections, Momo Memory Garden records, Question Deck content, and preferences on this device. These records support your local history, defaults, and exports. The app does not create an account or send these records to a server.",
     ],
   },
   {

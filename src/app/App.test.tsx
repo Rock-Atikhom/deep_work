@@ -67,6 +67,34 @@ describe("Timer-Only Focus Session", () => {
     expect(screen.getByText("Timer-Only Session")).toBeInTheDocument();
   });
 
+  it("marks setup, direct destinations, legal notices, and focus as Momo surfaces", () => {
+    const setup = render(<App />);
+    expect(setup.container.querySelector(".momo-plaza-gate")).toBeInTheDocument();
+    setup.unmount();
+
+    window.location.hash = "#/course-guard";
+    const guard = render(<App />);
+    expect(guard.container.querySelector(".momo-course-guard")).toBeInTheDocument();
+    guard.unmount();
+
+    window.location.hash = "#/privacy";
+    const notice = render(<App />);
+    expect(notice.container.querySelector(".momo-town-notice-shell")).toBeInTheDocument();
+  });
+
+  it("keeps an active session inside the Momo study room", () => {
+    const { container } = render(<App />);
+    fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "SQL" } });
+    fireEvent.change(screen.getByLabelText("Session goal"), { target: { value: "Review joins" } });
+    fireEvent.click(screen.getByRole("button", { name: "Start session" }));
+
+    expect(container.querySelector(".momo-study-room")).toBeInTheDocument();
+    expect(container.querySelector(".momo-study-room .focus-stage")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "End session" }));
+    expect(container.querySelector(".momo-study-room .reflection-card")).toBeInTheDocument();
+  });
+
   it("starts the Focus Stage after the student states an intention", () => {
     render(<App />);
     fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "SQL" } });

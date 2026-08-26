@@ -44,7 +44,10 @@ export function CourseGuardScreen({
 }: CourseGuardScreenProps) {
   const active = state?.phase === "watching" || state?.phase === "interruption";
   return (
-    <main className="plaza-inner-screen" aria-labelledby="course-guard-screen-title">
+    <main
+      className="plaza-inner-screen momo-course-guard"
+      aria-labelledby="course-guard-screen-title"
+    >
       <header className="plaza-inner-header">
         <a href="#/plaza">← Plaza</a>
         <div>

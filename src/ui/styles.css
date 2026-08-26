@@ -1152,6 +1152,8 @@ h2 {
 .momo-memory-garden .momo-sprout-planter-copy {
   display: grid;
   gap: 0.35rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .momo-memory-garden .momo-sprout-planter-kicker {
@@ -1542,6 +1544,12 @@ h2 {
   .complete-card {
     min-height: calc(100dvh - 36px);
     padding: 26px 22px;
+  }
+}
+
+@media (max-width: 620px) {
+  .momo-memory-garden .momo-memory-garden-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -2748,8 +2756,8 @@ html[data-reduced-motion="true"] *::after {
   font-weight: 900;
   letter-spacing: -0.02em;
   transition:
-    transform 120ms ease,
-    box-shadow 120ms ease;
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .plaza-shell .momo-care-bar button:nth-child(2) {
@@ -2765,9 +2773,7 @@ html[data-reduced-motion="true"] *::after {
 }
 
 .plaza-shell .momo-care-bar button:hover,
-.plaza-shell .momo-care-bar button:focus-visible,
-.plaza-shell .momo-plaza-map a:hover,
-.plaza-shell .momo-plaza-map a:focus-visible {
+.plaza-shell .momo-plaza-map a:hover {
   transform: translate(-2px, -2px);
   box-shadow: 5px 5px 0 var(--momo-shadow);
 }
@@ -2781,6 +2787,7 @@ html[data-reduced-motion="true"] *::after {
 .plaza-shell .momo-plaza-map a:focus-visible {
   outline: 3px solid var(--momo-ink);
   outline-offset: 3px;
+  transform: none;
 }
 
 .plaza-shell .plaza-destinations {
@@ -2815,8 +2822,8 @@ html[data-reduced-motion="true"] *::after {
   text-align: center;
   text-decoration: none;
   transition:
-    transform 120ms ease,
-    box-shadow 120ms ease;
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .plaza-shell .momo-plaza-map a:nth-child(2) {
@@ -3015,12 +3022,11 @@ html[data-reduced-motion="true"] *::after {
   box-shadow: 4px 4px 0 var(--momo-shadow);
   color: var(--momo-ink);
   transition:
-    transform 120ms ease,
-    box-shadow 120ms ease;
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.session-reward-shell .plaza-primary-button:hover,
-.session-reward-shell .plaza-primary-button:focus-visible {
+.session-reward-shell .plaza-primary-button:hover {
   background: var(--momo-lemon);
   color: var(--momo-ink);
   transform: translate(-2px, -2px);
@@ -3030,6 +3036,7 @@ html[data-reduced-motion="true"] *::after {
 .session-reward-shell .plaza-primary-button:focus-visible {
   outline: 3px solid var(--momo-ink);
   outline-offset: 4px;
+  transform: none;
 }
 
 @media (max-width: 540px) {
@@ -3325,5 +3332,1073 @@ html[data-reduced-motion="true"] *::after {
 @media (prefers-reduced-motion: reduce) {
   .momo-town-hall .focus-friend {
     animation: none;
+  }
+}
+
+/* Whole-app Momo consistency */
+:is(
+  .momo-plaza-gate,
+  .momo-course-guard,
+  .momo-wardrobe,
+  .momo-town-notice-shell,
+  .momo-study-room,
+  .momo-reward-route
+) {
+  color: var(--momo-ink);
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
+}
+
+:is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route) {
+  background: linear-gradient(180deg, var(--momo-sky) 0 28%, var(--momo-cream) 28% 100%);
+}
+
+:is(.momo-course-guard, .momo-wardrobe, .momo-town-notice-shell) {
+  border: 4px solid var(--momo-ink);
+  border-radius: 28px;
+  box-shadow: 8px 8px 0 var(--momo-shadow);
+}
+
+:is(.momo-course-guard, .momo-wardrobe) {
+  overflow: clip;
+}
+
+:is(
+    .momo-plaza-gate,
+    .momo-course-guard,
+    .momo-wardrobe,
+    .momo-town-notice-shell,
+    .momo-study-room,
+    .momo-reward-route
+  )
+  :is(h1, h2, h3) {
+  color: var(--momo-ink);
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+:is(
+    .momo-plaza-gate,
+    .momo-course-guard,
+    .momo-wardrobe,
+    .momo-town-notice-shell,
+    .momo-study-room,
+    .momo-reward-route
+  )
+  :is(a, button, input, select, textarea) {
+  font-family: inherit;
+}
+
+:is(
+    .momo-plaza-gate,
+    .momo-course-guard,
+    .momo-wardrobe,
+    .momo-town-notice-shell,
+    .momo-study-room,
+    .momo-reward-route
+  )
+  :is(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid var(--momo-ink);
+  outline-offset: 4px;
+}
+
+.momo-plaza-gate {
+  padding: clamp(16px, 3vw, 32px);
+}
+
+.momo-plaza-gate .setup-layout {
+  align-items: stretch;
+  gap: clamp(22px, 4vw, 52px);
+  margin: 0 auto;
+  padding: clamp(22px, 4vw, 44px);
+  border: 4px solid var(--momo-ink);
+  border-radius: 30px;
+  background: var(--momo-cream);
+  box-shadow: 8px 8px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+.momo-plaza-gate .intro-column {
+  align-content: start;
+}
+
+.momo-plaza-gate .product-mark,
+.momo-plaza-gate .plaza-eyebrow,
+.momo-plaza-gate .section-kicker,
+.momo-plaza-gate .mode-note-label {
+  color: var(--momo-ink);
+  font-family: inherit;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.momo-plaza-gate .intro-copy,
+.momo-plaza-gate .form-heading p,
+.momo-plaza-gate .form-footnote,
+.momo-plaza-gate .settings-heading p:last-child,
+.momo-plaza-gate .deck-heading p,
+.momo-plaza-gate .history-heading p,
+.momo-plaza-gate .empty-progress {
+  color: var(--momo-ink);
+  font-weight: 700;
+}
+
+.momo-plaza-gate .mode-note,
+.momo-plaza-gate .camera-setup-panel,
+.momo-plaza-gate .course-guard-panel {
+  border: 3px solid var(--momo-ink);
+  border-radius: 18px;
+  background: var(--momo-lemon);
+  box-shadow: 4px 4px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+.momo-plaza-gate .mode-note {
+  gap: 9px;
+  padding: 16px;
+}
+
+.momo-plaza-gate .camera-setup-panel,
+.momo-plaza-gate .course-guard-panel {
+  padding: 18px;
+}
+
+.momo-plaza-gate .intention-form {
+  align-content: start;
+  padding: clamp(20px, 3vw, 30px);
+  border: 4px solid var(--momo-ink);
+  border-radius: 24px;
+  background: var(--momo-pink);
+  box-shadow: 6px 6px 0 var(--momo-shadow);
+}
+
+.momo-plaza-gate .intention-form > .form-heading {
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--momo-ink);
+}
+
+.momo-plaza-gate .course-guard-panel .form-heading {
+  padding-bottom: 10px;
+  border-bottom: 2px dashed var(--momo-ink);
+}
+
+.momo-plaza-gate :is(.field, .choice-group) {
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-plaza-gate :is(.field input, .field textarea, .field select) {
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-cream);
+  color: var(--momo-ink);
+  box-shadow: inset 2px 2px 0 var(--momo-sky);
+}
+
+.momo-plaza-gate :is(.field input, .field textarea)::placeholder {
+  color: var(--momo-ink);
+  opacity: 0.7;
+}
+
+.momo-plaza-gate .choice {
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-cream);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-plaza-gate .choice:has(input:checked) {
+  background: var(--momo-leaf);
+}
+
+.momo-plaza-gate .choice input,
+.momo-plaza-gate .settings-check input {
+  accent-color: var(--momo-ink);
+}
+
+.momo-plaza-gate .course-guard-command-success,
+.momo-plaza-gate .data-status {
+  border: 3px solid var(--momo-ink);
+  border-radius: 14px;
+  background: var(--momo-leaf);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-plaza-gate .course-guard-command-error {
+  border: 3px solid var(--momo-ink);
+  border-radius: 14px;
+  background: var(--momo-pink);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-plaza-gate .data-status {
+  width: min(1160px, 100%);
+  padding: 10px 12px;
+}
+
+.momo-plaza-gate .settings-screen,
+.momo-plaza-gate .deck-workspace {
+  gap: 18px;
+  margin-top: 28px;
+  padding: clamp(20px, 3vw, 30px);
+  border: 4px solid var(--momo-ink);
+  border-radius: 24px;
+  background: var(--momo-cream);
+  box-shadow: 6px 6px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+.momo-plaza-gate .settings-screen {
+  width: min(1160px, 100%);
+}
+
+.momo-plaza-gate .settings-actions,
+.momo-plaza-gate .deck-editor {
+  border-top-color: var(--momo-ink);
+}
+
+.momo-plaza-gate .question-editor {
+  border: 3px solid var(--momo-ink);
+  border-radius: 16px;
+  background: var(--momo-sky);
+}
+
+.momo-plaza-gate .deck-message-error {
+  padding: 9px 11px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-pink);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-plaza-gate .deck-message-success {
+  padding: 9px 11px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-leaf);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-plaza-gate .momo-memory-garden .history-panel {
+  border: 3px solid var(--momo-ink);
+  border-radius: 18px;
+  background: var(--momo-cream);
+  box-shadow: 4px 4px 0 var(--momo-shadow);
+}
+
+.momo-plaza-gate .momo-memory-garden .history-list li {
+  border-top-color: var(--momo-ink);
+}
+
+.momo-plaza-gate .momo-memory-garden .history-main span,
+.momo-plaza-gate .momo-memory-garden .history-meta {
+  color: var(--momo-ink);
+}
+
+.momo-plaza-gate .legal-links,
+.momo-plaza-gate .legal-footer nav {
+  gap: 10px 16px;
+}
+
+.momo-plaza-gate :is(.legal-links a, .legal-footer a) {
+  color: var(--momo-ink);
+  font-weight: 900;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.momo-plaza-gate .legal-footer {
+  width: min(1160px, 100%);
+  margin-top: 28px;
+  border-top: 3px solid var(--momo-ink);
+  color: var(--momo-ink);
+}
+
+:is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
+  :is(
+    .primary-button,
+    .secondary-button,
+    .reflection-button,
+    .plaza-primary-button,
+    .plaza-secondary-button,
+    .file-button
+  ) {
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-leaf);
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  font-family: inherit;
+  font-weight: 900;
+  transition:
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
+  :is(.secondary-button, .plaza-secondary-button) {
+  background: var(--momo-cream);
+}
+
+:is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
+  :is(.primary-button, .plaza-primary-button) {
+  background: var(--momo-lemon);
+}
+
+:is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
+  :is(
+    .primary-button,
+    .secondary-button,
+    .reflection-button,
+    .plaza-primary-button,
+    .plaza-secondary-button,
+    .file-button
+  ):hover:not(:disabled) {
+  background: var(--momo-pink);
+  box-shadow: 5px 5px 0 var(--momo-shadow);
+  transform: translate(-2px, -2px);
+}
+
+:is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
+  :is(
+    .primary-button,
+    .secondary-button,
+    .reflection-button,
+    .plaza-primary-button,
+    .plaza-secondary-button,
+    .file-button
+  ):active:not(:disabled) {
+  box-shadow: 0 0 0 var(--momo-shadow);
+  transform: translate(3px, 3px);
+}
+
+:is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
+  :is(
+    .primary-button,
+    .secondary-button,
+    .reflection-button,
+    .plaza-primary-button,
+    .plaza-secondary-button,
+    .file-button
+  ):focus-visible {
+  transform: none;
+  transition: none;
+  animation: none;
+}
+
+:is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
+  :is(
+    .primary-button,
+    .secondary-button,
+    .reflection-button,
+    .plaza-primary-button,
+    .plaza-secondary-button,
+    .file-button
+  ):disabled {
+  border-color: var(--momo-ink);
+  background: var(--momo-cream);
+  box-shadow: 0 0 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  opacity: 0.65;
+  transform: none;
+}
+
+.momo-plaza-gate :is(.text-button, .momo-delete-button) {
+  border-bottom: 3px solid var(--momo-ink);
+  color: var(--momo-ink);
+  font-family: inherit;
+  font-weight: 900;
+}
+
+.momo-course-guard .plaza-inner-header,
+.momo-wardrobe .plaza-inner-header {
+  padding: 4px 4px 0;
+}
+
+.momo-course-guard .plaza-inner-header a,
+.momo-wardrobe .plaza-inner-header a {
+  padding: 8px 11px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 12px;
+  background: var(--momo-lemon);
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.momo-course-guard .plaza-eyebrow,
+.momo-wardrobe .plaza-eyebrow,
+.momo-course-guard .section-kicker {
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-course-guard .plaza-inner-header h1,
+.momo-wardrobe .plaza-inner-header h1 {
+  font-size: clamp(2.25rem, 6vw, 4.4rem);
+  line-height: 0.95;
+}
+
+.momo-course-guard .plaza-status-pill,
+.momo-course-guard .plaza-count-badge {
+  border: 2px solid var(--momo-ink);
+  background: var(--momo-lemon);
+  box-shadow: 2px 2px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-course-guard .plaza-status-disconnected,
+.momo-course-guard .plaza-status-permission-lost,
+.momo-course-guard .plaza-status-interruption {
+  background: var(--momo-pink);
+}
+
+.momo-course-guard .plaza-status-watching,
+.momo-course-guard .plaza-status-connected {
+  background: var(--momo-leaf);
+}
+
+.momo-course-guard .plaza-form-panel {
+  border: 4px solid var(--momo-ink);
+  border-radius: 22px;
+  background: var(--momo-cream);
+  box-shadow: 6px 6px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+.momo-course-guard .plaza-study-form {
+  background: var(--momo-pink);
+}
+
+.momo-course-guard .plaza-section-heading {
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--momo-ink);
+}
+
+.momo-course-guard :is(.field, .choice-group) {
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-course-guard :is(.field input, .field textarea, .field select) {
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-cream);
+  color: var(--momo-ink);
+  box-shadow: inset 2px 2px 0 var(--momo-sky);
+}
+
+.momo-course-guard .choice {
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-cream);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-course-guard .choice:has(input:checked) {
+  background: var(--momo-leaf);
+}
+
+.momo-course-guard .choice input {
+  accent-color: var(--momo-ink);
+}
+
+.momo-course-guard :is(.course-guard-command-success, .course-website) {
+  margin: 0;
+  padding: 9px 11px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-leaf);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-course-guard :is(.course-guard-command-error, .plaza-recovery-copy) {
+  margin: 0;
+  padding: 9px 11px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-pink);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-wardrobe .wardrobe-preview,
+.momo-wardrobe .wardrobe-catalog {
+  border: 4px solid var(--momo-ink);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+.momo-wardrobe .wardrobe-preview {
+  background: linear-gradient(180deg, var(--momo-sky) 0 64%, var(--momo-leaf) 64% 100%);
+}
+
+.momo-wardrobe .wardrobe-catalog {
+  background: var(--momo-cream);
+}
+
+.momo-wardrobe .wardrobe-preview p {
+  padding: 8px 12px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 12px;
+  background: var(--momo-lemon);
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-wardrobe .focus-friend {
+  animation: momo-idle 2.8s ease-in-out infinite;
+}
+
+.momo-wardrobe .focus-friend-body,
+.momo-wardrobe .focus-friend-ear {
+  border-color: var(--momo-ink);
+  background: var(--momo-pink);
+}
+
+.momo-wardrobe .focus-friend-face {
+  border-color: var(--momo-ink);
+  background: var(--momo-cream);
+}
+
+.momo-wardrobe :is(.focus-friend-sticker, .focus-friend-mood-dot) {
+  border-color: var(--momo-ink);
+  background: var(--momo-lemon);
+}
+
+.momo-wardrobe .focus-friend-hat {
+  border-color: var(--momo-ink);
+  background: var(--momo-leaf);
+}
+
+.momo-wardrobe .cosmetic-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 88px;
+  padding: 11px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 16px;
+  background: var(--momo-leaf);
+  color: var(--momo-ink);
+}
+
+.momo-wardrobe .cosmetic-card.is-locked {
+  border-style: dashed;
+  background: var(--momo-cream);
+  opacity: 1;
+}
+
+.momo-wardrobe .cosmetic-card > div span {
+  color: var(--momo-ink);
+  font-weight: 700;
+}
+
+.momo-wardrobe .cosmetic-card-icon {
+  border: 2px solid var(--momo-ink);
+  background: var(--momo-lemon);
+  color: var(--momo-ink);
+}
+
+.momo-wardrobe .cosmetic-card .plaza-secondary-button {
+  margin-left: auto;
+}
+
+.momo-wardrobe .cosmetic-card.is-locked .plaza-secondary-button:disabled {
+  opacity: 0.78;
+}
+
+.momo-town-notice-shell {
+  display: grid;
+  width: min(860px, calc(100% - 32px));
+  min-height: calc(100dvh - 32px);
+  gap: 22px;
+  margin: 16px auto;
+  padding: clamp(22px, 5vw, 52px);
+  background: linear-gradient(180deg, var(--momo-sky) 0 22%, var(--momo-cream) 22% 100%);
+}
+
+.momo-town-notice-shell .legal-screen {
+  width: min(68ch, 100%);
+  gap: 22px;
+  margin: 0;
+  padding: 0;
+}
+
+.momo-town-notice-shell .product-mark,
+.momo-town-notice-shell .legal-effective-date {
+  color: var(--momo-ink);
+  font-weight: 900;
+}
+
+.momo-town-notice-shell .legal-screen h1 {
+  max-width: 15ch;
+  margin: 0;
+  font-size: clamp(2.7rem, 8vw, 4.8rem);
+  line-height: 0.94;
+}
+
+.momo-town-notice-shell .legal-screen h2 {
+  font-size: clamp(1.35rem, 4vw, 1.85rem);
+  line-height: 1;
+}
+
+.momo-town-notice-shell .legal-effective-date {
+  width: fit-content;
+  padding: 8px 11px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 12px;
+  background: var(--momo-lemon);
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+}
+
+.momo-town-notice-shell .legal-screen section {
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 3px dashed var(--momo-ink);
+}
+
+.momo-town-notice-shell .legal-screen p {
+  max-width: 68ch;
+  color: var(--momo-ink);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.65;
+}
+
+.momo-town-notice-shell :is(.legal-screen a, .legal-footer a) {
+  color: var(--momo-ink);
+  font-weight: 900;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.momo-town-notice-shell .legal-footer {
+  width: min(68ch, 100%);
+  margin: auto 0 0;
+  padding-top: 16px;
+  border-top: 3px solid var(--momo-ink);
+  color: var(--momo-ink);
+}
+
+.momo-study-room {
+  display: grid;
+  align-content: start;
+  gap: clamp(20px, 3vw, 32px);
+  min-height: 100dvh;
+  padding: clamp(16px, 3vw, 32px);
+  background:
+    radial-gradient(circle at 12% 5%, rgb(255 255 255 / 72%) 0 3px, transparent 3.5px),
+    radial-gradient(circle at 86% 13%, rgb(255 255 255 / 58%) 0 4px, transparent 4.5px),
+    linear-gradient(180deg, var(--momo-sky) 0 26%, var(--momo-cream) 26% 100%);
+}
+
+.momo-study-room
+  :is(.focus-stage, .reflection-card, .complete-card, .quick-review-screen, .calibration-screen) {
+  border: 4px solid var(--momo-ink);
+  border-radius: 24px;
+  background: var(--momo-cream);
+  box-shadow: 7px 7px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+.momo-study-room :is(.focus-header, .focus-actions) {
+  border-color: var(--momo-ink);
+  border-width: 3px;
+}
+
+.momo-study-room .focus-stage {
+  padding: clamp(22px, 4vw, 42px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--momo-sky) 72%, white) 0 18%,
+    var(--momo-cream) 18% 100%
+  );
+}
+
+.momo-study-room .focus-main {
+  gap: clamp(16px, 2vw, 24px);
+  padding: clamp(54px, 10vw, 118px) 0;
+}
+
+.momo-study-room .focus-actions {
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding-top: 20px;
+}
+
+.momo-study-room :is(.focus-subject, .status-label, .focus-goal, .timer-caption, .reflection-goal) {
+  color: var(--momo-ink);
+  font-weight: 700;
+}
+
+.momo-study-room .timer {
+  display: grid;
+  place-items: center;
+  margin-top: 8px;
+  border: 4px solid var(--momo-ink);
+  border-radius: 18px;
+  background: var(--momo-lemon);
+  box-shadow: 6px 6px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
+  font-size: clamp(5.75rem, 18vw, 12rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.07em;
+  line-height: 0.82;
+  padding: 0.14em 0.22em 0.2em;
+}
+
+.momo-study-room .focus-actions .secondary-button {
+  background: var(--momo-leaf);
+}
+
+.momo-study-room .focus-actions .text-button {
+  min-height: 48px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-pink);
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  font-family: inherit;
+  font-weight: 900;
+  padding: 0 18px;
+  text-decoration: none;
+}
+
+.momo-study-room .focus-actions :is(.secondary-button, .text-button),
+.momo-study-room .reflection-actions .reflection-button,
+.momo-study-room .quick-review-screen .primary-button,
+.momo-study-room .gentle-reset-dialog button {
+  transition: none;
+}
+
+.momo-study-room .focus-actions :is(.secondary-button, .text-button):hover:not(:disabled),
+.momo-study-room .reflection-actions .reflection-button:hover:not(:disabled),
+.momo-study-room .quick-review-screen .primary-button:hover:not(:disabled),
+.momo-study-room .gentle-reset-dialog button:hover:not(:disabled) {
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+  transform: none;
+}
+
+.momo-study-room .quick-review-screen {
+  background:
+    radial-gradient(circle at 88% 12%, rgb(255 255 255 / 62%) 0 7px, transparent 7.5px),
+    var(--momo-lemon);
+}
+
+.momo-study-room .quick-review-screen .review-prompt {
+  color: var(--momo-ink) !important;
+  font-family: inherit;
+  font-weight: 900;
+}
+
+.momo-study-room .quick-review-screen .review-explanation {
+  border-top: 3px dashed var(--momo-ink);
+  color: var(--momo-ink);
+  font-weight: 700;
+}
+
+.momo-study-room .quick-review-screen .primary-button {
+  background: var(--momo-leaf);
+}
+
+.momo-study-room .reflection-card {
+  background:
+    radial-gradient(circle at 88% 11%, var(--momo-pink) 0 8px, transparent 8.5px), var(--momo-cream);
+}
+
+.momo-study-room .reflection-facts {
+  border-color: var(--momo-ink);
+  border-width: 3px;
+  border-style: dashed;
+}
+
+.momo-study-room .reflection-facts :is(dt, dd),
+.momo-study-room .reflection-note {
+  color: var(--momo-ink);
+}
+
+.momo-study-room .reflection-facts dd {
+  font-family: inherit;
+  font-weight: 900;
+}
+
+.momo-study-room .reflection-actions {
+  gap: 10px;
+}
+
+.momo-study-room .reflection-actions .reflection-button:nth-child(1) {
+  background: var(--momo-leaf);
+}
+
+.momo-study-room .reflection-actions .reflection-button:nth-child(2) {
+  background: var(--momo-lemon);
+}
+
+.momo-study-room .reflection-actions .reflection-button:nth-child(3) {
+  background: var(--momo-pink);
+}
+
+.momo-study-room .gentle-reset-dialog {
+  border: 4px solid var(--momo-ink);
+  border-radius: 24px;
+  background: var(--momo-pink);
+  box-shadow: 8px 8px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+.momo-study-room .gentle-reset-dialog::backdrop {
+  background: rgb(36 50 74 / 36%);
+}
+
+.momo-study-room .gentle-reset-dialog p:not(.section-kicker) {
+  color: var(--momo-ink);
+  font-weight: 700;
+}
+
+.momo-study-room .gentle-reset-dialog .primary-button {
+  background: var(--momo-leaf);
+}
+
+.momo-study-room .gentle-reset-dialog .secondary-button:nth-child(2) {
+  background: var(--momo-lemon);
+}
+
+.momo-study-room .gentle-reset-dialog .secondary-button:nth-child(3) {
+  background: var(--momo-cream);
+}
+
+.momo-plaza-gate :is(.camera-setup-panel, .course-guard-panel) {
+  background: var(--momo-blue);
+}
+
+:is(.momo-plaza-gate, .momo-study-room) .calibration-screen {
+  padding: 18px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--momo-blue) 0 22%, var(--momo-cream) 22% 100%);
+  box-shadow: 4px 4px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+:is(.momo-plaza-gate, .momo-study-room) .calibration-screen :is(p, h2) {
+  color: var(--momo-ink);
+  font-weight: 700;
+}
+
+:is(.momo-plaza-gate, .momo-study-room) .calibration-screen progress {
+  height: 16px;
+  border: 3px solid var(--momo-ink);
+  background: #fff;
+  accent-color: var(--momo-leaf);
+}
+
+:is(.momo-plaza-gate, .momo-study-room) .calibration-screen progress::-webkit-progress-bar {
+  background: #fff;
+}
+
+:is(.momo-plaza-gate, .momo-study-room) .calibration-screen progress::-webkit-progress-value {
+  background: var(--momo-leaf);
+}
+
+:is(.momo-plaza-gate, .momo-study-room) .calibration-screen progress::-moz-progress-bar {
+  background: var(--momo-leaf);
+}
+
+:is(.momo-plaza-gate, .momo-study-room) .calibration-screen :is(.primary-button, .text-button) {
+  transition: none;
+  transform: none;
+}
+
+:is(.momo-plaza-gate, .momo-study-room) .calibration-screen .primary-button {
+  background: var(--momo-leaf);
+}
+
+:is(.momo-plaza-gate, .momo-study-room) .calibration-screen .text-button {
+  min-height: 48px;
+  border: 3px solid var(--momo-ink);
+  border-radius: 13px;
+  background: var(--momo-cream);
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  font-family: inherit;
+  font-weight: 900;
+  padding: 0 18px;
+  text-decoration: none;
+}
+
+.momo-plaza-gate .course-guard-connection {
+  border: 3px solid var(--momo-ink);
+  border-radius: 16px;
+  background: var(--momo-blue);
+  padding: 14px;
+}
+
+.momo-plaza-gate .course-guard-connection :is(strong, p) {
+  color: var(--momo-ink);
+}
+
+.momo-study-room .legal-footer,
+.momo-reward-route .legal-footer {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 16px 0 4px;
+  border-top: 3px solid var(--momo-ink);
+  color: var(--momo-ink);
+}
+
+.momo-study-room :is(.legal-footer a, .legal-links a),
+.momo-reward-route .legal-footer a {
+  color: var(--momo-ink);
+  font-weight: 900;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.momo-reward-route {
+  display: grid;
+  align-content: start;
+  gap: clamp(20px, 3vw, 32px);
+  min-height: 100dvh;
+  padding: clamp(16px, 3vw, 32px) 0 clamp(28px, 5vw, 56px);
+  background:
+    radial-gradient(circle at 12% 5%, rgb(255 255 255 / 72%) 0 3px, transparent 3.5px),
+    radial-gradient(circle at 86% 13%, rgb(255 255 255 / 58%) 0 4px, transparent 4.5px),
+    linear-gradient(180deg, var(--momo-sky) 0 28%, var(--momo-cream) 28% 100%);
+}
+
+.momo-reward-route .session-reward-shell {
+  background: transparent;
+}
+
+.momo-reward-route .session-reward-card {
+  border-color: var(--momo-ink);
+  box-shadow: 8px 8px 0 var(--momo-shadow);
+}
+
+.momo-reward-route .momo-memory-garden {
+  margin: 0 auto;
+}
+
+:is(.momo-plaza-gate, .momo-reward-route) .delete-dialog {
+  border: 4px solid var(--momo-ink);
+  border-radius: 22px;
+  background: var(--momo-cream);
+  box-shadow: 8px 8px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+}
+
+:is(.momo-plaza-gate, .momo-reward-route) .delete-dialog p {
+  color: var(--momo-ink);
+  font-weight: 700;
+}
+
+:is(.momo-plaza-gate, .momo-reward-route) .delete-dialog .danger-button {
+  border: 3px solid var(--momo-ink);
+  background: var(--momo-pink);
+  box-shadow: 3px 3px 0 var(--momo-shadow);
+  color: var(--momo-ink);
+  font-family: inherit;
+  font-weight: 900;
+}
+
+@media (max-width: 760px) {
+  .momo-plaza-gate {
+    padding: 12px;
+  }
+
+  .momo-plaza-gate .setup-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .momo-plaza-gate .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  :is(.momo-course-guard, .momo-wardrobe) {
+    width: min(100% - 16px, 1180px);
+    margin: 8px auto;
+    padding: 18px 14px 30px;
+    border-radius: 22px;
+    box-shadow: 6px 6px 0 var(--momo-shadow);
+  }
+
+  .momo-course-guard .plaza-inner-header,
+  .momo-wardrobe .plaza-inner-header {
+    gap: 14px;
+  }
+
+  .momo-course-guard .plaza-form-panel,
+  .momo-wardrobe :is(.wardrobe-preview, .wardrobe-catalog) {
+    box-shadow: 4px 4px 0 var(--momo-shadow);
+  }
+
+  .momo-wardrobe .cosmetic-card {
+    align-items: flex-start;
+  }
+
+  .momo-wardrobe .cosmetic-card .plaza-secondary-button {
+    min-width: 80px;
+  }
+
+  .momo-town-notice-shell {
+    width: min(100% - 20px, 860px);
+    min-height: calc(100dvh - 20px);
+    gap: 18px;
+    margin: 10px auto;
+    padding: 22px 18px 28px;
+    border-radius: 22px;
+    box-shadow: 6px 6px 0 var(--momo-shadow);
+  }
+
+  .momo-town-notice-shell .legal-screen h1 {
+    font-size: clamp(2.45rem, 13vw, 3.65rem);
+  }
+
+  .momo-study-room {
+    padding: 12px;
+  }
+
+  .momo-study-room
+    :is(.focus-stage, .reflection-card, .complete-card, .quick-review-screen, .calibration-screen) {
+    border-radius: 20px;
+    box-shadow: 5px 5px 0 var(--momo-shadow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .momo-wardrobe .focus-friend {
+    animation: none;
+  }
+
+  :is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
+    :is(
+      .primary-button,
+      .secondary-button,
+      .reflection-button,
+      .plaza-primary-button,
+      .plaza-secondary-button,
+      .file-button
+    ) {
+    transition: none;
   }
 }

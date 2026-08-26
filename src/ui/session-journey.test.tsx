@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { App } from "../app/App";
 import type { CameraSnapshot } from "../camera/session";
@@ -95,12 +95,22 @@ describe("camera-free study journey", () => {
   it("keeps one balanced awareness event and offers a gentle reset", async () => {
     const camera = new FakeCamera();
     const vision = new FakeVision();
-    render(<App camera={camera} vision={vision} />);
+    const { container } = render(<App camera={camera} vision={vision} />);
     fireEvent.click(screen.getByRole("button", { name: "Use private camera awareness" }));
     fireEvent.click(screen.getByRole("button", { name: "Allow camera awareness" }));
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: "Set a quiet baseline" })).toBeInTheDocument(),
     );
+    const calibrationScreen = container.querySelector<HTMLElement>(
+      ".momo-plaza-gate .calibration-screen",
+    );
+    expect(calibrationScreen).toBeInTheDocument();
+    expect(
+      within(calibrationScreen!).getByRole("heading", { name: "Set a quiet baseline" }),
+    ).toBeVisible();
+    expect(
+      within(calibrationScreen!).getByRole("button", { name: "Continue without camera" }),
+    ).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Start calibration" }));
     vision.emitCalibrationReady();
     await waitFor(() => expect(screen.getByText(/Camera awareness is ready/)).toBeInTheDocument());
