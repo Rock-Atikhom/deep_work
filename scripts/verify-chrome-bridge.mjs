@@ -110,10 +110,26 @@ try {
   await waitForServer("http://127.0.0.1:5173");
 
   const page = await context.newPage();
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (entry) => {
+    if (entry.type() === "error") pageErrors.push(entry.text());
+  });
   await page.goto("http://localhost:5173/#/town-hall", { waitUntil: "domcontentloaded" });
 
   // The authoritative handshake: app must flip to connected on its own.
-  await page.getByText("Extension connected").first().waitFor({ timeout: 25_000 });
+  try {
+    await page.getByText("Extension connected").first().waitFor({ timeout: 25_000 });
+  } catch {
+    await page.screenshot({
+      path: path.join(outDir, "debug-handshake-timeout.png"),
+      fullPage: true,
+    });
+    const bodyText = await page.locator("body").innerText();
+    throw new Error(
+      `Handshake did not connect. Page errors: ${JSON.stringify(pageErrors)}. Body text: ${bodyText.slice(0, 600)}`,
+    );
+  }
   record("Bridge handshake: Town Hall reached 'Extension connected' via real extension", true);
   await page.screenshot({ path: path.join(outDir, "01-townhall-connected.png"), fullPage: false });
 

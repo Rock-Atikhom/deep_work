@@ -171,7 +171,7 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
     case "GET_STATE":
       return { ok: true, state: await loadState() };
     case "START_GUARD":
-      return startGuard();
+      return startGuard(message.courseUrl);
     case "STOP_GUARD":
       return stopGuard();
     case "RETURN_TO_COURSE":

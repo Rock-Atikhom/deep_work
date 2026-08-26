@@ -6,7 +6,8 @@
   "permissions": ["storage", "tabs"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "action": {
     "default_title": "Deep Work Course Guard",

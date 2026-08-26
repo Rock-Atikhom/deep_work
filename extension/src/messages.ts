@@ -2,7 +2,7 @@ import type { GuardState } from "./guard-machine";
 
 export type ExtensionMessage =
   | { type: "GET_STATE" }
-  | { type: "START_GUARD" }
+  | { type: "START_GUARD"; courseUrl: string }
   | { type: "STOP_GUARD" }
   | { type: "RETURN_TO_COURSE" };
 

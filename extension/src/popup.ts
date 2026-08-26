@@ -1,4 +1,6 @@
 import type { ExtensionMessage, ExtensionResponse } from "./messages";
+import { requestCourseOriginAccess } from "./course-origin-permission";
+import { courseGuardOriginFromUrl } from "../../src/course-guard/bridge-contract";
 import { popupViewModel } from "./popup-view";
 
 const statusElement = document.querySelector<HTMLParagraphElement>("#status");
@@ -57,16 +59,64 @@ async function send(messageToSend: ExtensionMessage): Promise<void> {
   }
 }
 
+async function activeTabUrl(): Promise<string | null> {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  return tab?.url ?? null;
+}
+
 toggle.addEventListener("click", () => {
-  const action = toggle.dataset.action ?? "start";
-  void send(
-    action === "stop"
-      ? { type: "STOP_GUARD" }
-      : action === "return"
-        ? { type: "RETURN_TO_COURSE" }
-        : { type: "START_GUARD" },
-  );
+  void startFromPopup();
 });
+
+async function startFromPopup(): Promise<void> {
+  toggle.disabled = true;
+  message.textContent = "";
+  try {
+    // Chrome only opens the origin prompt for gestures inside the extension
+    // itself, so the permission request happens HERE — never via the worker.
+    const stateResponse = await chrome.runtime.sendMessage<ExtensionResponse>({
+      type: "GET_STATE",
+    });
+    if (!stateResponse?.ok) throw new Error("state unavailable");
+
+    const saved = stateResponse.state;
+    const courseUrl =
+      saved.phase === "permission-lost" && saved.courseUrl ? saved.courseUrl : await activeTabUrl();
+    if (!courseUrl) {
+      message.textContent = "Open your online course before starting the guard.";
+      toggle.disabled = false;
+      return;
+    }
+    const courseOrigin = courseGuardOriginFromUrl(courseUrl);
+    if (!courseOrigin) {
+      message.textContent = "Open your online course before starting the guard.";
+      toggle.disabled = false;
+      return;
+    }
+
+    const granted = await requestCourseOriginAccess(chrome.permissions, courseOrigin);
+    if (!granted) {
+      message.textContent =
+        "Course access was declined. It is needed to detect when you leave the course website.";
+      toggle.disabled = false;
+      return;
+    }
+
+    const response = await chrome.runtime.sendMessage<ExtensionResponse>({
+      type: "START_GUARD",
+      courseUrl,
+    });
+    if (response?.ok) showState(response);
+    else {
+      message.textContent =
+        response?.message ?? "The extension could not reach its background worker.";
+      toggle.disabled = false;
+    }
+  } catch {
+    message.textContent = "The extension could not reach its background worker.";
+    toggle.disabled = false;
+  }
+}
 
 openPlaza.addEventListener("click", () => {
   void chrome.tabs.create({ url: "https://rock-atikhom.github.io/deep_work/#/plaza" });
