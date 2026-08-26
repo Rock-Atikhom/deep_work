@@ -87,7 +87,12 @@ describe("Timer-Only Focus Session", () => {
     fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "SQL" } });
     fireEvent.change(screen.getByLabelText("Session goal"), { target: { value: "Review joins" } });
     fireEvent.click(screen.getByRole("button", { name: "Start session" }));
+
     expect(container.querySelector(".momo-study-room")).toBeInTheDocument();
+    expect(container.querySelector(".momo-study-room .focus-stage")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "End session" }));
+    expect(container.querySelector(".momo-study-room .reflection-card")).toBeInTheDocument();
   });
 
   it("starts the Focus Stage after the student states an intention", () => {

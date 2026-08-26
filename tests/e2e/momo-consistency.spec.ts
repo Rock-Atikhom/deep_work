@@ -36,3 +36,15 @@ test("keeps direct Momo destinations and Town Notices visibly framed", async ({ 
   await expect(page.getByText("Momo's current look")).toBeVisible();
   await expect(page.getByRole("button", { name: "Locked" }).first()).toBeDisabled();
 });
+
+test("keeps the real focus to reward journey within Momo surfaces", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Subject").fill("SQL");
+  await page.getByLabel("Session goal").fill("Review joins");
+  await page.getByRole("button", { name: "Start session" }).press("Enter");
+  await expect(page.locator(".momo-study-room .focus-stage")).toBeVisible();
+  await expect(page.locator(".momo-study-room .focus-stage")).toHaveCSS("border-top-width", "4px");
+  await page.getByRole("button", { name: "End session" }).click();
+  await page.getByRole("button", { name: "Yes" }).click();
+  await expect(page.locator(".momo-reward-route .session-reward-shell")).toBeVisible();
+});
