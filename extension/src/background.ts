@@ -1,4 +1,9 @@
-import { createGuardState, reduceGuard, type GuardState } from "./guard-machine";
+import {
+  courseUrlForStartAttempt,
+  createGuardState,
+  reduceGuard,
+  type GuardState,
+} from "./guard-machine";
 import {
   createBridgeError,
   createHelloAck,
@@ -79,9 +84,14 @@ async function syncActiveTab(tab: ChromeTab): Promise<void> {
 }
 
 async function startGuard(courseUrl?: string): Promise<ExtensionResponse> {
+  const current = await loadState();
   const selectedTab = await activeTab();
-  const selectedCourseUrl = courseUrl ?? selectedTab?.url;
-  const selectedTabId = selectedTab?.id;
+  const selectedCourseUrl = courseUrlForStartAttempt(current, selectedTab?.url ?? null, courseUrl);
+  // A retry of a saved course keeps the tab the learner started from.
+  const selectedTabId =
+    !courseUrl && current.phase === "permission-lost" && current.latestInCourseTabId != null
+      ? current.latestInCourseTabId
+      : selectedTab?.id;
   if (!selectedCourseUrl || selectedTabId === undefined) {
     return {
       code: "invalid-course-url",
@@ -103,6 +113,10 @@ async function startGuard(courseUrl?: string): Promise<ExtensionResponse> {
     };
   }
   if (!(await requestCourseOriginAccess(chrome.permissions, next.courseOrigin!))) {
+    // Persist the chosen course as permission-lost so the popup offers
+    // "Try again" (a valid gesture path for the Chrome origin prompt)
+    // and the web app shows Permission needed — no dead-end idle loop.
+    await saveState({ ...next, phase: "permission-lost" });
     return {
       code: "permission-needed",
       message:
@@ -124,13 +138,29 @@ async function stopGuard(): Promise<ExtensionResponse> {
   return { ok: true, state: next };
 }
 
+async function focusCourseTab(tabId: number | undefined, url: string): Promise<void> {
+  if (tabId !== undefined) {
+    try {
+      await chrome.tabs.update(tabId, { url });
+      return;
+    } catch {
+      // The saved tab may have been closed since the guard started.
+    }
+  }
+  try {
+    await chrome.tabs.create({ url });
+  } catch {
+    // Tab creation is best-effort; the learner can reopen the course manually.
+  }
+}
+
 async function returnToCourse(): Promise<ExtensionResponse> {
   const state = await loadState();
   if (!state.courseUrl) return { ok: false, message: "Start the guard from your course first." };
   const tab = await activeTab();
   const targetTabId = state.latestInCourseTabId ?? tab?.id;
   const targetUrl = state.latestInCourseUrl ?? state.courseUrl;
-  if (targetTabId !== undefined) await chrome.tabs.update(targetTabId, { url: targetUrl });
+  await focusCourseTab(targetTabId, targetUrl);
   const next = reduceGuard(state, { type: "RETURN_TO_COURSE" });
   await saveState(next);
   return { ok: true, state: next };

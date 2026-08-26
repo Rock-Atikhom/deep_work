@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createGuardState, reduceGuard } from "./guard-machine";
+import { courseUrlForStartAttempt, createGuardState, reduceGuard } from "./guard-machine";
 
 describe("online learning guard", () => {
   it("interrupts when the learner leaves the course and resumes on return", () => {
@@ -85,5 +85,34 @@ describe("online learning guard", () => {
     });
     state = reduceGuard(state, { type: "RETURN_TO_COURSE" });
     expect(state).toMatchObject({ phase: "watching", returnCount: 1 });
+  });
+
+  it("reuses the saved course URL when retrying a permission-lost start", () => {
+    const permissionLost = {
+      ...createGuardState(),
+      courseOrigin: "https://learn.example.com",
+      courseUrl: "https://learn.example.com/course/lesson-1",
+      phase: "permission-lost" as const,
+    };
+
+    expect(courseUrlForStartAttempt(permissionLost, "https://unrelated.example.net/page")).toBe(
+      "https://learn.example.com/course/lesson-1",
+    );
+  });
+
+  it("prefers an explicit course URL, then falls back to the active tab", () => {
+    const idle = createGuardState();
+
+    expect(
+      courseUrlForStartAttempt(
+        idle,
+        "https://active.example.com/page",
+        "https://course.example.com",
+      ),
+    ).toBe("https://course.example.com");
+    expect(courseUrlForStartAttempt(idle, "https://active.example.com/page")).toBe(
+      "https://active.example.com/page",
+    );
+    expect(courseUrlForStartAttempt(idle, null)).toBeNull();
   });
 });

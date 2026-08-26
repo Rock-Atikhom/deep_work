@@ -84,6 +84,18 @@ function idleAfterSession(state: GuardState, summary: GuardSessionSummary | null
   return { ...createGuardState(), lastSession: summary };
 }
 
+export function courseUrlForStartAttempt(
+  state: GuardState,
+  activeTabUrl: string | null,
+  requestedCourseUrl?: string,
+): string | null {
+  if (requestedCourseUrl) return requestedCourseUrl;
+  // A permission-lost retry must resume the course the learner already chose,
+  // not whatever tab happens to be active when they reopen the popup.
+  if (state.phase === "permission-lost" && state.courseUrl) return state.courseUrl;
+  return activeTabUrl;
+}
+
 export function reduceGuard(state: GuardState, event: GuardEvent): GuardState {
   switch (event.type) {
     case "START": {
