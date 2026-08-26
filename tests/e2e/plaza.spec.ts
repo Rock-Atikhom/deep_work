@@ -1,5 +1,22 @@
 import { expect, test } from "@playwright/test";
 
+async function expectReadableMobilePlanter(page: import("@playwright/test").Page) {
+  const planter = page.locator(".momo-sprout-planter");
+  const art = planter.locator(".momo-sprout-planter-art");
+  const copy = planter.locator(".momo-sprout-planter-copy");
+
+  await expect(art).toBeVisible();
+  await expect(copy).toBeVisible();
+  await expect(copy.getByText("Garden keepsake")).toBeVisible();
+  await expect(copy.getByText(/seeds$/)).toBeVisible();
+
+  const [artBox, copyBox] = await Promise.all([art.boundingBox(), copy.boundingBox()]);
+  expect(artBox).not.toBeNull();
+  expect(copyBox).not.toBeNull();
+  expect(copyBox!.width).toBeGreaterThanOrEqual(250);
+  expect(copyBox!.y).toBeGreaterThanOrEqual(artBox!.y + artBox!.height + 12);
+}
+
 test.describe("Momo's Plaza", () => {
   test("turns a reflected timer session into a Momo reward and returns to Plaza", async ({
     page,
@@ -194,6 +211,21 @@ test.describe("Momo's Plaza", () => {
       scrollWidth: element.scrollWidth,
     }));
     expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
+  });
+
+  test("keeps shared keepsake copy readable in Archive and Reward at 390px", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/#/archive");
+    await expectReadableMobilePlanter(page);
+
+    await page.goto("/");
+    await page.getByLabel("Subject").fill("SQL");
+    await page.getByLabel("Session goal").fill("Review joins");
+    await page.getByRole("button", { name: "Start session" }).press("Enter");
+    await page.getByRole("button", { name: "End session" }).click();
+    await page.getByRole("button", { name: "Yes" }).click();
+    await expect(page.getByRole("heading", { name: /Momo is proud/i })).toBeVisible();
+    await expectReadableMobilePlanter(page);
   });
 
   test("keeps the Momo Town Hall back link visibly focused from the keyboard", async ({ page }) => {

@@ -141,7 +141,7 @@ try {
   const startedAtMs = Date.now() - 60_000;
   await popup.evaluate(
     async ({ startedAtMs }) => {
-      await chrome.storage.local.set({
+      await globalThis.chrome.storage.local.set({
         guardState: {
           courseOrigin: "https://learn.example.com",
           courseUrl: "https://learn.example.com/lesson",
@@ -163,16 +163,16 @@ try {
     predicate: (frame) => frame.url() === iframeUrl,
   });
   await popup.evaluate(() => {
-    const frame = document.createElement("iframe");
-    frame.src = chrome.runtime.getURL("popup.html?verify-stop");
-    document.body.append(frame);
+    const frame = globalThis.document.createElement("iframe");
+    frame.src = globalThis.chrome.runtime.getURL("popup.html?verify-stop");
+    globalThis.document.body.append(frame);
   });
   const popupFrame = await verifyPopup;
   await popupFrame.getByRole("button", { name: "Stop guard" }).waitFor();
   await popupFrame.getByRole("button", { name: "Stop guard" }).click();
   await popupFrame.getByRole("button", { name: "Start guard" }).waitFor();
   const guardState = await popup.evaluate(async () => {
-    const stored = await chrome.storage.local.get("guardState");
+    const stored = await globalThis.chrome.storage.local.get("guardState");
     return stored.guardState;
   });
   const popupStopped =
@@ -182,7 +182,11 @@ try {
     popupStopped,
     popupStopped ? "" : JSON.stringify(guardState),
   );
-  record("Generated popup has no browser page errors", popupErrors.length === 0, popupErrors.join(" | "));
+  record(
+    "Generated popup has no browser page errors",
+    popupErrors.length === 0,
+    popupErrors.join(" | "),
+  );
   await popup.screenshot({ path: path.join(outDir, "00-popup-stopped.png"), fullPage: true });
 
   log(`starting approved dev server with VITE_COURSE_GUARD_EXTENSION_ID=${extensionId}…`);

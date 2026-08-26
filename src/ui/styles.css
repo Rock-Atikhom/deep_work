@@ -52,17 +52,6 @@ button:disabled {
   padding: 28px;
 }
 
-.legal-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.legal-links {
-  margin: 0 0 24px;
-}
-
-.legal-links a,
 .legal-screen a {
   color: var(--botanical-dark);
   text-underline-offset: 0.16em;
@@ -1652,6 +1641,10 @@ h2 {
 
 @media (max-width: 620px) {
   .momo-memory-garden .momo-memory-garden-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .momo-memory-garden .momo-sprout-planter {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -3704,17 +3697,6 @@ html[data-reduced-motion="true"] *::after {
   color: var(--momo-ink);
 }
 
-.momo-plaza-gate .legal-links {
-  gap: 10px 16px;
-}
-
-.momo-plaza-gate .legal-links a {
-  color: var(--momo-ink);
-  font-weight: 900;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.2em;
-}
-
 :is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
   :is(
     .primary-button,
@@ -4339,13 +4321,6 @@ html[data-reduced-motion="true"] *::after {
 
 .momo-plaza-gate .course-guard-connection :is(strong, p) {
   color: var(--momo-ink);
-}
-
-.momo-study-room .legal-links a {
-  color: var(--momo-ink);
-  font-weight: 900;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.2em;
 }
 
 .momo-reward-route {

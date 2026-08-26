@@ -1187,10 +1187,6 @@ export function App({
                   {settingsOpen ? "Close settings" : "Open settings"}
                 </button>
               </div>
-              <nav className="legal-links" aria-label="Legal">
-                <a href="#/privacy">Privacy Policy</a>
-                <a href="#/terms">Terms of Use</a>
-              </nav>
               <h1 id="setup-title">Make room for focused learning</h1>
               <p className="intro-copy">
                 Choose one subject and one goal. The timer keeps the next study block clear.
