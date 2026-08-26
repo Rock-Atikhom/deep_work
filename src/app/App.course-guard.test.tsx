@@ -6,12 +6,14 @@ import { App } from "./App";
 
 function createFakeBridge() {
   let listener: ((event: CourseGuardBridgeEvent) => void) | undefined;
+  let subscriptionCount = 0;
   let state: CourseGuardSnapshot = idleState;
   const bridge: CourseGuardBridge = {
     connect(nextListener) {
       listener = nextListener;
+      subscriptionCount += 1;
       return () => {
-        listener = undefined;
+        if (listener === nextListener) listener = undefined;
       };
     },
     async startGuard() {
@@ -35,6 +37,9 @@ function createFakeBridge() {
     bridge,
     emit(event: CourseGuardBridgeEvent) {
       listener?.(event);
+    },
+    subscriptions() {
+      return subscriptionCount;
     },
   };
 }
@@ -192,5 +197,37 @@ describe("Course Guard connection in Learning Plaza", () => {
     });
 
     expect((await screen.findAllByText("25 growth")).length).toBeGreaterThan(0);
+  });
+});
+
+describe("Extension connection recovery in Town Hall", () => {
+  it("re-attempts the bridge handshake from the Town Hall Check again action", () => {
+    window.location.hash = "#/town-hall";
+    const fakeBridge = createFakeBridge();
+    render(<App courseGuardBridge={fakeBridge.bridge} />);
+    act(() => {
+      fakeBridge.emit({ status: "connected", type: "connection" });
+      fakeBridge.emit({ state: idleState, type: "state" });
+    });
+
+    expect(screen.getByText("Extension connected")).toBeInTheDocument();
+    const subscriptionsBefore = fakeBridge.subscriptions();
+
+    act(() => {
+      fakeBridge.emit({ reason: "port-closed", status: "disconnected", type: "connection" });
+    });
+
+    expect(screen.getByText(/isn't reachable right now/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
+    expect(fakeBridge.subscriptions()).toBe(subscriptionsBefore + 1);
+
+    act(() => {
+      fakeBridge.emit({ status: "connected", type: "connection" });
+      fakeBridge.emit({ state: idleState, type: "state" });
+    });
+
+    expect(screen.getByText("Extension connected")).toBeInTheDocument();
+    expect(screen.queryByText(/isn't reachable right now/i)).not.toBeInTheDocument();
   });
 });

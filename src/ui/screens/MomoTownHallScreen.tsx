@@ -13,6 +13,7 @@ export type MomoTownHallScreenProps = {
   onExportData: () => void;
   onNameChange: (name: string) => void;
   onColorStyleChange: (colorStyle: CompanionColorStyle) => void;
+  onReconnectCheck: () => void;
   onPresetChange: (preset: PresetName) => void;
   onReducedMotionChange: (reducedMotion: boolean) => void;
   onReset: () => void;
@@ -32,6 +33,7 @@ export function MomoTownHallScreen({
   onExportData,
   onNameChange,
   onColorStyleChange,
+  onReconnectCheck,
   onPresetChange,
   onReducedMotionChange,
   onReset,
@@ -69,6 +71,35 @@ export function MomoTownHallScreen({
           {dataStatus}
         </p>
       )}
+
+      <section
+        className="momo-town-hall-card momo-town-hall-connection-help"
+        aria-labelledby="connection-help-title"
+      >
+        <h2 id="connection-help-title">Extension connection</h2>
+        {connection === "connected" ? (
+          <p>
+            The Deep Work Course Guard extension is connected. Course Guard commands will reach it.
+          </p>
+        ) : (
+          <div className="momo-town-hall-recovery">
+            <p role="status">The Course Guard extension isn&apos;t reachable right now.</p>
+            <ol className="momo-town-hall-recovery-steps">
+              <li>
+                Make sure the Deep Work Course Guard extension is installed and enabled in Chrome.
+              </li>
+              <li>Choose Check again below to re-attempt the secure handshake.</li>
+              <li>
+                If it still can&apos;t connect, reload this page from the production site or an
+                approved local development origin.
+              </li>
+            </ol>
+          </div>
+        )}
+        <button type="button" onClick={onReconnectCheck}>
+          Check again
+        </button>
+      </section>
 
       <section
         className="momo-town-hall-card momo-town-hall-personalization"
