@@ -120,3 +120,38 @@ test("shows Momo artwork while browser reduced-motion disables FocusFriend anima
   await expect(page.getByRole("img", { name: "Momo, encouraging you" })).toBeVisible();
   await expect(page.locator(".focus-friend")).toHaveCSS("animation-name", "none");
 });
+
+test("keeps shared Momo setup controls keyboard-safe while preserving pointer feedback", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const continueWithoutCamera = page.getByRole("button", { name: "Continue without camera" });
+  const restingBackground = await continueWithoutCamera.evaluate(
+    (button) => getComputedStyle(button).backgroundColor,
+  );
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    await page.keyboard.press("Tab");
+    if (await continueWithoutCamera.evaluate((button) => button === document.activeElement)) {
+      break;
+    }
+  }
+
+  await expect(continueWithoutCamera).toBeFocused();
+  await expect(continueWithoutCamera).toHaveCSS("outline-width", "3px");
+  await expect(continueWithoutCamera).toHaveCSS("transform", "none");
+  await expect(continueWithoutCamera).toHaveCSS("transition-duration", "0s");
+  await expect(continueWithoutCamera).toHaveCSS("animation-name", "none");
+  await expect(continueWithoutCamera).toHaveCSS("background-color", restingBackground);
+
+  await page.goto("/");
+  await continueWithoutCamera.hover();
+
+  await expect(continueWithoutCamera).toHaveCSS("transform", "matrix(1, 0, 0, 1, -2, -2)");
+  await expect(continueWithoutCamera).toHaveCSS("transition-duration", "0.16s, 0.16s, 0.16s");
+  await expect(continueWithoutCamera).toHaveCSS(
+    "transition-timing-function",
+    "cubic-bezier(0.22, 1, 0.36, 1), cubic-bezier(0.22, 1, 0.36, 1), cubic-bezier(0.22, 1, 0.36, 1)",
+  );
+});

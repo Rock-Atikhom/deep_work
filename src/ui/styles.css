@@ -3637,9 +3637,9 @@ html[data-reduced-motion="true"] *::after {
   font-family: inherit;
   font-weight: 900;
   transition:
-    transform 120ms ease,
-    box-shadow 120ms ease,
-    background-color 120ms ease;
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
@@ -3688,8 +3688,9 @@ html[data-reduced-motion="true"] *::after {
     .plaza-secondary-button,
     .file-button
   ):focus-visible {
-  background: var(--momo-lemon);
   transform: none;
+  transition: none;
+  animation: none;
 }
 
 :is(.momo-plaza-gate, .momo-course-guard, .momo-wardrobe, .momo-study-room, .momo-reward-route)
