@@ -1012,6 +1012,9 @@ export function App({
           ← Plaza
         </a>
         <MomoMemoryGarden
+          onClearHistory={() =>
+            setPlazaState((current) => reducePlazaState(current, { type: "CLEAR_SESSION_HISTORY" }))
+          }
           onDelete={() => setDeleteDialogOpen(true)}
           onExport={exportData}
           snapshot={snapshot}
@@ -1491,6 +1494,11 @@ export function App({
               selectedDeckId={selectedDeckId}
             />
             <MomoMemoryGarden
+              onClearHistory={() =>
+                setPlazaState((current) =>
+                  reducePlazaState(current, { type: "CLEAR_SESSION_HISTORY" }),
+                )
+              }
               onDelete={() => setDeleteDialogOpen(true)}
               onExport={exportData}
               snapshot={snapshot}
@@ -1685,6 +1693,9 @@ export function App({
         subject={session.config.subject}
       />
       <MomoMemoryGarden
+        onClearHistory={() =>
+          setPlazaState((current) => reducePlazaState(current, { type: "CLEAR_SESSION_HISTORY" }))
+        }
         onDelete={() => setDeleteDialogOpen(true)}
         onExport={exportData}
         snapshot={snapshot}

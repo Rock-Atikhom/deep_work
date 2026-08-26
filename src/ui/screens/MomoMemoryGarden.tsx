@@ -3,6 +3,7 @@ import { MomoSproutPlanter } from "../components/MomoSproutPlanter";
 import { HistoryScreen } from "./HistoryScreen";
 
 export type MomoMemoryGardenProps = {
+  onClearHistory: () => void;
   onDelete: () => void;
   onExport: () => void;
   snapshot: RepositorySnapshot;
@@ -12,7 +13,12 @@ function gardenStageLabel(stage: "sprout" | "leaf" | "bloom"): string {
   return stage === "bloom" ? "Bloom" : stage === "leaf" ? "Leaf" : "Sprout";
 }
 
-export function MomoMemoryGarden({ onDelete, onExport, snapshot }: MomoMemoryGardenProps) {
+export function MomoMemoryGarden({
+  onClearHistory,
+  onDelete,
+  onExport,
+  snapshot,
+}: MomoMemoryGardenProps) {
   const sproutCount = snapshot.garden.plants.length;
 
   return (
@@ -57,6 +63,14 @@ export function MomoMemoryGarden({ onDelete, onExport, snapshot }: MomoMemoryGar
       <div className="momo-device-keepsakes" aria-label="Device keepsakes controls">
         <button className="momo-export-button" type="button" onClick={onExport}>
           Export my data
+        </button>
+        <button
+          className="momo-export-button"
+          type="button"
+          onClick={onClearHistory}
+          disabled={snapshot.plaza.courseGuardSessions.length === 0}
+        >
+          Clear session history
         </button>
         <button className="momo-delete-button" type="button" onClick={onDelete}>
           Delete my data

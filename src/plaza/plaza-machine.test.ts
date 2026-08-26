@@ -133,4 +133,25 @@ describe("plaza companion state", () => {
     state = reducePlazaState(state, { type: "SET_COLOR_STYLE", colorStyle: "sky" });
     expect(state.companion.colorStyle).toBe("sky");
   });
+
+  it("clears session history without touching companion settings", () => {
+    const completed = reducePlazaState(createInitialPlazaState(), {
+      type: "SESSION_COMPLETED",
+      outcome: {
+        completionStatus: "completed" as const,
+        courseLabel: "SQL",
+        courseOrigin: "https://learn.example.com",
+        elapsedMs: 25 * 60_000,
+        finishedAtMs: 1_501_000,
+        id: "guard-1",
+        returnCount: 1,
+        startedAtMs: 1_000,
+      },
+    });
+
+    const cleared = reducePlazaState(completed, { type: "CLEAR_SESSION_HISTORY" });
+
+    expect(cleared.courseGuardSessions).toEqual([]);
+    expect(cleared.companion).toEqual(completed.companion);
+  });
 });
