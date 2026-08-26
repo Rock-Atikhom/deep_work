@@ -82,9 +82,24 @@ test("keeps the real focus to reward journey within Momo surfaces", async ({ pag
   await page.getByRole("button", { name: "Start session" }).press("Enter");
   await expect(page.locator(".momo-study-room .focus-stage")).toBeVisible();
   await expect(page.locator(".momo-study-room .focus-stage")).toHaveCSS("border-top-width", "4px");
+  await expect(page.getByRole("contentinfo", { name: "Momo Town footer" })).toHaveCount(1);
   await page.getByRole("button", { name: "End session" }).click();
   await page.getByRole("button", { name: "Yes" }).click();
   await expect(page.locator(".momo-reward-route .session-reward-shell")).toBeVisible();
+  await expect(page.getByRole("contentinfo", { name: "Momo Town footer" })).toHaveCount(1);
+});
+
+test("uses one Momo Town footer on every route", async ({ page }) => {
+  for (const path of mobileRoutes) {
+    await page.goto(path);
+    const footer = page.getByRole("contentinfo", { name: "Momo Town footer" });
+    await expect(footer).toHaveCount(1);
+    await expect(footer.getByRole("link", { name: "Plaza" })).toHaveAttribute("href", "#/plaza");
+    await expect(footer.getByRole("link", { name: "Town Hall" })).toHaveAttribute(
+      "href",
+      "#/town-hall",
+    );
+  }
 });
 
 test("keeps every valid hash route visible at 390px with safe session fallbacks", async ({

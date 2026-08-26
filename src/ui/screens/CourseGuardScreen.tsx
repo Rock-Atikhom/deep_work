@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { CourseGuardSnapshot } from "../../course-guard/bridge-contract";
+import { LegalFooter } from "./LegalScreen";
 
 export interface CourseGuardScreenProps {
   children?: ReactNode;
@@ -126,6 +127,7 @@ export function CourseGuardScreen({
       </section>
 
       {children}
+      <LegalFooter />
     </main>
   );
 }

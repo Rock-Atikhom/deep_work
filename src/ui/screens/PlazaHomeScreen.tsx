@@ -11,6 +11,7 @@ import { PlazaGameHud } from "../components/PlazaGameHud";
 import { PlazaMap } from "../components/PlazaMap";
 import { PlazaMeter } from "../components/PlazaMeter";
 import { TodayQuest } from "../components/TodayQuest";
+import { LegalFooter } from "./LegalScreen";
 
 export interface PlazaHomeScreenProps {
   companion: CompanionState;
@@ -162,6 +163,7 @@ export function PlazaHomeScreen({
           </ul>
         )}
       </section>
+      <LegalFooter />
     </main>
   );
 }

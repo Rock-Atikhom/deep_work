@@ -1023,6 +1023,7 @@ export function App({
         {deleteDialogOpen && (
           <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
         )}
+        <LegalFooter />
       </main>
     );
   }
