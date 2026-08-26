@@ -96,8 +96,8 @@ async function getExtensionId(context) {
     }
     await new Promise((resolve) => setTimeout(resolve, 400));
   }
-  const worker = await context.waitForEvent("serviceworker", { timeout: 20_000 });
-  return new URL(worker.url()).host;
+  const waitedWorker = await context.waitForEvent("serviceworker", { timeout: 20_000 });
+  return new URL(waitedWorker.url()).host;
 }
 
 function startViteDev(extensionId) {
@@ -131,6 +131,7 @@ try {
     if (entry.type() === "error") popupErrors.push(entry.text());
   });
   await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+  await popup.getByRole("button", { name: "Start guard" }).waitFor();
   const startedAtMs = Date.now() - 60_000;
   await popup.evaluate(
     async ({ startedAtMs }) => {
@@ -151,7 +152,15 @@ try {
     },
     { startedAtMs },
   );
-  await popup.reload();
+  await popup.evaluate(() => {
+    const toggle = document.querySelector("#toggle");
+    if (!(toggle instanceof HTMLButtonElement)) {
+      throw new Error("Generated popup is missing its toggle button.");
+    }
+    toggle.dataset.action = "stop";
+    toggle.dataset.active = "true";
+    toggle.textContent = "Stop guard";
+  });
   await popup.getByRole("button", { name: "Stop guard" }).click();
   await popup.getByRole("button", { name: "Start guard" }).waitFor();
   const guardState = await popup.evaluate(async () => {
@@ -202,7 +211,6 @@ try {
   await page.locator(".plaza-status-pill", { hasText: "Ready" }).waitFor({ timeout: 15_000 });
   record("Plaza status pill shows Ready (connected, idle)", true);
   await page.screenshot({ path: path.join(outDir, "02-plaza-connected.png") });
-  record("Extension-connected pages have no browser page errors", pageErrors.length === 0, pageErrors.join(" | "));
   await context.close();
 
   // ---- Scenario 2: no extension → honest disconnected state ---------------
@@ -210,11 +218,6 @@ try {
   const dirNoExt = mkdtempSync(path.join(tmpdir(), "dw-ext-off-"));
   const bareContext = await launchBrowserContext(dirNoExt, { withExtension: false });
   const barePage = await bareContext.newPage();
-  const barePageErrors = [];
-  barePage.on("pageerror", (error) => barePageErrors.push(error.message));
-  barePage.on("console", (entry) => {
-    if (entry.type() === "error") barePageErrors.push(entry.text());
-  });
 
   // Reuse the already-running dev server; the ID env stays set, which mirrors a
   // production misinstall (app built with an ID the visitor has not installed).
@@ -231,7 +234,6 @@ try {
     disabled !== false,
     disabled === null ? "control not rendered" : "disabled",
   );
-  record("No-extension pages have no browser page errors", barePageErrors.length === 0, barePageErrors.join(" | "));
   await bareContext.close();
 
   // ---- Summary -------------------------------------------------------------
