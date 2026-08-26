@@ -4402,3 +4402,35 @@ html[data-reduced-motion="true"] *::after {
     transition: none;
   }
 }
+
+/* Companion color styles (Ticket #26) */
+.focus-friend-color-blossom .focus-friend-body {
+  background: var(--momo-pink);
+}
+
+.focus-friend-color-meadow .focus-friend-body {
+  background: var(--momo-leaf);
+}
+
+.focus-friend-color-sky .focus-friend-body {
+  background: var(--momo-blue);
+}
+
+.momo-town-hall-personalization {
+  display: grid;
+  gap: 16px;
+}
+
+.momo-town-hall-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  border: none;
+  padding: 0;
+}
+
+.momo-town-hall-colors label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

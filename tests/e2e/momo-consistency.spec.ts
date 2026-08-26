@@ -155,3 +155,21 @@ test("keeps shared Momo setup controls keyboard-safe while preserving pointer fe
     "cubic-bezier(0.22, 1, 0.36, 1), cubic-bezier(0.22, 1, 0.36, 1), cubic-bezier(0.22, 1, 0.36, 1)",
   );
 });
+
+test("personalizes the Focus Friend name and color style from Town Hall", async ({ page }) => {
+  await page.goto("/#/town-hall");
+
+  await page.getByLabel("Companion name").fill("Pip");
+  await page.getByRole("radio", { name: "Blossom pink" }).check();
+
+  await expect(page.getByRole("img", { name: /Pip, encouraging/i })).toBeVisible();
+  await expect(
+    page.locator(".momo-town-hall .focus-friend-color-blossom .focus-friend-body"),
+  ).toHaveCSS("background-color", "rgb(255, 159, 196)");
+
+  await page.goto("/#/plaza");
+  await expect(
+    page.locator(".plaza-shell .focus-friend-color-blossom .focus-friend-body"),
+  ).toHaveCSS("background-color", "rgb(255, 159, 196)");
+  await expect(page.getByRole("img", { name: /Pip/i })).toBeVisible();
+});

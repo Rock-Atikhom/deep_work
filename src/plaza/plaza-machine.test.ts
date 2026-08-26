@@ -108,4 +108,29 @@ describe("plaza companion state", () => {
       100,
     );
   });
+
+  it("renames the companion and keeps the previous name for blank input", () => {
+    const state = reducePlazaState(createInitialPlazaState(), {
+      type: "RENAME_COMPANION",
+      name: "  Pip  ",
+    });
+    expect(state.companion.name).toBe("Pip");
+
+    const unchanged = reducePlazaState(state, { type: "RENAME_COMPANION", name: "   " });
+    expect(unchanged.companion.name).toBe("Pip");
+    expect(unchanged).toBe(state);
+  });
+
+  it("applies one of three preset color styles with sky as the default", () => {
+    let state = createInitialPlazaState();
+    expect(state.companion.colorStyle).toBe("sky");
+    state = reducePlazaState(state, { type: "SET_COLOR_STYLE", colorStyle: "blossom" });
+    expect(state.companion.colorStyle).toBe("blossom");
+
+    state = reducePlazaState(state, { type: "SET_COLOR_STYLE", colorStyle: "meadow" });
+    expect(state.companion.colorStyle).toBe("meadow");
+
+    state = reducePlazaState(state, { type: "SET_COLOR_STYLE", colorStyle: "sky" });
+    expect(state.companion.colorStyle).toBe("sky");
+  });
 });

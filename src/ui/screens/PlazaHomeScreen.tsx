@@ -93,6 +93,7 @@ export function PlazaHomeScreen({
           <span aria-hidden="true" className="plaza-cloud plaza-cloud-two" />
           <div className="plaza-scene-sign">Momo&apos;s plaza</div>
           <FocusFriend
+            colorStyle={companion.colorStyle}
             equippedCosmeticIds={companion.equippedCosmeticIds}
             mood={companion.mood}
             name={companion.name}

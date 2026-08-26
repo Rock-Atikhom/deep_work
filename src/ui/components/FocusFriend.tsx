@@ -1,4 +1,4 @@
-import type { CompanionMood } from "../../plaza/plaza-types";
+import type { CompanionColorStyle, CompanionMood } from "../../plaza/plaza-types";
 
 const moodLabels: Record<CompanionMood, string> = {
   resting: "resting",
@@ -9,16 +9,26 @@ const moodLabels: Record<CompanionMood, string> = {
 };
 
 export interface FocusFriendProps {
+  colorStyle?: CompanionColorStyle;
   equippedCosmeticIds?: string[];
   mood: CompanionMood;
   name: string;
 }
 
-export function FocusFriend({ equippedCosmeticIds = [], mood, name }: FocusFriendProps) {
+export function FocusFriend({
+  colorStyle,
+  equippedCosmeticIds = [],
+  mood,
+  name,
+}: FocusFriendProps) {
   return (
     <div
       aria-label={`${name}, ${moodLabels[mood]}`}
-      className={`focus-friend focus-friend-${mood}`}
+      className={
+        colorStyle
+          ? `focus-friend focus-friend-color-${colorStyle} focus-friend-${mood}`
+          : `focus-friend focus-friend-${mood}`
+      }
       role="img"
     >
       <span aria-hidden="true" className="focus-friend-shadow" />

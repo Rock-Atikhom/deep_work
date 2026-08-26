@@ -24,9 +24,10 @@ test.describe("Momo's Plaza", () => {
       "border-top-width",
       "3px",
     );
+    // Ticket #26: the reward Focus Friend wears the companion's preset color style (default sky).
     await expect(page.locator(".session-reward-shell .focus-friend-body")).toHaveCSS(
       "background-color",
-      "rgb(255, 159, 196)",
+      "rgb(98, 201, 245)",
     );
     await page.getByRole("button", { name: "Back to Momo's Plaza" }).click();
     await expect(page).toHaveURL(/#\/plaza$/);

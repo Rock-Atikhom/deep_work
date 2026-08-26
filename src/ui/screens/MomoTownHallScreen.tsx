@@ -1,4 +1,4 @@
-import type { CompanionState } from "../../plaza/plaza-types";
+import type { CompanionColorStyle, CompanionState } from "../../plaza/plaza-types";
 import type { SoundPreference } from "../../session/session-machine";
 import type { PresetName } from "../../session/session-types";
 import { FocusFriend } from "../components/FocusFriend";
@@ -11,6 +11,8 @@ export type MomoTownHallScreenProps = {
   onDeleteData: () => void;
   onDurationChange: (durationMs: number) => void;
   onExportData: () => void;
+  onNameChange: (name: string) => void;
+  onColorStyleChange: (colorStyle: CompanionColorStyle) => void;
   onPresetChange: (preset: PresetName) => void;
   onReducedMotionChange: (reducedMotion: boolean) => void;
   onReset: () => void;
@@ -28,6 +30,8 @@ export function MomoTownHallScreen({
   onDeleteData,
   onDurationChange,
   onExportData,
+  onNameChange,
+  onColorStyleChange,
   onPresetChange,
   onReducedMotionChange,
   onReset,
@@ -48,6 +52,7 @@ export function MomoTownHallScreen({
 
       <section className="momo-town-hall-hero" aria-labelledby="momo-town-hall-title">
         <FocusFriend
+          colorStyle={companion.colorStyle}
           equippedCosmeticIds={companion.equippedCosmeticIds}
           mood="encouraging"
           name={companion.name}
@@ -64,6 +69,56 @@ export function MomoTownHallScreen({
           {dataStatus}
         </p>
       )}
+
+      <section
+        className="momo-town-hall-card momo-town-hall-personalization"
+        aria-labelledby="personalization-title"
+      >
+        <h2 id="personalization-title">Focus Friend personalization</h2>
+        <label htmlFor="momo-town-hall-name">
+          <span>Companion name</span>
+          <input
+            id="momo-town-hall-name"
+            type="text"
+            value={companion.name}
+            onChange={(event) => onNameChange(event.target.value)}
+          />
+        </label>
+        <fieldset className="momo-town-hall-colors">
+          <legend>Friend color</legend>
+          <label>
+            <input
+              type="radio"
+              name="companion-color-style"
+              value="sky"
+              checked={companion.colorStyle === "sky"}
+              onChange={() => onColorStyleChange("sky")}
+            />
+            <span>Sky blue</span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="companion-color-style"
+              value="blossom"
+              checked={companion.colorStyle === "blossom"}
+              onChange={() => onColorStyleChange("blossom")}
+            />
+            <span>Blossom pink</span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="companion-color-style"
+              value="meadow"
+              checked={companion.colorStyle === "meadow"}
+              onChange={() => onColorStyleChange("meadow")}
+            />
+            <span>Meadow green</span>
+          </label>
+        </fieldset>
+        <p>Colors are local decoration only — Momo never scores or judges your focus.</p>
+      </section>
 
       <section
         className="momo-town-hall-card momo-town-hall-preferences"
