@@ -1,7 +1,6 @@
 import { PLAZA_COSMETICS } from "../../plaza/plaza-rewards";
 import type { CompanionState } from "../../plaza/plaza-types";
 import { FocusFriend } from "../components/FocusFriend";
-import { LegalFooter } from "./LegalScreen";
 
 export interface WardrobeScreenProps {
   companion: CompanionState;
@@ -59,7 +58,6 @@ export function WardrobeScreen({ companion, onEquip }: WardrobeScreenProps) {
           })}
         </div>
       </section>
-      <LegalFooter />
     </main>
   );
 }

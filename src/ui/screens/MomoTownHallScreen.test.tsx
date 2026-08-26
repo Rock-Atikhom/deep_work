@@ -123,11 +123,7 @@ describe("MomoTownHallScreen", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "Your local data was deleted from this device.",
     );
-    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
-      "href",
-      "#/privacy",
-    );
-    expect(screen.getByRole("link", { name: "Terms of Use" })).toHaveAttribute("href", "#/terms");
+    expect(screen.queryByRole("navigation", { name: "Legal" })).not.toBeInTheDocument();
     expect(onDurationChange).toHaveBeenCalledWith(50 * 60_000);
     expect(onPresetChange).toHaveBeenCalledWith("strict");
     expect(onSoundChange).toHaveBeenCalledWith("soft");

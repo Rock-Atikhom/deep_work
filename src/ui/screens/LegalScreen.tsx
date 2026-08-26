@@ -108,7 +108,7 @@ const documents: Record<LegalDocument, { title: string; sections: readonly Legal
 
 export function LegalFooter() {
   return (
-    <footer aria-label="Momo Town footer" className="momo-town-footer" role="contentinfo">
+    <footer aria-label="Momo Town footer" className="momo-town-footer">
       <div className="momo-town-footer-brand">
         <span aria-hidden="true" className="momo-town-footer-mark">
           <span />

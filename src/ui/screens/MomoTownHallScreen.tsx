@@ -2,7 +2,6 @@ import type { CompanionColorStyle, CompanionState } from "../../plaza/plaza-type
 import type { SoundPreference } from "../../session/session-machine";
 import type { PresetName } from "../../session/session-types";
 import { FocusFriend } from "../components/FocusFriend";
-import { LegalFooter } from "./LegalScreen";
 
 export type MomoTownHallScreenProps = {
   companion: CompanionState;
@@ -220,8 +219,6 @@ export function MomoTownHallScreen({
           </button>
         </div>
       </section>
-
-      <LegalFooter />
     </main>
   );
 }
