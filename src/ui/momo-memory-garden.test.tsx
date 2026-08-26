@@ -7,9 +7,11 @@ describe("MomoMemoryGarden", () => {
   it("renders Momo's archive, private Quest Log, and safe data controls", () => {
     const onExport = vi.fn();
     const onDelete = vi.fn();
+    const onClearHistory = vi.fn();
 
     const { container } = render(
       <MomoMemoryGarden
+        onClearHistory={onClearHistory}
         onDelete={onDelete}
         onExport={onExport}
         snapshot={{
@@ -29,7 +31,23 @@ describe("MomoMemoryGarden", () => {
             schemaVersion: 1,
             totalSeeds: 1,
           },
-          plaza: createInitialPlazaState(),
+          plaza: {
+            ...createInitialPlazaState(),
+            courseGuardSessions: [
+              {
+                completionStatus: "completed" as const,
+                courseLabel: "SQL",
+                courseOrigin: "https://learn.example.com",
+                elapsedMs: 25 * 60_000,
+                finishedAtMs: 2_500,
+                growthPoints: 25,
+                id: "guard-1",
+                returnCount: 1,
+                rewardId: null,
+                startedAtMs: 1_000,
+              },
+            ],
+          },
           preferences: { durationMs: 1_500_000, selectedDeckId: null, sound: "silent" },
           schemaVersion: 1,
           summaries: [
@@ -68,8 +86,31 @@ describe("MomoMemoryGarden", () => {
     expect(root?.querySelector(".momo-empty-progress")).toBeNull();
     expect(root?.querySelector(".momo-device-keepsakes")).not.toHaveClass("data-actions");
     fireEvent.click(screen.getByRole("button", { name: "Export my data" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear session history" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete my data" }));
     expect(onExport).toHaveBeenCalledOnce();
+    expect(onClearHistory).toHaveBeenCalledOnce();
     expect(onDelete).toHaveBeenCalledOnce();
+  });
+
+  it("disables Clear session history when no Course Guard sessions exist", () => {
+    const { getByRole } = render(
+      <MomoMemoryGarden
+        onClearHistory={() => undefined}
+        onDelete={() => undefined}
+        onExport={() => undefined}
+        snapshot={{
+          active: null,
+          decks: [],
+          garden: { plants: [], schemaVersion: 1, totalSeeds: 0 },
+          plaza: createInitialPlazaState(),
+          preferences: { durationMs: 1_500_000, selectedDeckId: null, sound: "silent" },
+          schemaVersion: 1,
+          summaries: [],
+        }}
+      />,
+    );
+
+    expect(getByRole("button", { name: "Clear session history" })).toBeDisabled();
   });
 });

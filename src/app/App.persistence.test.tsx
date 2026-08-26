@@ -64,6 +64,43 @@ describe("Timer-Only persistence", () => {
     repository.close();
   });
 
+  it("clears Course Guard history from the archive without touching companion settings", async () => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    await repository.savePlaza({
+      ...createInitialPlazaState(),
+      companion: { ...createInitialPlazaState().companion, name: "Pip", growthPoints: 25 },
+      courseGuardSessions: [
+        {
+          completionStatus: "completed" as const,
+          courseLabel: "SQL",
+          courseOrigin: "https://learn.example.com",
+          elapsedMs: 25 * 60_000,
+          finishedAtMs: 2_500,
+          growthPoints: 25,
+          id: "guard-1",
+          returnCount: 1,
+          rewardId: "sticker-sun",
+          startedAtMs: 1_000,
+        },
+      ],
+    });
+    window.location.hash = "#/archive";
+    render(<App repository={repository} />);
+
+    await screen.findByRole("heading", { name: "Momo's Memory Garden" });
+    const clearButton = screen.getByRole("button", { name: "Clear session history" });
+    await waitFor(() => expect(clearButton).toBeEnabled());
+    fireEvent.click(clearButton);
+
+    await waitFor(async () => {
+      const snapshot = await repository.load();
+      expect(snapshot.plaza.courseGuardSessions).toEqual([]);
+      expect(snapshot.plaza.companion.name).toBe("Pip");
+      expect(snapshot.plaza.companion.growthPoints).toBe(25);
+    });
+    repository.close();
+  });
+
   it("recovers an active session after the app mounts again", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     const startedAtMs = Date.now() - 60_000;

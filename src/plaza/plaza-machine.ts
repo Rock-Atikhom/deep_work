@@ -21,7 +21,8 @@ export type PlazaEvent =
   | { type: "EQUIP_COSMETIC"; cosmeticId: string }
   | { type: "SET_MOOD"; mood: CompanionMood }
   | { type: "RENAME_COMPANION"; name: string }
-  | { type: "SET_COLOR_STYLE"; colorStyle: CompanionColorStyle };
+  | { type: "SET_COLOR_STYLE"; colorStyle: CompanionColorStyle }
+  | { type: "CLEAR_SESSION_HISTORY" };
 
 export interface GuardMoodInput {
   connection: "connected" | "disconnected";
@@ -158,5 +159,7 @@ export function reducePlazaState(state: PlazaState, event: PlazaEvent): PlazaSta
         : state.companion.colorStyle;
       return { ...state, companion: { ...state.companion, colorStyle } };
     }
+    case "CLEAR_SESSION_HISTORY":
+      return { ...state, courseGuardSessions: [] };
   }
 }
