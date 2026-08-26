@@ -4242,6 +4242,17 @@ html[data-reduced-motion="true"] *::after {
   text-decoration: none;
 }
 
+.momo-plaza-gate .course-guard-connection {
+  border: 3px solid var(--momo-ink);
+  border-radius: 16px;
+  background: var(--momo-blue);
+  padding: 14px;
+}
+
+.momo-plaza-gate .course-guard-connection :is(strong, p) {
+  color: var(--momo-ink);
+}
+
 .momo-study-room .legal-footer,
 .momo-reward-route .legal-footer {
   width: min(1180px, 100%);
