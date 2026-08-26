@@ -4,6 +4,38 @@ import { createInitialPlazaState } from "../../plaza/plaza-machine";
 import { MomoTownHallScreen } from "./MomoTownHallScreen";
 
 describe("MomoTownHallScreen", () => {
+  it("offers extension reconnection help when disconnected", () => {
+    const onReconnectCheck = vi.fn();
+
+    render(
+      <MomoTownHallScreen
+        companion={createInitialPlazaState().companion}
+        connection="disconnected"
+        dataStatus={null}
+        durationMs={25 * 60_000}
+        onColorStyleChange={() => {}}
+        onDeleteData={() => {}}
+        onDurationChange={() => {}}
+        onExportData={() => {}}
+        onNameChange={() => {}}
+        onPresetChange={() => {}}
+        onReconnectCheck={onReconnectCheck}
+        onReducedMotionChange={() => {}}
+        onReset={() => {}}
+        onSoundChange={() => {}}
+        preset="balanced"
+        reducedMotion={false}
+        sound="standard"
+      />,
+    );
+
+    expect(screen.getByText(/isn't reachable right now/i)).toBeInTheDocument();
+    expect(screen.getByText(/installed and enabled in Chrome/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
+    expect(onReconnectCheck).toHaveBeenCalledOnce();
+  });
+
   it("personalizes the Focus Friend name and color style", () => {
     const onNameChange = vi.fn();
     const onColorStyleChange = vi.fn();
@@ -15,6 +47,7 @@ describe("MomoTownHallScreen", () => {
         dataStatus={null}
         durationMs={25 * 60_000}
         onColorStyleChange={onColorStyleChange}
+        onReconnectCheck={() => {}}
         onDeleteData={() => {}}
         onDurationChange={() => {}}
         onExportData={() => {}}
@@ -59,6 +92,7 @@ describe("MomoTownHallScreen", () => {
         onDeleteData={onDeleteData}
         onDurationChange={onDurationChange}
         onColorStyleChange={onColorStyleChange}
+        onReconnectCheck={() => {}}
         onNameChange={onNameChange}
         onExportData={onExportData}
         onPresetChange={onPresetChange}

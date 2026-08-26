@@ -469,6 +469,7 @@ export function App({
   const [courseGuardConnection, setCourseGuardConnection] = useState<"connected" | "disconnected">(
     "disconnected",
   );
+  const [bridgeHandshakes, setBridgeHandshakes] = useState(0);
   const [courseGuardState, setCourseGuardState] = useState<CourseGuardSnapshot | null>(null);
   const [courseGuardPermissionNeeded, setCourseGuardPermissionNeeded] = useState(false);
   const [courseGuardCommandStatus, setCourseGuardCommandStatus] = useState<{
@@ -677,7 +678,7 @@ export function App({
         });
       }
     });
-  }, [courseGuardBridge]);
+  }, [courseGuardBridge, bridgeHandshakes]);
 
   useEffect(() => {
     if (!hydratedRef.current || storageStatus === "unavailable") return;
@@ -1060,6 +1061,7 @@ export function App({
               reducePlazaState(current, { colorStyle, type: "SET_COLOR_STYLE" }),
             )
           }
+          onReconnectCheck={() => setBridgeHandshakes((count) => count + 1)}
           onPresetChange={(preset: PresetName) => setForm((current) => ({ ...current, preset }))}
           onReducedMotionChange={setReducedMotion}
           onReset={resetSettings}
