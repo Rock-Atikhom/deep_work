@@ -65,6 +65,14 @@ async function activeTabUrl(): Promise<string | null> {
 }
 
 toggle.addEventListener("click", () => {
+  if (toggle.dataset.action === "stop") {
+    void send({ type: "STOP_GUARD" });
+    return;
+  }
+  if (toggle.dataset.action === "return") {
+    void send({ type: "RETURN_TO_COURSE" });
+    return;
+  }
   void startFromPopup();
 });
 

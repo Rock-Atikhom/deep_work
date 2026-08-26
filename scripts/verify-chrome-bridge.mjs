@@ -10,7 +10,7 @@
  * Usage: node scripts/verify-chrome-bridge.mjs [--headed=false]
  */
 import { spawn } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
