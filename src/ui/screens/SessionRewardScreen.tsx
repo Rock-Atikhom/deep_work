@@ -31,6 +31,7 @@ export function SessionRewardScreen({
       <PlazaGameHud companion={companion} guardStatus="Reward time" rewardCount={rewardCount} />
       <section className="session-reward-card">
         <FocusFriend
+          colorStyle={companion.colorStyle}
           equippedCosmeticIds={companion.equippedCosmeticIds}
           mood="proud"
           name={companion.name}

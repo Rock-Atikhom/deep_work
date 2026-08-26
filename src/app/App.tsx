@@ -1047,6 +1047,16 @@ export function App({
           onDeleteData={() => setDeleteDialogOpen(true)}
           onDurationChange={(durationMs) => setForm((current) => ({ ...current, durationMs }))}
           onExportData={exportData}
+          onNameChange={(name) =>
+            setPlazaState((current) =>
+              reducePlazaState(current, { name, type: "RENAME_COMPANION" }),
+            )
+          }
+          onColorStyleChange={(colorStyle) =>
+            setPlazaState((current) =>
+              reducePlazaState(current, { colorStyle, type: "SET_COLOR_STYLE" }),
+            )
+          }
           onPresetChange={(preset: PresetName) => setForm((current) => ({ ...current, preset }))}
           onReducedMotionChange={setReducedMotion}
           onReset={resetSettings}

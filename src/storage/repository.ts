@@ -16,6 +16,7 @@ import { deriveGarden, type GardenState } from "../garden/garden";
 import { createInitialPlazaState } from "../plaza/plaza-machine";
 import {
   PLAZA_SCHEMA_VERSION,
+  COMPANION_COLOR_STYLES,
   type CompanionState,
   type CourseGuardSessionRecord,
   type PlazaState,
@@ -152,6 +153,11 @@ function normalizeCompanion(value: unknown): CompanionState {
       typeof candidate.name === "string" && candidate.name.trim()
         ? candidate.name.trim()
         : initial.name,
+    colorStyle:
+      typeof candidate.colorStyle === "string" &&
+      COMPANION_COLOR_STYLES.includes(candidate.colorStyle as never)
+        ? candidate.colorStyle
+        : initial.colorStyle,
     mood,
     energy,
     growthPoints,

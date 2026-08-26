@@ -4,6 +4,41 @@ import { createInitialPlazaState } from "../../plaza/plaza-machine";
 import { MomoTownHallScreen } from "./MomoTownHallScreen";
 
 describe("MomoTownHallScreen", () => {
+  it("personalizes the Focus Friend name and color style", () => {
+    const onNameChange = vi.fn();
+    const onColorStyleChange = vi.fn();
+
+    render(
+      <MomoTownHallScreen
+        companion={createInitialPlazaState().companion}
+        connection="connected"
+        dataStatus={null}
+        durationMs={25 * 60_000}
+        onColorStyleChange={onColorStyleChange}
+        onDeleteData={() => {}}
+        onDurationChange={() => {}}
+        onExportData={() => {}}
+        onNameChange={onNameChange}
+        onPresetChange={() => {}}
+        onReducedMotionChange={() => {}}
+        onReset={() => {}}
+        onSoundChange={() => {}}
+        preset="balanced"
+        reducedMotion={false}
+        sound="standard"
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Companion name"), {
+      target: { value: "Pip" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Blossom pink" }));
+
+    expect(onNameChange).toHaveBeenCalledWith("Pip");
+    expect(onColorStyleChange).toHaveBeenCalledWith("blossom");
+    expect(screen.getByRole("radio", { name: "Sky blue" })).toBeChecked();
+  });
+
   it("renders Momo's Mayor's Desk and forwards preference controls", () => {
     const onDurationChange = vi.fn();
     const onPresetChange = vi.fn();
@@ -12,6 +47,8 @@ describe("MomoTownHallScreen", () => {
     const onReset = vi.fn();
     const onExportData = vi.fn();
     const onDeleteData = vi.fn();
+    const onNameChange = vi.fn();
+    const onColorStyleChange = vi.fn();
 
     render(
       <MomoTownHallScreen
@@ -21,6 +58,8 @@ describe("MomoTownHallScreen", () => {
         durationMs={25 * 60_000}
         onDeleteData={onDeleteData}
         onDurationChange={onDurationChange}
+        onColorStyleChange={onColorStyleChange}
+        onNameChange={onNameChange}
         onExportData={onExportData}
         onPresetChange={onPresetChange}
         onReducedMotionChange={onReducedMotionChange}

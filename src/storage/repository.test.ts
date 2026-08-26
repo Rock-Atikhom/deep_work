@@ -33,6 +33,24 @@ describe("Deep Work local repository", () => {
     repository.close();
   });
 
+  it("falls back to the default color style for legacy companions", async () => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    const snapshot = await repository.load();
+
+    await repository.savePlaza({
+      ...snapshot.plaza,
+      companion: {
+        ...snapshot.plaza.companion,
+        // Legacy snapshots have no colorStyle field.
+        colorStyle: undefined as unknown as typeof snapshot.plaza.companion.colorStyle,
+      },
+    });
+    await expect(repository.load()).resolves.toMatchObject({
+      plaza: { companion: { colorStyle: "sky" } },
+    });
+    repository.close();
+  });
+
   it("persists companion cosmetics and Course Guard history independently of legacy summaries", async () => {
     const repository = await openDeepWorkRepository({ databaseName: databaseName() });
     const snapshot = await repository.load();

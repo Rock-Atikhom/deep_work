@@ -1,5 +1,7 @@
 import {
+  COMPANION_COLOR_STYLES,
   PLAZA_SCHEMA_VERSION,
+  type CompanionColorStyle,
   type CompanionMood,
   type PlazaSessionOutcome,
   type PlazaState,
@@ -18,7 +20,8 @@ export type PlazaEvent =
   | { type: "CARE_ACTION"; action: CareAction }
   | { type: "EQUIP_COSMETIC"; cosmeticId: string }
   | { type: "SET_MOOD"; mood: CompanionMood }
-  | { type: "RENAME_COMPANION"; name: string };
+  | { type: "RENAME_COMPANION"; name: string }
+  | { type: "SET_COLOR_STYLE"; colorStyle: CompanionColorStyle };
 
 export interface GuardMoodInput {
   connection: "connected" | "disconnected";
@@ -46,6 +49,7 @@ export function createInitialPlazaState(): PlazaState {
     schemaVersion: PLAZA_SCHEMA_VERSION,
     companion: {
       name: "Momo",
+      colorStyle: "sky",
       mood: "ready",
       energy: MAX_ENERGY,
       growthPoints: 0,
@@ -147,6 +151,12 @@ export function reducePlazaState(state: PlazaState, event: PlazaEvent): PlazaSta
     case "RENAME_COMPANION": {
       const name = event.name.trim();
       return name.length === 0 ? state : { ...state, companion: { ...state.companion, name } };
+    }
+    case "SET_COLOR_STYLE": {
+      const colorStyle = COMPANION_COLOR_STYLES.includes(event.colorStyle)
+        ? event.colorStyle
+        : state.companion.colorStyle;
+      return { ...state, companion: { ...state.companion, colorStyle } };
     }
   }
 }

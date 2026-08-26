@@ -20,6 +20,7 @@ export function WardrobeScreen({ companion, onEquip }: WardrobeScreenProps) {
       <section className="wardrobe-layout">
         <div className="wardrobe-preview">
           <FocusFriend
+            colorStyle={companion.colorStyle}
             equippedCosmeticIds={companion.equippedCosmeticIds}
             mood="proud"
             name={companion.name}
