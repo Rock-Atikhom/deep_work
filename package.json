@@ -17,7 +17,8 @@
     "vision:manifest:check": "node scripts/generate-vision-manifest.mjs --check",
     "build": "tsc -b && vite build",
     "extension:build": "vite build -c vite.extension.config.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:chrome": "node scripts/verify-chrome-bridge.mjs"
   },
   "dependencies": {
     "@fontsource-variable/newsreader": "5.3.0",
