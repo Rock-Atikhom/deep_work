@@ -1,10 +1,29 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "../app/App";
-import { LegalScreen } from "./screens/LegalScreen";
+import { LegalFooter, LegalScreen } from "./screens/LegalScreen";
 import { WelcomeScreen } from "./screens/WelcomeScreen";
 
 describe("legal pages", () => {
+  it("provides every Momo Town destination from one named footer", () => {
+    render(<LegalFooter />);
+
+    const footer = screen.getByRole("contentinfo", { name: "Momo Town footer" });
+    expect(within(footer).getByRole("link", { name: "Plaza" })).toHaveAttribute("href", "#/plaza");
+    expect(within(footer).getByRole("link", { name: "Town Hall" })).toHaveAttribute(
+      "href",
+      "#/town-hall",
+    );
+    expect(within(footer).getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+      "href",
+      "#/privacy",
+    );
+    expect(within(footer).getByRole("link", { name: "Terms of Use" })).toHaveAttribute(
+      "href",
+      "#/terms",
+    );
+  });
+
   it("makes Privacy Policy and Terms of Use available from welcome, settings, and the footer", () => {
     const { rerender } = render(<WelcomeScreen onCamera={() => {}} onTimerOnly={() => {}} />);
 
