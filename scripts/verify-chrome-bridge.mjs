@@ -2,7 +2,7 @@
 /**
  * Chrome bridge smoke verification for Ticket #29 (Part C support).
  *
- * Launches desktop Chrome (falls back to bundled Chromium) with the unpacked
+ * Launches Playwright Chromium (falls back to installed Google Chrome) with the unpacked
  * extension from dist-extension/, discovers its runtime extension ID, starts
  * the approved localhost:5173 dev server with that ID, and verifies the real
  * external-messaging handshake end-to-end. Saves screenshots as evidence.
@@ -132,6 +132,12 @@ try {
   });
   await popup.goto(`chrome-extension://${extensionId}/popup.html`);
   await popup.getByRole("button", { name: "Start guard" }).waitFor();
+  const coursePage = await context.newPage();
+  await coursePage.route("https://learn.example.com/**", (route) =>
+    route.fulfill({ body: "<title>Course</title>", contentType: "text/html" }),
+  );
+  await coursePage.goto("https://learn.example.com/lesson");
+  await coursePage.bringToFront();
   const startedAtMs = Date.now() - 60_000;
   await popup.evaluate(
     async ({ startedAtMs }) => {
@@ -152,17 +158,19 @@ try {
     },
     { startedAtMs },
   );
-  await popup.evaluate(() => {
-    const toggle = document.querySelector("#toggle");
-    if (!(toggle instanceof HTMLButtonElement)) {
-      throw new Error("Generated popup is missing its toggle button.");
-    }
-    toggle.dataset.action = "stop";
-    toggle.dataset.active = "true";
-    toggle.textContent = "Stop guard";
+  const iframeUrl = `chrome-extension://${extensionId}/popup.html?verify-stop`;
+  const verifyPopup = popup.waitForEvent("framenavigated", {
+    predicate: (frame) => frame.url() === iframeUrl,
   });
-  await popup.getByRole("button", { name: "Stop guard" }).click();
-  await popup.getByRole("button", { name: "Start guard" }).waitFor();
+  await popup.evaluate(() => {
+    const frame = document.createElement("iframe");
+    frame.src = chrome.runtime.getURL("popup.html?verify-stop");
+    document.body.append(frame);
+  });
+  const popupFrame = await verifyPopup;
+  await popupFrame.getByRole("button", { name: "Stop guard" }).waitFor();
+  await popupFrame.getByRole("button", { name: "Stop guard" }).click();
+  await popupFrame.getByRole("button", { name: "Start guard" }).waitFor();
   const guardState = await popup.evaluate(async () => {
     const stored = await chrome.storage.local.get("guardState");
     return stored.guardState;
