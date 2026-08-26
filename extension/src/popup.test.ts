@@ -17,6 +17,9 @@ function renderPopupShell(): HTMLButtonElement {
 }
 
 function installChromeMock(initialState: GuardState) {
+  const containsPermission = vi.fn(async () => true);
+  const requestPermission = vi.fn(async () => true);
+  const queryTabs = vi.fn(async () => [{ id: 1, url: initialState.courseUrl }]);
   const sendMessage = vi.fn(async (message: { type: string }) => {
     if (message.type === "GET_STATE") return { ok: true, state: initialState };
     if (message.type === "STOP_GUARD") return { ok: true, state: createGuardState() };
@@ -29,18 +32,18 @@ function installChromeMock(initialState: GuardState) {
 
   vi.stubGlobal("chrome", {
     permissions: {
-      contains: vi.fn(async () => true),
+      contains: containsPermission,
       remove: vi.fn(async () => true),
-      request: vi.fn(async () => true),
+      request: requestPermission,
     },
     runtime: { sendMessage },
     tabs: {
       create: vi.fn(async () => undefined),
-      query: vi.fn(async () => [{ id: 1, url: initialState.courseUrl }]),
+      query: queryTabs,
     },
   });
 
-  return sendMessage;
+  return { containsPermission, queryTabs, requestPermission, sendMessage };
 }
 
 afterEach(() => {
@@ -58,14 +61,22 @@ describe("Course Guard popup actions", () => {
       courseUrl: "https://learn.example.com/lesson",
       phase: "watching" as const,
     };
-    const sendMessage = installChromeMock(state);
+    const { containsPermission, queryTabs, requestPermission, sendMessage } =
+      installChromeMock(state);
     const toggle = renderPopupShell();
 
     await import("./popup");
     await waitFor(() => expect(toggle.dataset.action).toBe("stop"));
     fireEvent.click(toggle);
 
-    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: "STOP_GUARD" }));
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(2));
+    expect(sendMessage.mock.calls.map(([message]) => message)).toEqual([
+      { type: "GET_STATE" },
+      { type: "STOP_GUARD" },
+    ]);
+    expect(queryTabs).not.toHaveBeenCalled();
+    expect(containsPermission).not.toHaveBeenCalled();
+    expect(requestPermission).not.toHaveBeenCalled();
   });
 
   it("sends RETURN_TO_COURSE when the active popup action is return", async () => {
@@ -75,13 +86,21 @@ describe("Course Guard popup actions", () => {
       courseUrl: "https://learn.example.com/lesson",
       phase: "interruption" as const,
     };
-    const sendMessage = installChromeMock(state);
+    const { containsPermission, queryTabs, requestPermission, sendMessage } =
+      installChromeMock(state);
     const toggle = renderPopupShell();
 
     await import("./popup");
     await waitFor(() => expect(toggle.dataset.action).toBe("return"));
     fireEvent.click(toggle);
 
-    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: "RETURN_TO_COURSE" }));
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(2));
+    expect(sendMessage.mock.calls.map(([message]) => message)).toEqual([
+      { type: "GET_STATE" },
+      { type: "RETURN_TO_COURSE" },
+    ]);
+    expect(queryTabs).not.toHaveBeenCalled();
+    expect(containsPermission).not.toHaveBeenCalled();
+    expect(requestPermission).not.toHaveBeenCalled();
   });
 });
