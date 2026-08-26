@@ -10,6 +10,44 @@ const directRoutes = [
   { heading: "Terms of Use", path: "/#/terms" },
 ] as const;
 
+const mobileRoutes = [
+  "/#/welcome",
+  "/#/plaza",
+  "/#/course-guard",
+  "/#/archive",
+  "/#/wardrobe",
+  "/#/town-hall",
+  "/#/setup",
+  "/#/calibration",
+  "/#/focus",
+  "/#/quick-review",
+  "/#/reflection",
+  "/#/history",
+  "/#/decks",
+  "/#/settings",
+  "/#/privacy",
+  "/#/terms",
+] as const;
+
+const mobileRouteHeadings: Record<(typeof mobileRoutes)[number], string> = {
+  "/#/welcome": "Make room for focused learning",
+  "/#/plaza": "Momo's Plaza",
+  "/#/course-guard": "Keep one course close",
+  "/#/archive": "Momo's Memory Garden",
+  "/#/wardrobe": "Make the town feel like yours",
+  "/#/town-hall": "Momo's Town Hall",
+  "/#/setup": "Make room for focused learning",
+  "/#/calibration": "Make room for focused learning",
+  "/#/focus": "Make room for focused learning",
+  "/#/quick-review": "Make room for focused learning",
+  "/#/reflection": "Make room for focused learning",
+  "/#/history": "Make room for focused learning",
+  "/#/decks": "Make room for focused learning",
+  "/#/settings": "Make room for focused learning",
+  "/#/privacy": "Privacy Policy",
+  "/#/terms": "Terms of Use",
+};
+
 const legacyRoutes = [
   { heading: "Keep one course close", path: "/#/course-guard", surface: ".momo-course-guard" },
   { heading: "Make the town feel like yours", path: "/#/wardrobe", surface: ".momo-wardrobe" },
@@ -47,4 +85,38 @@ test("keeps the real focus to reward journey within Momo surfaces", async ({ pag
   await page.getByRole("button", { name: "End session" }).click();
   await page.getByRole("button", { name: "Yes" }).click();
   await expect(page.locator(".momo-reward-route .session-reward-shell")).toBeVisible();
+});
+
+test("keeps every valid hash route visible at 390px with safe session fallbacks", async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+
+  for (const path of mobileRoutes) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { name: mobileRouteHeadings[path] })).toBeVisible();
+
+    const viewport = await page.locator("html").evaluate((html) => ({
+      clientWidth: html.clientWidth,
+      scrollWidth: html.scrollWidth,
+    }));
+    expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
+  }
+});
+
+test("shows Momo artwork while browser reduced-motion disables FocusFriend animation", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  await page.goto("/#/plaza");
+  await expect(page.getByRole("img", { name: "Momo, ready" })).toBeVisible();
+  await expect(page.locator(".focus-friend")).toHaveCSS("animation-name", "none");
+
+  await page.goto("/#/archive");
+  await expect(page.getByRole("img", { name: /Momo sprout planter/ })).toBeVisible();
+
+  await page.goto("/#/town-hall");
+  await expect(page.getByRole("img", { name: "Momo, encouraging you" })).toBeVisible();
+  await expect(page.locator(".focus-friend")).toHaveCSS("animation-name", "none");
 });
