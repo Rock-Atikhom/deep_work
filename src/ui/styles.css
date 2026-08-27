@@ -158,7 +158,7 @@ button:disabled {
 }
 
 .momo-town-footer a:focus-visible {
-  outline: 3px solid var(--momo-ink);
+  outline: 3px solid var(--momo-coral-focus);
   outline-offset: 3px;
 }
 
@@ -3187,8 +3187,7 @@ html[data-reduced-motion="true"] *::after {
   gap: 8px 12px;
 }
 
-.momo-town-hall .momo-town-hall-header a,
-.momo-town-hall .momo-town-hall-legal a {
+.momo-town-hall .momo-town-hall-header a {
   color: var(--momo-ink);
   font-weight: 900;
   text-decoration-thickness: 2px;
@@ -3380,13 +3379,6 @@ html[data-reduced-motion="true"] *::after {
 
 .momo-town-hall .momo-town-hall-data button:last-child {
   background: var(--momo-pink);
-}
-
-.momo-town-hall .momo-town-hall-legal {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 20px;
-  padding: 4px;
 }
 
 .momo-town-hall a:focus-visible,

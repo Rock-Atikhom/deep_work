@@ -220,6 +220,7 @@ function toStoredSession(session: SessionState): StoredSession {
       session.phase !== "paused" &&
       session.phase !== "notes-pause" &&
       session.phase !== "gentle-reset" &&
+      session.phase !== "quick-review" &&
       session.phase !== "reflection") ||
     session.sessionStartedAtMs === null
   ) {

@@ -79,6 +79,36 @@ async function expectFooterLinksKeyboardReachable(page: import("@playwright/test
   }
 }
 
+async function startFocusSession(page: import("@playwright/test").Page) {
+  await page.goto("/");
+  await page.getByLabel("Subject").fill("SQL");
+  await page.getByLabel("Session goal").fill("Review joins");
+  await page.getByRole("button", { name: "Start session" }).press("Enter");
+  await expect(page.getByRole("heading", { name: "Focus Stage" })).toBeVisible();
+}
+
+async function navigateFromActiveSession(
+  page: import("@playwright/test").Page,
+  destination: "Plaza" | "Town Hall",
+  restoredHeading: string | RegExp,
+  method: "click" | "keyboard",
+) {
+  const link = page.getByRole("link", { name: destination });
+  if (method === "click") {
+    await link.click();
+  } else {
+    await link.focus();
+    await page.keyboard.press("Enter");
+  }
+  await expect(
+    page.getByRole("heading", {
+      name: destination === "Plaza" ? "Momo's Plaza" : "Momo's Town Hall",
+    }),
+  ).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: restoredHeading })).toBeVisible();
+}
+
 const mobileRouteHeadings: Record<(typeof mobileRoutes)[number], string> = {
   "/#/welcome": "Make room for focused learning",
   "/#/plaza": "Momo's Plaza",
@@ -144,6 +174,45 @@ test("keeps the real focus to reward journey within Momo surfaces", async ({ pag
   await page.screenshot({ fullPage: true, path: `${acceptanceDir}/reward-mobile.png` });
   await page.setViewportSize({ height: 800, width: 1280 });
   await page.screenshot({ fullPage: true, path: `${acceptanceDir}/reward-desktop.png` });
+});
+
+test("keeps footer navigation route-first through real active session states", async ({ page }) => {
+  await startFocusSession(page);
+  await navigateFromActiveSession(page, "Town Hall", "Focus Stage", "click");
+  await navigateFromActiveSession(page, "Plaza", "Focus Stage", "keyboard");
+
+  await page.getByRole("button", { name: "End session" }).click();
+  await expect(page.getByRole("heading", { name: "Reflect on this session" })).toBeVisible();
+  await navigateFromActiveSession(page, "Town Hall", "Reflect on this session", "click");
+  await navigateFromActiveSession(page, "Plaza", "Reflect on this session", "keyboard");
+
+  await page.getByRole("button", { name: "Yes" }).click();
+  await expect(page.getByRole("heading", { name: /Momo is proud/i })).toBeVisible();
+  await navigateFromActiveSession(page, "Town Hall", /Momo is proud/i, "click");
+  await navigateFromActiveSession(page, "Plaza", /Momo is proud/i, "keyboard");
+});
+
+test("does not replace an active session from the direct Course Guard route", async ({ page }) => {
+  await startFocusSession(page);
+  await page.goto("/#/course-guard");
+  await expect(page.getByRole("heading", { name: "Keep one course close" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Begin focus session" })).toBeDisabled();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Focus Stage" })).toBeVisible();
+});
+
+test("uses coral keyboard focus for shared footer links", async ({ page }) => {
+  await page.goto("/#/plaza");
+  const link = page.getByRole("contentinfo", { name: "Momo Town footer" }).getByRole("link", {
+    name: "Plaza",
+  });
+  await page.evaluate(() => document.body.focus());
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    await page.keyboard.press("Tab");
+    if (await link.evaluate((element) => element === document.activeElement)) break;
+  }
+  await expect(link).toBeFocused();
+  await expect(link).toHaveCSS("outline-color", "rgb(185, 79, 86)");
 });
 
 test("uses one Momo Town footer on every route", async ({ page }) => {

@@ -715,6 +715,7 @@ export function App({
       session.phase === "paused" ||
       session.phase === "notes-pause" ||
       session.phase === "gentle-reset" ||
+      session.phase === "quick-review" ||
       session.phase === "reflection"
     ) {
       queuePersistence((repository) => repository.saveActiveSession(session));
@@ -747,7 +748,15 @@ export function App({
     );
   }, [awarenessPaused]);
 
+  const activeSession =
+    session.phase === "focus" ||
+    session.phase === "paused" ||
+    session.phase === "notes-pause" ||
+    session.phase === "gentle-reset" ||
+    session.phase === "quick-review" ||
+    session.phase === "reflection";
   const canStart =
+    !activeSession &&
     form.subject.trim().length > 0 &&
     form.goal.trim().length > 0 &&
     (activeCameraMode === "disabled" || cameraStage === "ready");
@@ -808,14 +817,16 @@ export function App({
       subject: form.subject.trim(),
     };
 
-    setNowMs(Date.now());
+    const startedAtMs = Date.now();
+    setNowMs(startedAtMs);
     setSession(
       reduceSession(createSessionState(config), {
-        atMs: Date.now(),
+        atMs: startedAtMs,
         sessionId: newSessionId(),
         type: "START",
       }),
     );
+    window.location.hash = "#/focus";
   }
 
   function chooseReflection(value: Reflection) {
@@ -991,7 +1002,7 @@ export function App({
     );
   }
 
-  if (session.phase === "setup" && route === "plaza") {
+  if (route === "plaza") {
     return (
       <>
         <PlazaHomeScreen
@@ -1011,7 +1022,7 @@ export function App({
     );
   }
 
-  if (session.phase === "setup" && route === "archive") {
+  if (route === "archive") {
     return (
       <>
         <main className="momo-memory-garden-route">
@@ -1037,7 +1048,7 @@ export function App({
     );
   }
 
-  if (session.phase === "setup" && route === "wardrobe") {
+  if (route === "wardrobe") {
     return (
       <>
         <WardrobeScreen
@@ -1053,7 +1064,7 @@ export function App({
     );
   }
 
-  if (session.phase === "setup" && route === "town-hall") {
+  if (route === "town-hall") {
     return (
       <>
         <MomoTownHallScreen
@@ -1091,7 +1102,7 @@ export function App({
     );
   }
 
-  if (session.phase === "setup" && route === "course-guard") {
+  if (route === "course-guard") {
     return (
       <>
         <CourseGuardScreen

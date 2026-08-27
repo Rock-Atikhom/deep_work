@@ -111,6 +111,10 @@ describe("camera-free study journey", () => {
     expect(
       within(calibrationScreen!).getByRole("button", { name: "Continue without camera" }),
     ).toBeVisible();
+    const footer = screen.getByRole("contentinfo", { name: "Momo Town footer" });
+    expect(footer.tagName).toBe("FOOTER");
+    expect(footer).not.toHaveAttribute("role", "contentinfo");
+    expect(footer.closest("main")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Start calibration" }));
     vision.emitCalibrationReady();
     await waitFor(() => expect(screen.getByText(/Camera awareness is ready/)).toBeInTheDocument());
