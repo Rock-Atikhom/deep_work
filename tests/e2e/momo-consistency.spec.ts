@@ -167,9 +167,12 @@ test("uses one accessible Back to Plaza control on every Plaza destination", asy
       await expect(link).toHaveAttribute("href", "#/plaza");
       await expect(link).toHaveCSS("min-height", "46px");
       await expect(link).toHaveCSS("border-top-width", "3px");
+      const box = await link.boundingBox();
       if (viewport.label === "desktop") {
-        const box = await link.boundingBox();
         expect(box?.width ?? 0).toBeLessThan(400);
+      }
+      if (viewport.label === "mobile" && path === "/#/archive") {
+        expect(box?.width ?? 0).toBeGreaterThanOrEqual((page.viewportSize()?.width ?? 0) - 48);
       }
       await link.focus();
       await expect(link).toBeFocused();

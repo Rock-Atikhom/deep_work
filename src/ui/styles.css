@@ -1118,7 +1118,6 @@ h2 {
 }
 
 .momo-memory-garden-route > .momo-back-link {
-  width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
   font-family: "Arial Rounded MT Bold", "Trebuchet MS", "IBM Plex Sans", sans-serif;
 }
