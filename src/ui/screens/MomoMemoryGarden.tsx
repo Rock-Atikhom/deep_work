@@ -53,7 +53,16 @@ export function MomoMemoryGarden({
               ))}
             </ul>
           ) : (
-            <p className="momo-empty-progress">No completed sessions yet.</p>
+            <div className="momo-empty-sprouts">
+              <span className="momo-empty-sprouts-mark" aria-hidden="true">
+                ✦
+              </span>
+              <h4>Your first sprout is waiting</h4>
+              <p>Complete a focus session and choose a reflection to grow it here.</p>
+              <a className="momo-empty-sprouts-link" href="#/plaza">
+                Start a focus session
+              </a>
+            </div>
           )}
         </section>
       </div>

@@ -93,6 +93,36 @@ describe("MomoMemoryGarden", () => {
     expect(onDelete).toHaveBeenCalledOnce();
   });
 
+  it("guides a new gardener toward the first focus session", () => {
+    render(
+      <MomoMemoryGarden
+        onClearHistory={() => undefined}
+        onDelete={() => undefined}
+        onExport={() => undefined}
+        snapshot={{
+          active: null,
+          decks: [],
+          garden: { plants: [], schemaVersion: 1, totalSeeds: 0 },
+          plaza: createInitialPlazaState(),
+          preferences: { durationMs: 25 * 60_000, selectedDeckId: null, sound: "silent" },
+          schemaVersion: 1,
+          summaries: [],
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Your first sprout is waiting" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Complete a focus session and choose a reflection/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Start a focus session" })).toHaveAttribute(
+      "href",
+      "#/plaza",
+    );
+  });
+
   it("disables Clear session history when no Course Guard sessions exist", () => {
     const { getByRole } = render(
       <MomoMemoryGarden
