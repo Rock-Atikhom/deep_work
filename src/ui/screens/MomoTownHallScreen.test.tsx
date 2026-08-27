@@ -118,6 +118,10 @@ describe("MomoTownHallScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete my data" }));
 
     expect(screen.getByRole("heading", { name: "Momo's Town Hall" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "← Back to Plaza" })).toHaveAttribute(
+      "href",
+      "#/plaza",
+    );
     expect(screen.getByRole("img", { name: /Momo, encouraging/i })).toBeInTheDocument();
     expect(screen.getByText("Extension connected")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(

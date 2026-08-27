@@ -22,6 +22,7 @@ import { QuickReviewScreen } from "../ui/screens/QuickReviewScreen";
 import { ReflectionScreen } from "../ui/screens/ReflectionScreen";
 import { SettingsScreen } from "../ui/screens/SettingsScreen";
 import { DeckLibraryScreen } from "../ui/screens/DeckLibraryScreen";
+import { MomoBackLink } from "../ui/components/MomoBackLink";
 import { StaticSkeleton } from "../ui/components/StaticSkeleton";
 import { GentleResetDialog } from "../ui/components/GentleResetDialog";
 import { LegalFooter, LegalScreen } from "../ui/screens/LegalScreen";
@@ -1026,9 +1027,7 @@ export function App({
     return (
       <>
         <main className="momo-memory-garden-route">
-          <a className="momo-memory-garden-route-back" href="#/plaza">
-            ← Plaza
-          </a>
+          <MomoBackLink />
           <MomoMemoryGarden
             onClearHistory={() =>
               setPlazaState((current) =>

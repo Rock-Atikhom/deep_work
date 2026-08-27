@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { CourseGuardSnapshot } from "../../course-guard/bridge-contract";
+import { MomoBackLink } from "../components/MomoBackLink";
 
 export interface CourseGuardScreenProps {
   children?: ReactNode;
@@ -49,7 +50,7 @@ export function CourseGuardScreen({
       aria-labelledby="course-guard-screen-title"
     >
       <header className="plaza-inner-header">
-        <a href="#/plaza">← Plaza</a>
+        <MomoBackLink />
         <div>
           <p className="plaza-eyebrow">Course Guard station</p>
           <h1 id="course-guard-screen-title">Keep one course close</h1>

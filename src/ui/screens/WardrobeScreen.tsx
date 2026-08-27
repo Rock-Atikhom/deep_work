@@ -1,6 +1,7 @@
 import { PLAZA_COSMETICS } from "../../plaza/plaza-rewards";
 import type { CompanionState } from "../../plaza/plaza-types";
 import { FocusFriend } from "../components/FocusFriend";
+import { MomoBackLink } from "../components/MomoBackLink";
 
 export interface WardrobeScreenProps {
   companion: CompanionState;
@@ -11,7 +12,7 @@ export function WardrobeScreen({ companion, onEquip }: WardrobeScreenProps) {
   return (
     <main className="plaza-inner-screen momo-wardrobe" aria-labelledby="wardrobe-title">
       <header className="plaza-inner-header">
-        <a href="#/plaza">← Plaza</a>
+        <MomoBackLink />
         <div>
           <p className="plaza-eyebrow">Wardrobe & Plaza</p>
           <h1 id="wardrobe-title">Make the town feel like yours</h1>
