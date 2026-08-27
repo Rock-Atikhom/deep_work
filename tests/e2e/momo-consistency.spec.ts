@@ -10,6 +10,8 @@ const directRoutes = [
   { heading: "Terms of Use", path: "/#/terms" },
 ] as const;
 
+const backLinkRoutes = ["/#/archive", "/#/town-hall", "/#/wardrobe", "/#/course-guard"] as const;
+
 const mobileRoutes = [
   "/#/welcome",
   "/#/plaza",
@@ -153,6 +155,52 @@ test("keeps direct Momo destinations and Town Notices visibly framed", async ({ 
   await page.goto("/#/wardrobe");
   await expect(page.getByText("Momo's current look")).toBeVisible();
   await expect(page.getByRole("button", { name: "Locked" }).first()).toBeDisabled();
+});
+
+test("uses one accessible Back to Plaza control on every Plaza destination", async ({ page }) => {
+  for (const viewport of footerViewports) {
+    await page.setViewportSize(viewport.size);
+    for (const path of backLinkRoutes) {
+      await page.goto(path);
+      const link = page.getByRole("link", { name: "← Back to Plaza" });
+      await expect(link).toHaveCount(1);
+      await expect(link).toHaveAttribute("href", "#/plaza");
+      await expect(link).toHaveCSS("min-height", "46px");
+      await expect(link).toHaveCSS("border-top-width", "3px");
+      await link.focus();
+      await expect(link).toBeFocused();
+      await expect(link).toHaveCSS("outline-width", "3px");
+    }
+  }
+});
+
+test("keeps Town Hall in the Plaza visual language", async ({ page }) => {
+  await page.goto("/#/town-hall");
+  await expect(page.locator(".momo-town-hall-header")).toHaveCSS(
+    "background-color",
+    "rgb(157, 220, 255)",
+  );
+  await expect(page.locator(".momo-town-hall-hero")).toHaveCSS(
+    "background-color",
+    "rgb(255, 249, 234)",
+  );
+  await expect(page.locator(".momo-town-hall-preferences")).toHaveCSS(
+    "background-color",
+    "rgb(255, 217, 90)",
+  );
+  await expect(page.locator(".momo-town-hall-data")).toHaveCSS(
+    "background-color",
+    "rgb(121, 199, 121)",
+  );
+});
+
+test("gives an empty Archive a first-sprout next step", async ({ page }) => {
+  await page.goto("/#/archive");
+  await expect(page.getByRole("heading", { name: "Your first sprout is waiting" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start a focus session" })).toHaveAttribute(
+    "href",
+    "#/plaza",
+  );
 });
 
 test("keeps the real focus to reward journey within Momo surfaces", async ({ page }) => {
