@@ -328,11 +328,13 @@ test("audits the shared footer and branded favicon across every route and viewpo
     }
   }
 
-  await expect(page.locator('link[rel~="icon"]')).toHaveAttribute("href", "/momo-favicon.svg");
-  const faviconResponse = await page.evaluate(async () => {
-    const response = await fetch("/momo-favicon.svg");
+  const favicon = page.locator('link[rel~="icon"]');
+  const faviconHref = await favicon.getAttribute("href");
+  expect(faviconHref).toMatch(/\/momo-favicon\.svg$/);
+  const faviconResponse = await page.evaluate(async (href) => {
+    const response = await fetch(href ?? "");
     return { contentType: response.headers.get("content-type"), status: response.status };
-  });
+  }, faviconHref);
   expect(faviconResponse.status).toBe(200);
   expect(faviconResponse.contentType).toContain("image/svg+xml");
   expect(pageErrors).toEqual([]);
@@ -419,7 +421,7 @@ test("personalizes the Focus Friend name and color style from Town Hall", async 
     page.locator(".momo-town-hall .focus-friend-color-blossom .focus-friend-body"),
   ).toHaveCSS("background-color", "rgb(255, 159, 196)");
 
-  await page.goto("/#/plaza");
+  await page.getByRole("link", { name: "← Back to Plaza" }).click();
   await expect(
     page.locator(".plaza-shell .focus-friend-color-blossom .focus-friend-body"),
   ).toHaveCSS("background-color", "rgb(255, 159, 196)");
