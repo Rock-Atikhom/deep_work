@@ -50,7 +50,7 @@ CI=1 npx playwright test -c tests/e2e/playwright.config.ts \
 
 Expected: FAIL on the desktop Archive route because the current link width is approximately 1120px.
 
-- [ ] **Step 3: Remove the desktop width expansion**
+- [x] **Step 3: Remove the desktop width expansion**
 
 In `src/ui/styles.css`, change the Archive route rule from:
 
@@ -79,11 +79,11 @@ Do not change the mobile override:
 }
 ```
 
-- [ ] **Step 4: Run the focused test to verify it passes**
+- [x] **Step 4: Run the focused test to verify it passes**
 
 Run the same focused command. Expected: the Archive and all other Plaza destination back links pass desktop compactness, 46px minimum height, 3px border, focus, and `#/plaza` assertions at both viewports.
 
-- [ ] **Step 5: Run the complete verification suite**
+- [x] **Step 5: Run the complete verification suite**
 
 From the worktree, run:
 
@@ -99,7 +99,7 @@ CI=1 npx playwright test --pass-with-no-tests --config=tests/e2e
 
 Expected: all commands exit successfully; unit tests remain 49 files / 219 tests and Playwright remains 25 passing tests.
 
-- [ ] **Step 6: Review the diff and commit**
+- [x] **Step 6: Review the diff and commit**
 
 Run:
 
