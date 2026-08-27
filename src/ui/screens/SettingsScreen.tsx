@@ -92,10 +92,6 @@ export function SettingsScreen({
           Delete my data
         </button>
       </div>
-      <nav className="legal-links" aria-label="Legal">
-        <a href="#/privacy">Privacy Policy</a>
-        <a href="#/terms">Terms of Use</a>
-      </nav>
     </section>
   );
 }

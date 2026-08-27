@@ -22,6 +22,7 @@ import { QuickReviewScreen } from "../ui/screens/QuickReviewScreen";
 import { ReflectionScreen } from "../ui/screens/ReflectionScreen";
 import { SettingsScreen } from "../ui/screens/SettingsScreen";
 import { DeckLibraryScreen } from "../ui/screens/DeckLibraryScreen";
+import { MomoBackLink } from "../ui/components/MomoBackLink";
 import { StaticSkeleton } from "../ui/components/StaticSkeleton";
 import { GentleResetDialog } from "../ui/components/GentleResetDialog";
 import { LegalFooter, LegalScreen } from "../ui/screens/LegalScreen";
@@ -715,6 +716,7 @@ export function App({
       session.phase === "paused" ||
       session.phase === "notes-pause" ||
       session.phase === "gentle-reset" ||
+      session.phase === "quick-review" ||
       session.phase === "reflection"
     ) {
       queuePersistence((repository) => repository.saveActiveSession(session));
@@ -747,7 +749,15 @@ export function App({
     );
   }, [awarenessPaused]);
 
+  const activeSession =
+    session.phase === "focus" ||
+    session.phase === "paused" ||
+    session.phase === "notes-pause" ||
+    session.phase === "gentle-reset" ||
+    session.phase === "quick-review" ||
+    session.phase === "reflection";
   const canStart =
+    !activeSession &&
     form.subject.trim().length > 0 &&
     form.goal.trim().length > 0 &&
     (activeCameraMode === "disabled" || cameraStage === "ready");
@@ -808,14 +818,16 @@ export function App({
       subject: form.subject.trim(),
     };
 
-    setNowMs(Date.now());
+    const startedAtMs = Date.now();
+    setNowMs(startedAtMs);
     setSession(
       reduceSession(createSessionState(config), {
-        atMs: Date.now(),
+        atMs: startedAtMs,
         sessionId: newSessionId(),
         type: "START",
       }),
     );
+    window.location.hash = "#/focus";
   }
 
   function chooseReflection(value: Reflection) {
@@ -982,65 +994,76 @@ export function App({
 
   if (route === "privacy" || route === "terms") {
     return (
-      <main className="momo-town-notice-shell">
-        <LegalScreen document={route} />
+      <>
+        <main className="momo-town-notice-shell">
+          <LegalScreen document={route} />
+        </main>
         <LegalFooter />
-      </main>
+      </>
     );
   }
 
-  if (session.phase === "setup" && route === "plaza") {
+  if (route === "plaza") {
     return (
-      <PlazaHomeScreen
-        companion={plazaState.companion}
-        connection={courseGuardConnection}
-        guardPhase={courseGuardState?.phase ?? "idle"}
-        onCare={(action) =>
-          setPlazaState((current) => reducePlazaState(current, { action, type: "CARE_ACTION" }))
-        }
-        onStartFocus={() => {
-          window.location.hash = "#/course-guard";
-        }}
-        recentSessions={plazaState.courseGuardSessions}
-      />
-    );
-  }
-
-  if (session.phase === "setup" && route === "archive") {
-    return (
-      <main className="momo-memory-garden-route">
-        <a className="momo-memory-garden-route-back" href="#/plaza">
-          ← Plaza
-        </a>
-        <MomoMemoryGarden
-          onClearHistory={() =>
-            setPlazaState((current) => reducePlazaState(current, { type: "CLEAR_SESSION_HISTORY" }))
+      <>
+        <PlazaHomeScreen
+          companion={plazaState.companion}
+          connection={courseGuardConnection}
+          guardPhase={courseGuardState?.phase ?? "idle"}
+          onCare={(action) =>
+            setPlazaState((current) => reducePlazaState(current, { action, type: "CARE_ACTION" }))
           }
-          onDelete={() => setDeleteDialogOpen(true)}
-          onExport={exportData}
-          snapshot={snapshot}
+          onStartFocus={() => {
+            window.location.hash = "#/course-guard";
+          }}
+          recentSessions={plazaState.courseGuardSessions}
         />
-        {deleteDialogOpen && (
-          <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
-        )}
-      </main>
+        <LegalFooter />
+      </>
     );
   }
 
-  if (session.phase === "setup" && route === "wardrobe") {
+  if (route === "archive") {
     return (
-      <WardrobeScreen
-        companion={plazaState.companion}
-        onEquip={(cosmeticId) =>
-          setPlazaState((current) =>
-            reducePlazaState(current, { cosmeticId, type: "EQUIP_COSMETIC" }),
-          )
-        }
-      />
+      <>
+        <main className="momo-memory-garden-route">
+          <MomoBackLink />
+          <MomoMemoryGarden
+            onClearHistory={() =>
+              setPlazaState((current) =>
+                reducePlazaState(current, { type: "CLEAR_SESSION_HISTORY" }),
+              )
+            }
+            onDelete={() => setDeleteDialogOpen(true)}
+            onExport={exportData}
+            snapshot={snapshot}
+          />
+          {deleteDialogOpen && (
+            <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
+          )}
+        </main>
+        <LegalFooter />
+      </>
     );
   }
 
-  if (session.phase === "setup" && route === "town-hall") {
+  if (route === "wardrobe") {
+    return (
+      <>
+        <WardrobeScreen
+          companion={plazaState.companion}
+          onEquip={(cosmeticId) =>
+            setPlazaState((current) =>
+              reducePlazaState(current, { cosmeticId, type: "EQUIP_COSMETIC" }),
+            )
+          }
+        />
+        <LegalFooter />
+      </>
+    );
+  }
+
+  if (route === "town-hall") {
     return (
       <>
         <MomoTownHallScreen
@@ -1073,278 +1096,42 @@ export function App({
         {deleteDialogOpen && (
           <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
         )}
+        <LegalFooter />
       </>
     );
   }
 
-  if (session.phase === "setup" && route === "course-guard") {
+  if (route === "course-guard") {
     return (
-      <CourseGuardScreen
-        commandPending={courseGuardCommandPending}
-        commandStatus={courseGuardCommandStatus}
-        connection={courseGuardConnection}
-        courseUrl={courseUrl}
-        courseWebsite={courseWebsite}
-        onCourseUrlChange={(value) => {
-          setCourseUrl(value);
-          setCourseGuardPermissionNeeded(false);
-          setCourseGuardCommandStatus(null);
-        }}
-        onStart={() => void startCourseGuard()}
-        onStop={() => void stopCourseGuard()}
-        permissionNeeded={courseGuardPermissionNeeded}
-        state={courseGuardState}
-        startDisabled={!canStartCourseGuard}
-      >
-        <form className="plaza-form-panel plaza-study-form" onSubmit={startSession}>
-          <div className="plaza-section-heading">
-            <div>
-              <p className="section-kicker">Study intention</p>
-              <h2>Give this session a small direction</h2>
-            </div>
-          </div>
-          <label className="field" htmlFor="plaza-subject">
-            <span>Subject</span>
-            <input
-              id="plaza-subject"
-              value={form.subject}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, subject: event.target.value }))
-              }
-              placeholder="For example, SQL"
-              autoComplete="off"
-            />
-          </label>
-          <label className="field" htmlFor="plaza-study-goal">
-            <span>Study goal</span>
-            <textarea
-              id="plaza-study-goal"
-              aria-label="Plaza session goal"
-              value={form.goal}
-              onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))}
-              placeholder="What would you like to understand or finish?"
-              rows={3}
-            />
-          </label>
-          <fieldset className="choice-group">
-            <legend>Time available</legend>
-            <div className="choice-row">
-              {[25, 50].map((minutes) => (
-                <label className="choice" key={minutes}>
-                  <input
-                    type="radio"
-                    name="plaza-duration"
-                    checked={form.durationMs === minutes * MINUTE}
-                    onChange={() =>
-                      setForm((current) => ({ ...current, durationMs: minutes * MINUTE }))
-                    }
-                  />
-                  <span>{minutes} minutes</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <button className="plaza-primary-button" type="submit" disabled={!canStart}>
-            Begin focus session
-          </button>
-        </form>
-      </CourseGuardScreen>
-    );
-  }
-
-  if (session.phase === "setup") {
-    return (
-      <main className="page-shell momo-plaza-gate">
-        <section className="setup-layout" aria-labelledby="setup-title">
-          <div className="intro-column">
-            <div className="product-row">
-              <p className="product-mark">Deep Work Companion</p>
-              <button
-                className="text-button settings-toggle"
-                type="button"
-                onClick={() => setSettingsOpen((open) => !open)}
-              >
-                {settingsOpen ? "Close settings" : "Open settings"}
-              </button>
-            </div>
-            <nav className="legal-links" aria-label="Legal">
-              <a href="#/privacy">Privacy Policy</a>
-              <a href="#/terms">Terms of Use</a>
-            </nav>
-            <h1 id="setup-title">Make room for focused learning</h1>
-            <p className="intro-copy">
-              Choose one subject and one goal. The timer keeps the next study block clear.
-            </p>
-            <div className="mode-note" role="note">
-              <span className="mode-note-label">Today&apos;s mode</span>
-              <strong>
-                {activeCameraMode === "enabled" ? "Private Camera Awareness" : "Timer-Only Session"}
-              </strong>
-              <span>
-                {activeCameraMode === "enabled"
-                  ? "Camera analysis stays on this device and can be stopped at any time."
-                  : "No camera analysis is used in this session."}
-              </span>
-              {activeCameraMode === "disabled" ? (
-                <>
-                  <button
-                    className="primary-button mode-choice-button"
-                    type="button"
-                    onClick={chooseCamera}
-                  >
-                    Use private camera awareness
-                  </button>
-                  <button
-                    className="secondary-button mode-choice-button"
-                    type="button"
-                    onClick={continueWithoutCamera}
-                  >
-                    Continue without camera
-                  </button>
-                </>
-              ) : (
-                <button
-                  className="secondary-button mode-choice-button"
-                  type="button"
-                  onClick={continueWithoutCamera}
-                >
-                  Continue without camera
-                </button>
-              )}
-            </div>
-            <CourseGuardConnectionStatus
-              connection={courseGuardConnection}
-              permissionNeeded={courseGuardPermissionNeeded}
-              state={courseGuardState}
-            />
-            {activeCameraMode === "enabled" && (
-              <section className="camera-setup-panel" aria-labelledby="camera-setup-title">
-                <h2 id="camera-setup-title">Private camera awareness</h2>
-                {cameraStage === "consent" && (
-                  <>
-                    <p>
-                      Allow your laptop camera only if you want local awareness prompts during this
-                      study block.
-                    </p>
-                    <button className="primary-button" type="button" onClick={allowCamera}>
-                      Allow camera awareness
-                    </button>
-                  </>
-                )}
-                {(cameraStage === "starting" || cameraStage === "preparing") && (
-                  <StaticSkeleton
-                    label={
-                      cameraStage === "preparing"
-                        ? "Preparing private camera analysis"
-                        : "Starting camera"
-                    }
-                  />
-                )}
-                {(cameraStage === "calibration" || cameraStage === "calibrating") && (
-                  <CalibrationScreen
-                    onContinueWithoutCamera={continueWithoutCamera}
-                    onStart={startCalibration}
-                    preparing={cameraStage === "calibrating"}
-                    progress={calibrationProgress}
-                  />
-                )}
-                {cameraStage === "ready" && (
-                  <p role="status">Camera awareness is ready. Your baseline is set.</p>
-                )}
-                {cameraStage === "error" && (
-                  <>
-                    <p role="alert">
-                      Camera awareness could not start. Your timer-only session is still available.
-                    </p>
-                    <button className="secondary-button" type="button" onClick={retryCamera}>
-                      Retry camera awareness
-                    </button>
-                  </>
-                )}
-                {cameraVideoRef && (
-                  <video
-                    ref={cameraVideoRef}
-                    className="camera-video"
-                    muted
-                    playsInline
-                    aria-hidden="true"
-                  />
-                )}
-              </section>
-            )}
-          </div>
-
-          <form className="intention-form" onSubmit={startSession}>
-            <section className="course-guard-panel" aria-labelledby="course-guard-title">
-              <div className="form-heading">
-                <h2 id="course-guard-title">Course Guard</h2>
-                <p>Keep one online course easy to return to when another website pulls you away.</p>
+      <>
+        <CourseGuardScreen
+          commandPending={courseGuardCommandPending}
+          commandStatus={courseGuardCommandStatus}
+          connection={courseGuardConnection}
+          courseUrl={courseUrl}
+          courseWebsite={courseWebsite}
+          onCourseUrlChange={(value) => {
+            setCourseUrl(value);
+            setCourseGuardPermissionNeeded(false);
+            setCourseGuardCommandStatus(null);
+          }}
+          onStart={() => void startCourseGuard()}
+          onStop={() => void stopCourseGuard()}
+          permissionNeeded={courseGuardPermissionNeeded}
+          state={courseGuardState}
+          startDisabled={!canStartCourseGuard}
+        >
+          <form className="plaza-form-panel plaza-study-form" onSubmit={startSession}>
+            <div className="plaza-section-heading">
+              <div>
+                <p className="section-kicker">Study intention</p>
+                <h2>Give this session a small direction</h2>
               </div>
-              <label className="field" htmlFor="course-url">
-                <span>Course URL</span>
-                <input
-                  id="course-url"
-                  type="url"
-                  value={courseUrl}
-                  onChange={(event) => {
-                    setCourseUrl(event.target.value);
-                    setCourseGuardPermissionNeeded(false);
-                    setCourseGuardCommandStatus(null);
-                  }}
-                  placeholder="https://learn.example.com/lesson"
-                  autoComplete="url"
-                  inputMode="url"
-                />
-              </label>
-              {normalizedCourseUrl && !isCourseGuardCourseUrl(normalizedCourseUrl) && (
-                <p className="course-guard-command-error" role="alert">
-                  Enter a valid HTTP(S) Course URL.
-                </p>
-              )}
-              {courseWebsite && (
-                <p className="course-website" role="status">
-                  Course Website: <strong>{courseWebsite}</strong>
-                </p>
-              )}
-              <div className="course-guard-actions">
-                {courseGuardState?.phase === "watching" ||
-                courseGuardState?.phase === "interruption" ? (
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => void stopCourseGuard()}
-                    disabled={courseGuardCommandPending || courseGuardConnection === "disconnected"}
-                  >
-                    Stop Course Guard
-                  </button>
-                ) : (
-                  <button
-                    className="primary-button"
-                    type="button"
-                    onClick={() => void startCourseGuard()}
-                    disabled={!canStartCourseGuard}
-                  >
-                    Start Course Guard
-                  </button>
-                )}
-              </div>
-              {courseGuardCommandStatus && (
-                <p
-                  className={`course-guard-command-${courseGuardCommandStatus.kind}`}
-                  role={courseGuardCommandStatus.kind === "error" ? "alert" : "status"}
-                >
-                  {courseGuardCommandStatus.text}
-                </p>
-              )}
-            </section>
-            <div className="form-heading">
-              <h2>Set your intention</h2>
-              <p>A small, specific goal gives the session somewhere to return to.</p>
             </div>
-
-            <label className="field">
+            <label className="field" htmlFor="plaza-subject">
               <span>Subject</span>
               <input
+                id="plaza-subject"
                 value={form.subject}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, subject: event.target.value }))
@@ -1353,12 +1140,11 @@ export function App({
                 autoComplete="off"
               />
             </label>
-
-            <label className="field" htmlFor="study-goal">
+            <label className="field" htmlFor="plaza-study-goal">
               <span>Study goal</span>
               <textarea
-                id="study-goal"
-                aria-label="Session goal"
+                id="plaza-study-goal"
+                aria-label="Plaza session goal"
                 value={form.goal}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, goal: event.target.value }))
@@ -1367,10 +1153,6 @@ export function App({
                 rows={3}
               />
             </label>
-            <label className="sr-only" htmlFor="study-goal">
-              Session goal
-            </label>
-
             <fieldset className="choice-group">
               <legend>Time available</legend>
               <div className="choice-row">
@@ -1378,7 +1160,7 @@ export function App({
                   <label className="choice" key={minutes}>
                     <input
                       type="radio"
-                      name="duration"
+                      name="plaza-duration"
                       checked={form.durationMs === minutes * MINUTE}
                       onChange={() =>
                         setForm((current) => ({ ...current, durationMs: minutes * MINUTE }))
@@ -1388,182 +1170,438 @@ export function App({
                   </label>
                 ))}
               </div>
-              <label className="field custom-duration">
-                <span>Custom minutes</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={180}
-                  value={
-                    form.durationMs !== 25 * MINUTE && form.durationMs !== 50 * MINUTE
-                      ? form.durationMs / MINUTE
-                      : ""
-                  }
-                  onChange={(event) => {
-                    const minutes = Number(event.target.value);
-                    setForm((current) => ({
-                      ...current,
-                      durationMs:
-                        Number.isFinite(minutes) && minutes > 0
-                          ? minutes * MINUTE
-                          : current.durationMs,
-                    }));
-                  }}
-                  placeholder="Minutes"
-                  inputMode="numeric"
-                />
-              </label>
             </fieldset>
-
-            <fieldset className="choice-group">
-              <legend>Sound</legend>
-              <div className="choice-row">
-                {(["silent", "soft", "standard"] as const).map((sound: SoundPreference) => (
-                  <label className="choice" key={sound}>
-                    <input
-                      type="radio"
-                      name="sound"
-                      checked={form.sound === sound}
-                      onChange={() => setForm((current) => ({ ...current, sound }))}
-                    />
-                    <span>{sound === "silent" ? "Off" : capitalize(sound)}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <button className="primary-button" type="submit" disabled={!canStart}>
+            <button className="plaza-primary-button" type="submit" disabled={!canStart}>
               Begin focus session
             </button>
-            <button className="sr-only" type="submit" disabled={!canStart}>
-              Start session
-            </button>
-            {storageStatus === "loading" && (
-              <p className="storage-status" role="status">
-                Restoring your local session...
-              </p>
-            )}
-            {storageStatus === "unavailable" && (
-              <p className="storage-status" role="status">
-                Local saving is unavailable. This session will still run in memory.
-              </p>
-            )}
-            <p className="form-footnote">You can pause or end the session whenever you need.</p>
           </form>
-        </section>
-        <button
-          className="text-button study-tools-toggle"
-          type="button"
-          aria-expanded={studyToolsOpen}
-          onClick={() => setStudyToolsOpen((open) => !open)}
-        >
-          {studyToolsOpen ? "Hide study tools" : "More study tools"}
-        </button>
-        {settingsOpen && (
-          <SettingsScreen
-            durationMs={form.durationMs}
-            onDeleteData={() => setDeleteDialogOpen(true)}
-            onDurationChange={(durationMs) => setForm((current) => ({ ...current, durationMs }))}
-            onExportData={exportData}
-            onPresetChange={(preset: PresetName) => setForm((current) => ({ ...current, preset }))}
-            onReset={resetSettings}
-            onSoundChange={(sound) => setForm((current) => ({ ...current, sound }))}
-            onReducedMotionChange={setReducedMotion}
-            preset={form.preset ?? "balanced"}
-            reducedMotion={reducedMotion}
-            sound={form.sound}
-          />
-        )}
-        {deleteStatus && (
-          <p className="data-status" role="status">
-            {deleteStatus}
-          </p>
-        )}
-        {studyToolsOpen && (
-          <>
-            <DeckWorkspace
-              decks={snapshot.decks}
-              draft={deckDraft}
-              message={deckMessage}
-              onAddQuestion={addQuestionToDraft}
-              onDelete={deleteDeck}
-              onDraftChange={setDeckDraft}
-              onExport={exportDeck}
-              onImport={importDeck}
-              onNew={startNewDeck}
-              onSave={saveDeckDraft}
-              onSelect={selectDeck}
-              selectedDeckId={selectedDeckId}
-            />
-            <MomoMemoryGarden
-              onClearHistory={() =>
-                setPlazaState((current) =>
-                  reducePlazaState(current, { type: "CLEAR_SESSION_HISTORY" }),
-                )
-              }
-              onDelete={() => setDeleteDialogOpen(true)}
-              onExport={exportData}
-              snapshot={snapshot}
-            />
-          </>
-        )}
-        {deleteDialogOpen && (
-          <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
-        )}
+        </CourseGuardScreen>
         <LegalFooter />
-      </main>
+      </>
+    );
+  }
+
+  if (session.phase === "setup") {
+    return (
+      <>
+        <main className="page-shell momo-plaza-gate">
+          <section className="setup-layout" aria-labelledby="setup-title">
+            <div className="intro-column">
+              <div className="product-row">
+                <p className="product-mark">Deep Work Companion</p>
+                <button
+                  className="text-button settings-toggle"
+                  type="button"
+                  onClick={() => setSettingsOpen((open) => !open)}
+                >
+                  {settingsOpen ? "Close settings" : "Open settings"}
+                </button>
+              </div>
+              <h1 id="setup-title">Make room for focused learning</h1>
+              <p className="intro-copy">
+                Choose one subject and one goal. The timer keeps the next study block clear.
+              </p>
+              <div className="mode-note" role="note">
+                <span className="mode-note-label">Today&apos;s mode</span>
+                <strong>
+                  {activeCameraMode === "enabled"
+                    ? "Private Camera Awareness"
+                    : "Timer-Only Session"}
+                </strong>
+                <span>
+                  {activeCameraMode === "enabled"
+                    ? "Camera analysis stays on this device and can be stopped at any time."
+                    : "No camera analysis is used in this session."}
+                </span>
+                {activeCameraMode === "disabled" ? (
+                  <>
+                    <button
+                      className="primary-button mode-choice-button"
+                      type="button"
+                      onClick={chooseCamera}
+                    >
+                      Use private camera awareness
+                    </button>
+                    <button
+                      className="secondary-button mode-choice-button"
+                      type="button"
+                      onClick={continueWithoutCamera}
+                    >
+                      Continue without camera
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="secondary-button mode-choice-button"
+                    type="button"
+                    onClick={continueWithoutCamera}
+                  >
+                    Continue without camera
+                  </button>
+                )}
+              </div>
+              <CourseGuardConnectionStatus
+                connection={courseGuardConnection}
+                permissionNeeded={courseGuardPermissionNeeded}
+                state={courseGuardState}
+              />
+              {activeCameraMode === "enabled" && (
+                <section className="camera-setup-panel" aria-labelledby="camera-setup-title">
+                  <h2 id="camera-setup-title">Private camera awareness</h2>
+                  {cameraStage === "consent" && (
+                    <>
+                      <p>
+                        Allow your laptop camera only if you want local awareness prompts during
+                        this study block.
+                      </p>
+                      <button className="primary-button" type="button" onClick={allowCamera}>
+                        Allow camera awareness
+                      </button>
+                    </>
+                  )}
+                  {(cameraStage === "starting" || cameraStage === "preparing") && (
+                    <StaticSkeleton
+                      label={
+                        cameraStage === "preparing"
+                          ? "Preparing private camera analysis"
+                          : "Starting camera"
+                      }
+                    />
+                  )}
+                  {(cameraStage === "calibration" || cameraStage === "calibrating") && (
+                    <CalibrationScreen
+                      onContinueWithoutCamera={continueWithoutCamera}
+                      onStart={startCalibration}
+                      preparing={cameraStage === "calibrating"}
+                      progress={calibrationProgress}
+                    />
+                  )}
+                  {cameraStage === "ready" && (
+                    <p role="status">Camera awareness is ready. Your baseline is set.</p>
+                  )}
+                  {cameraStage === "error" && (
+                    <>
+                      <p role="alert">
+                        Camera awareness could not start. Your timer-only session is still
+                        available.
+                      </p>
+                      <button className="secondary-button" type="button" onClick={retryCamera}>
+                        Retry camera awareness
+                      </button>
+                    </>
+                  )}
+                  {cameraVideoRef && (
+                    <video
+                      ref={cameraVideoRef}
+                      className="camera-video"
+                      muted
+                      playsInline
+                      aria-hidden="true"
+                    />
+                  )}
+                </section>
+              )}
+            </div>
+
+            <form className="intention-form" onSubmit={startSession}>
+              <section className="course-guard-panel" aria-labelledby="course-guard-title">
+                <div className="form-heading">
+                  <h2 id="course-guard-title">Course Guard</h2>
+                  <p>
+                    Keep one online course easy to return to when another website pulls you away.
+                  </p>
+                </div>
+                <label className="field" htmlFor="course-url">
+                  <span>Course URL</span>
+                  <input
+                    id="course-url"
+                    type="url"
+                    value={courseUrl}
+                    onChange={(event) => {
+                      setCourseUrl(event.target.value);
+                      setCourseGuardPermissionNeeded(false);
+                      setCourseGuardCommandStatus(null);
+                    }}
+                    placeholder="https://learn.example.com/lesson"
+                    autoComplete="url"
+                    inputMode="url"
+                  />
+                </label>
+                {normalizedCourseUrl && !isCourseGuardCourseUrl(normalizedCourseUrl) && (
+                  <p className="course-guard-command-error" role="alert">
+                    Enter a valid HTTP(S) Course URL.
+                  </p>
+                )}
+                {courseWebsite && (
+                  <p className="course-website" role="status">
+                    Course Website: <strong>{courseWebsite}</strong>
+                  </p>
+                )}
+                <div className="course-guard-actions">
+                  {courseGuardState?.phase === "watching" ||
+                  courseGuardState?.phase === "interruption" ? (
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={() => void stopCourseGuard()}
+                      disabled={
+                        courseGuardCommandPending || courseGuardConnection === "disconnected"
+                      }
+                    >
+                      Stop Course Guard
+                    </button>
+                  ) : (
+                    <button
+                      className="primary-button"
+                      type="button"
+                      onClick={() => void startCourseGuard()}
+                      disabled={!canStartCourseGuard}
+                    >
+                      Start Course Guard
+                    </button>
+                  )}
+                </div>
+                {courseGuardCommandStatus && (
+                  <p
+                    className={`course-guard-command-${courseGuardCommandStatus.kind}`}
+                    role={courseGuardCommandStatus.kind === "error" ? "alert" : "status"}
+                  >
+                    {courseGuardCommandStatus.text}
+                  </p>
+                )}
+              </section>
+              <div className="form-heading">
+                <h2>Set your intention</h2>
+                <p>A small, specific goal gives the session somewhere to return to.</p>
+              </div>
+
+              <label className="field">
+                <span>Subject</span>
+                <input
+                  value={form.subject}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, subject: event.target.value }))
+                  }
+                  placeholder="For example, SQL"
+                  autoComplete="off"
+                />
+              </label>
+
+              <label className="field" htmlFor="study-goal">
+                <span>Study goal</span>
+                <textarea
+                  id="study-goal"
+                  aria-label="Session goal"
+                  value={form.goal}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, goal: event.target.value }))
+                  }
+                  placeholder="What would you like to understand or finish?"
+                  rows={3}
+                />
+              </label>
+              <label className="sr-only" htmlFor="study-goal">
+                Session goal
+              </label>
+
+              <fieldset className="choice-group">
+                <legend>Time available</legend>
+                <div className="choice-row">
+                  {[25, 50].map((minutes) => (
+                    <label className="choice" key={minutes}>
+                      <input
+                        type="radio"
+                        name="duration"
+                        checked={form.durationMs === minutes * MINUTE}
+                        onChange={() =>
+                          setForm((current) => ({ ...current, durationMs: minutes * MINUTE }))
+                        }
+                      />
+                      <span>{minutes} minutes</span>
+                    </label>
+                  ))}
+                </div>
+                <label className="field custom-duration">
+                  <span>Custom minutes</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={180}
+                    value={
+                      form.durationMs !== 25 * MINUTE && form.durationMs !== 50 * MINUTE
+                        ? form.durationMs / MINUTE
+                        : ""
+                    }
+                    onChange={(event) => {
+                      const minutes = Number(event.target.value);
+                      setForm((current) => ({
+                        ...current,
+                        durationMs:
+                          Number.isFinite(minutes) && minutes > 0
+                            ? minutes * MINUTE
+                            : current.durationMs,
+                      }));
+                    }}
+                    placeholder="Minutes"
+                    inputMode="numeric"
+                  />
+                </label>
+              </fieldset>
+
+              <fieldset className="choice-group">
+                <legend>Sound</legend>
+                <div className="choice-row">
+                  {(["silent", "soft", "standard"] as const).map((sound: SoundPreference) => (
+                    <label className="choice" key={sound}>
+                      <input
+                        type="radio"
+                        name="sound"
+                        checked={form.sound === sound}
+                        onChange={() => setForm((current) => ({ ...current, sound }))}
+                      />
+                      <span>{sound === "silent" ? "Off" : capitalize(sound)}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <button className="primary-button" type="submit" disabled={!canStart}>
+                Begin focus session
+              </button>
+              <button className="sr-only" type="submit" disabled={!canStart}>
+                Start session
+              </button>
+              {storageStatus === "loading" && (
+                <p className="storage-status" role="status">
+                  Restoring your local session...
+                </p>
+              )}
+              {storageStatus === "unavailable" && (
+                <p className="storage-status" role="status">
+                  Local saving is unavailable. This session will still run in memory.
+                </p>
+              )}
+              <p className="form-footnote">You can pause or end the session whenever you need.</p>
+            </form>
+          </section>
+          <button
+            className="text-button study-tools-toggle"
+            type="button"
+            aria-expanded={studyToolsOpen}
+            onClick={() => setStudyToolsOpen((open) => !open)}
+          >
+            {studyToolsOpen ? "Hide study tools" : "More study tools"}
+          </button>
+          {settingsOpen && (
+            <SettingsScreen
+              durationMs={form.durationMs}
+              onDeleteData={() => setDeleteDialogOpen(true)}
+              onDurationChange={(durationMs) => setForm((current) => ({ ...current, durationMs }))}
+              onExportData={exportData}
+              onPresetChange={(preset: PresetName) =>
+                setForm((current) => ({ ...current, preset }))
+              }
+              onReset={resetSettings}
+              onSoundChange={(sound) => setForm((current) => ({ ...current, sound }))}
+              onReducedMotionChange={setReducedMotion}
+              preset={form.preset ?? "balanced"}
+              reducedMotion={reducedMotion}
+              sound={form.sound}
+            />
+          )}
+          {deleteStatus && (
+            <p className="data-status" role="status">
+              {deleteStatus}
+            </p>
+          )}
+          {studyToolsOpen && (
+            <>
+              <DeckWorkspace
+                decks={snapshot.decks}
+                draft={deckDraft}
+                message={deckMessage}
+                onAddQuestion={addQuestionToDraft}
+                onDelete={deleteDeck}
+                onDraftChange={setDeckDraft}
+                onExport={exportDeck}
+                onImport={importDeck}
+                onNew={startNewDeck}
+                onSave={saveDeckDraft}
+                onSelect={selectDeck}
+                selectedDeckId={selectedDeckId}
+              />
+              <MomoMemoryGarden
+                onClearHistory={() =>
+                  setPlazaState((current) =>
+                    reducePlazaState(current, { type: "CLEAR_SESSION_HISTORY" }),
+                  )
+                }
+                onDelete={() => setDeleteDialogOpen(true)}
+                onExport={exportData}
+                snapshot={snapshot}
+              />
+            </>
+          )}
+          {deleteDialogOpen && (
+            <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
+          )}
+        </main>
+        <LegalFooter />
+      </>
     );
   }
 
   if (session.phase === "gentle-reset") {
     return (
-      <main className="page-shell momo-study-room">
-        <section
-          ref={focusStageRef}
-          className="focus-stage"
-          aria-labelledby="focus-title"
-          tabIndex={-1}
-        >
-          <header className="focus-header">
-            <div>
-              <p className="product-mark">Deep Work Companion</p>
-              <p className="focus-subject">{session.config.subject}</p>
+      <>
+        <main className="page-shell momo-study-room">
+          <section
+            ref={focusStageRef}
+            className="focus-stage"
+            aria-labelledby="focus-title"
+            tabIndex={-1}
+          >
+            <header className="focus-header">
+              <div>
+                <p className="product-mark">Deep Work Companion</p>
+                <p className="focus-subject">{session.config.subject}</p>
+              </div>
+              <span className="status-label">Awareness event {session.awarenessCount}</span>
+            </header>
+            <div className="focus-main">
+              <p className="focus-kicker">One thing for now</p>
+              <h1 id="focus-title">Focus Stage</h1>
+              <p className="focus-goal">{session.config.goal}</p>
+              <time
+                className="timer"
+                role="timer"
+                dateTime={`PT${Math.ceil(timeRemaining / 1_000)}S`}
+                aria-label={`${formatDuration(timeRemaining)} remaining`}
+              >
+                {formatDuration(timeRemaining)}
+              </time>
+              <p className="timer-caption">Session paused for a reset</p>
             </div>
-            <span className="status-label">Awareness event {session.awarenessCount}</span>
-          </header>
-          <div className="focus-main">
-            <p className="focus-kicker">One thing for now</p>
-            <h1 id="focus-title">Focus Stage</h1>
-            <p className="focus-goal">{session.config.goal}</p>
-            <time
-              className="timer"
-              role="timer"
-              dateTime={`PT${Math.ceil(timeRemaining / 1_000)}S`}
-              aria-label={`${formatDuration(timeRemaining)} remaining`}
-            >
-              {formatDuration(timeRemaining)}
-            </time>
-            <p className="timer-caption">Session paused for a reset</p>
-          </div>
-          <GentleResetDialog
-            focusTargetRef={focusStageRef}
-            onContinue={() => {
-              dismissAwareness();
-              dispatchEvent(setSession, { type: "CONTINUE_STUDYING", atMs: Date.now() });
-            }}
-            onNotes={() => {
-              dismissAwareness();
-              dispatchEvent(setSession, { type: "TAKING_NOTES", atMs: Date.now() });
-            }}
-            onQuickReview={() => {
-              dismissAwareness();
-              dispatchEvent(setSession, { type: "OPEN_QUICK_REVIEW", atMs: Date.now() });
-            }}
-            open
-          />
-        </section>
+            <GentleResetDialog
+              focusTargetRef={focusStageRef}
+              onContinue={() => {
+                dismissAwareness();
+                dispatchEvent(setSession, { type: "CONTINUE_STUDYING", atMs: Date.now() });
+              }}
+              onNotes={() => {
+                dismissAwareness();
+                dispatchEvent(setSession, { type: "TAKING_NOTES", atMs: Date.now() });
+              }}
+              onQuickReview={() => {
+                dismissAwareness();
+                dispatchEvent(setSession, { type: "OPEN_QUICK_REVIEW", atMs: Date.now() });
+              }}
+              open
+            />
+          </section>
+        </main>
         <LegalFooter />
-      </main>
+      </>
     );
   }
 
@@ -1571,103 +1609,109 @@ export function App({
     const selectedDeck = snapshot.decks.find((deck) => deck.id === selectedDeckId);
     const reviewCard = selectedDeck?.questions[0];
     return (
-      <main className="page-shell momo-study-room">
-        <QuickReviewScreen
-          onComplete={() =>
-            dispatchEvent(setSession, { type: "COMPLETE_REVIEW", atMs: Date.now() })
-          }
-          {...(reviewCard?.explanation ? { explanation: reviewCard.explanation } : {})}
-          prompt={
-            reviewCard?.prompt ??
-            "State the next step you can explain without looking at your notes."
-          }
-        />
+      <>
+        <main className="page-shell momo-study-room">
+          <QuickReviewScreen
+            onComplete={() =>
+              dispatchEvent(setSession, { type: "COMPLETE_REVIEW", atMs: Date.now() })
+            }
+            {...(reviewCard?.explanation ? { explanation: reviewCard.explanation } : {})}
+            prompt={
+              reviewCard?.prompt ??
+              "State the next step you can explain without looking at your notes."
+            }
+          />
+        </main>
         <LegalFooter />
-      </main>
+      </>
     );
   }
 
   if (session.phase === "focus" || session.phase === "paused" || session.phase === "notes-pause") {
     const isPaused = session.phase === "paused";
     return (
-      <main className="page-shell momo-study-room">
-        <section className="focus-stage" aria-labelledby="focus-title">
-          <header className="focus-header">
-            <div>
-              <p className="product-mark">Deep Work Companion</p>
-              <p className="focus-subject">{session.config.subject}</p>
+      <>
+        <main className="page-shell momo-study-room">
+          <section className="focus-stage" aria-labelledby="focus-title">
+            <header className="focus-header">
+              <div>
+                <p className="product-mark">Deep Work Companion</p>
+                <p className="focus-subject">{session.config.subject}</p>
+              </div>
+              <span className="status-label">
+                {activeCameraMode === "disabled"
+                  ? "Camera awareness is off"
+                  : `Awareness events: ${session.awarenessCount}`}
+                <span className="sr-only">Timer-Only Session</span>
+              </span>
+            </header>
+
+            <div className="focus-main">
+              <p className="focus-kicker">One thing for now</p>
+              <h1 id="focus-title">Focus Stage</h1>
+              <p className="focus-goal">{session.config.goal}</p>
+              <time
+                className="timer"
+                role="timer"
+                dateTime={`PT${Math.ceil(timeRemaining / 1_000)}S`}
+                aria-label={`${formatDuration(timeRemaining)} remaining`}
+              >
+                {formatDuration(timeRemaining)}
+              </time>
+              <p className="timer-caption">
+                {session.phase === "notes-pause"
+                  ? "Notes pause - awareness is off"
+                  : isPaused
+                    ? "Session paused"
+                    : awarenessPaused
+                      ? "Awareness paused - keep this window visible"
+                      : "Time remaining"}
+              </p>
             </div>
-            <span className="status-label">
-              {activeCameraMode === "disabled"
-                ? "Camera awareness is off"
-                : `Awareness events: ${session.awarenessCount}`}
-              <span className="sr-only">Timer-Only Session</span>
-            </span>
-          </header>
 
-          <div className="focus-main">
-            <p className="focus-kicker">One thing for now</p>
-            <h1 id="focus-title">Focus Stage</h1>
-            <p className="focus-goal">{session.config.goal}</p>
-            <time
-              className="timer"
-              role="timer"
-              dateTime={`PT${Math.ceil(timeRemaining / 1_000)}S`}
-              aria-label={`${formatDuration(timeRemaining)} remaining`}
-            >
-              {formatDuration(timeRemaining)}
-            </time>
-            <p className="timer-caption">
-              {session.phase === "notes-pause"
-                ? "Notes pause - awareness is off"
-                : isPaused
-                  ? "Session paused"
-                  : awarenessPaused
-                    ? "Awareness paused - keep this window visible"
-                    : "Time remaining"}
-            </p>
-          </div>
-
-          <div className="focus-actions">
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() =>
-                dispatchEvent(setSession, {
-                  type: isPaused || session.phase === "notes-pause" ? "RESUME" : "PAUSE",
-                  atMs: Date.now(),
-                })
-              }
-            >
-              {isPaused || session.phase === "notes-pause" ? "Resume session" : "Pause session"}
-            </button>
-            <button
-              className="text-button"
-              type="button"
-              onClick={() => dispatchEvent(setSession, { type: "END", atMs: Date.now() })}
-            >
-              End session
-            </button>
-          </div>
-        </section>
+            <div className="focus-actions">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() =>
+                  dispatchEvent(setSession, {
+                    type: isPaused || session.phase === "notes-pause" ? "RESUME" : "PAUSE",
+                    atMs: Date.now(),
+                  })
+                }
+              >
+                {isPaused || session.phase === "notes-pause" ? "Resume session" : "Pause session"}
+              </button>
+              <button
+                className="text-button"
+                type="button"
+                onClick={() => dispatchEvent(setSession, { type: "END", atMs: Date.now() })}
+              >
+                End session
+              </button>
+            </div>
+          </section>
+        </main>
         <LegalFooter />
-      </main>
+      </>
     );
   }
 
   if (session.phase === "reflection") {
     return (
-      <main className="page-shell momo-study-room">
-        <ReflectionScreen
-          awarenessCount={session.awarenessCount}
-          focusTimeLabel={formatDuration(session.elapsedMs)}
-          goal={session.config.goal}
-          onReflect={chooseReflection}
-          quickReviewCompleted={session.quickReviewCompleted}
-          subject={session.config.subject}
-        />
+      <>
+        <main className="page-shell momo-study-room">
+          <ReflectionScreen
+            awarenessCount={session.awarenessCount}
+            focusTimeLabel={formatDuration(session.elapsedMs)}
+            goal={session.config.goal}
+            onReflect={chooseReflection}
+            quickReviewCompleted={session.quickReviewCompleted}
+            subject={session.config.subject}
+          />
+        </main>
         <LegalFooter />
-      </main>
+      </>
     );
   }
 
@@ -1682,30 +1726,32 @@ export function App({
   ).length;
 
   return (
-    <div className="momo-reward-route">
-      <SessionRewardScreen
-        companion={plazaState.companion}
-        earnedGrowth={earnedGrowth}
-        goal={session.config.goal}
-        nextUnlock={upcomingUnlock}
-        onReturnToPlaza={returnToPlaza}
-        reflection={reflectionLabel(session.reflection ?? "not-yet")}
-        rewardCount={rewardCount}
-        savedLocally={storageStatus === "ready"}
-        subject={session.config.subject}
-      />
-      <MomoMemoryGarden
-        onClearHistory={() =>
-          setPlazaState((current) => reducePlazaState(current, { type: "CLEAR_SESSION_HISTORY" }))
-        }
-        onDelete={() => setDeleteDialogOpen(true)}
-        onExport={exportData}
-        snapshot={snapshot}
-      />
-      {deleteDialogOpen && (
-        <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
-      )}
+    <>
+      <div className="momo-reward-route">
+        <SessionRewardScreen
+          companion={plazaState.companion}
+          earnedGrowth={earnedGrowth}
+          goal={session.config.goal}
+          nextUnlock={upcomingUnlock}
+          onReturnToPlaza={returnToPlaza}
+          reflection={reflectionLabel(session.reflection ?? "not-yet")}
+          rewardCount={rewardCount}
+          savedLocally={storageStatus === "ready"}
+          subject={session.config.subject}
+        />
+        <MomoMemoryGarden
+          onClearHistory={() =>
+            setPlazaState((current) => reducePlazaState(current, { type: "CLEAR_SESSION_HISTORY" }))
+          }
+          onDelete={() => setDeleteDialogOpen(true)}
+          onExport={exportData}
+          snapshot={snapshot}
+        />
+        {deleteDialogOpen && (
+          <DeleteDialog onCancel={() => setDeleteDialogOpen(false)} onConfirm={deleteAllData} />
+        )}
+      </div>
       <LegalFooter />
-    </div>
+    </>
   );
 }

@@ -108,7 +108,20 @@ const documents: Record<LegalDocument, { title: string; sections: readonly Legal
 
 export function LegalFooter() {
   return (
-    <footer className="legal-footer">
+    <footer aria-label="Momo Town footer" className="momo-town-footer">
+      <div className="momo-town-footer-brand">
+        <span aria-hidden="true" className="momo-town-footer-mark">
+          <span />
+        </span>
+        <p>
+          <strong>Momo&apos;s Learning Plaza</strong>
+          <span>Small steps stay on this device.</span>
+        </p>
+      </div>
+      <nav aria-label="Momo Town">
+        <a href="#/plaza">Plaza</a>
+        <a href="#/town-hall">Town Hall</a>
+      </nav>
       <nav aria-label="Legal">
         <a href="#/privacy">Privacy Policy</a>
         <a href="#/terms">Terms of Use</a>

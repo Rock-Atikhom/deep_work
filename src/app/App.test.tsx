@@ -13,7 +13,10 @@ describe("Timer-Only Focus Session", () => {
 
     expect(screen.getByRole("heading", { name: "Momo's Memory Garden" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /Momo sprout planter/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "← Plaza" })).toHaveAttribute("href", "#/plaza");
+    expect(screen.getByRole("link", { name: "← Back to Plaza" })).toHaveAttribute(
+      "href",
+      "#/plaza",
+    );
     expect(screen.queryByRole("heading", { name: "Your learning shelf" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Delete my data" }));

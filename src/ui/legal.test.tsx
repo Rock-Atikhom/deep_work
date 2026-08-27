@@ -1,23 +1,39 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "../app/App";
-import { LegalScreen } from "./screens/LegalScreen";
-import { WelcomeScreen } from "./screens/WelcomeScreen";
+import { LegalFooter, LegalScreen } from "./screens/LegalScreen";
 
 describe("legal pages", () => {
-  it("makes Privacy Policy and Terms of Use available from welcome, settings, and the footer", () => {
-    const { rerender } = render(<WelcomeScreen onCamera={() => {}} onTimerOnly={() => {}} />);
+  it("provides every Momo Town destination from one named footer", () => {
+    render(<LegalFooter />);
 
-    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+    const footer = screen.getByRole("contentinfo", { name: "Momo Town footer" });
+    expect(within(footer).getByRole("link", { name: "Plaza" })).toHaveAttribute("href", "#/plaza");
+    expect(within(footer).getByRole("link", { name: "Town Hall" })).toHaveAttribute(
+      "href",
+      "#/town-hall",
+    );
+    expect(within(footer).getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
       "href",
       "#/privacy",
     );
-    expect(screen.getByRole("link", { name: "Terms of Use" })).toHaveAttribute("href", "#/terms");
+    expect(within(footer).getByRole("link", { name: "Terms of Use" })).toHaveAttribute(
+      "href",
+      "#/terms",
+    );
+  });
 
-    rerender(<App />);
+  it("keeps legal destinations in the shared footer for welcome, setup, and settings", () => {
+    render(<App />);
+
+    expect(screen.getAllByRole("contentinfo", { name: "Momo Town footer" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Privacy Policy" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Terms of Use" })).toHaveLength(1);
+
     fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
-    expect(screen.getAllByRole("link", { name: "Privacy Policy" }).length).toBeGreaterThan(1);
-    expect(screen.getAllByRole("link", { name: "Terms of Use" }).length).toBeGreaterThan(1);
+    expect(screen.getAllByRole("contentinfo", { name: "Momo Town footer" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Privacy Policy" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Terms of Use" })).toHaveLength(1);
   });
 
   it("states the local-processing, storage, permission, and deletion commitments in the privacy policy", () => {

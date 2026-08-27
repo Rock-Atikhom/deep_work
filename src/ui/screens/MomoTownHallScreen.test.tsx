@@ -118,16 +118,16 @@ describe("MomoTownHallScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete my data" }));
 
     expect(screen.getByRole("heading", { name: "Momo's Town Hall" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "← Back to Plaza" })).toHaveAttribute(
+      "href",
+      "#/plaza",
+    );
     expect(screen.getByRole("img", { name: /Momo, encouraging/i })).toBeInTheDocument();
     expect(screen.getByText("Extension connected")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Your local data was deleted from this device.",
     );
-    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
-      "href",
-      "#/privacy",
-    );
-    expect(screen.getByRole("link", { name: "Terms of Use" })).toHaveAttribute("href", "#/terms");
+    expect(screen.queryByRole("navigation", { name: "Legal" })).not.toBeInTheDocument();
     expect(onDurationChange).toHaveBeenCalledWith(50 * 60_000);
     expect(onPresetChange).toHaveBeenCalledWith("strict");
     expect(onSoundChange).toHaveBeenCalledWith("soft");

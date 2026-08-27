@@ -1,7 +1,12 @@
 import "fake-indexeddb/auto";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { createSessionState, reduceSession, type SessionConfig } from "../session/session-machine";
+import {
+  createSessionState,
+  reduceSession,
+  type SessionConfig,
+  type SessionState,
+} from "../session/session-machine";
 import {
   openDeepWorkRepository,
   type DeepWorkRepository,
@@ -19,6 +24,40 @@ const config: SessionConfig = {
 
 function databaseName() {
   return `deep-work-app-test-${crypto.randomUUID()}`;
+}
+
+function persistedSessionForFooter(
+  phase: "focus" | "paused" | "notes-pause" | "gentle-reset" | "quick-review" | "reflection",
+): SessionState {
+  const startedAtMs = Date.now() - 60_000;
+  let session = createSessionState(config);
+  session = reduceSession(session, {
+    atMs: startedAtMs,
+    sessionId: `footer-${phase}`,
+    type: "START",
+  });
+
+  if (phase === "focus") return session;
+  if (phase === "paused") {
+    return reduceSession(session, { atMs: startedAtMs + 5_000, type: "PAUSE" });
+  }
+  if (phase === "reflection") {
+    return reduceSession(session, { atMs: startedAtMs + 5_000, type: "END" });
+  }
+
+  session = reduceSession(session, {
+    atMs: startedAtMs + 5_000,
+    signal: "gaze-down",
+    type: "AWARENESS_EVENT",
+  });
+  if (phase === "gentle-reset") return session;
+  if (phase === "quick-review") {
+    return reduceSession(session, { atMs: startedAtMs + 6_000, type: "OPEN_QUICK_REVIEW" });
+  }
+  if (phase === "notes-pause") {
+    return reduceSession(session, { atMs: startedAtMs + 6_000, type: "TAKING_NOTES" });
+  }
+  return session;
 }
 
 afterEach(() => {
@@ -98,6 +137,29 @@ describe("Timer-Only persistence", () => {
       expect(snapshot.plaza.companion.name).toBe("Pip");
       expect(snapshot.plaza.companion.growthPoints).toBe(25);
     });
+    repository.close();
+  });
+
+  it.each([
+    "focus",
+    "paused",
+    "notes-pause",
+    "gentle-reset",
+    "quick-review",
+    "reflection",
+  ] as const)("renders one native footer for persisted %s state", async (phase) => {
+    const repository = await openDeepWorkRepository({ databaseName: databaseName() });
+    await repository.saveActiveSession(persistedSessionForFooter(phase));
+
+    render(<App repository={repository} />);
+
+    await waitFor(() =>
+      expect(screen.getAllByRole("contentinfo", { name: "Momo Town footer" })).toHaveLength(1),
+    );
+    const footer = screen.getByRole("contentinfo", { name: "Momo Town footer" });
+    expect(footer.tagName).toBe("FOOTER");
+    expect(footer).not.toHaveAttribute("role", "contentinfo");
+    expect(footer.closest("main")).toBeNull();
     repository.close();
   });
 

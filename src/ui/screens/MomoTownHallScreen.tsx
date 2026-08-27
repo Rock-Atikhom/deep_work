@@ -2,6 +2,7 @@ import type { CompanionColorStyle, CompanionState } from "../../plaza/plaza-type
 import type { SoundPreference } from "../../session/session-machine";
 import type { PresetName } from "../../session/session-types";
 import { FocusFriend } from "../components/FocusFriend";
+import { MomoBackLink } from "../components/MomoBackLink";
 
 export type MomoTownHallScreenProps = {
   companion: CompanionState;
@@ -45,7 +46,7 @@ export function MomoTownHallScreen({
   return (
     <main className="momo-town-hall" aria-labelledby="momo-town-hall-title">
       <header className="momo-town-hall-header">
-        <a href="#/plaza">← Back to Plaza</a>
+        <MomoBackLink />
         <p>Momo&apos;s Mayor&apos;s Desk</p>
         <span className={`momo-town-hall-connection momo-town-hall-connection-${connection}`}>
           {connection === "connected" ? "Extension connected" : "Extension disconnected"}
@@ -219,11 +220,6 @@ export function MomoTownHallScreen({
           </button>
         </div>
       </section>
-
-      <nav className="momo-town-hall-legal" aria-label="Legal">
-        <a href="#/privacy">Privacy Policy</a>
-        <a href="#/terms">Terms of Use</a>
-      </nav>
     </main>
   );
 }

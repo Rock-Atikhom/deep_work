@@ -2,7 +2,7 @@
 /**
  * Chrome bridge smoke verification for Ticket #29 (Part C support).
  *
- * Launches desktop Chrome (falls back to bundled Chromium) with the unpacked
+ * Launches Playwright Chromium (falls back to installed Google Chrome) with the unpacked
  * extension from dist-extension/, discovers its runtime extension ID, starts
  * the approved localhost:5173 dev server with that ID, and verifies the real
  * external-messaging handshake end-to-end. Saves screenshots as evidence.
@@ -43,6 +43,7 @@ async function waitForServer(url, timeoutMs = 30_000) {
 
 async function launchBrowserContext(userDataDir, { withExtension }) {
   const options = {
+    channel: "chromium",
     headless,
     viewport: null,
     timeout: 30_000,
@@ -67,7 +68,26 @@ async function launchBrowserContext(userDataDir, { withExtension }) {
 }
 
 async function getExtensionId(context) {
-  // MV3 workers can idle out; poll before falling back to the event.
+  const [worker] = context.serviceWorkers();
+  if (worker?.url().startsWith("chrome-extension://")) {
+    return new URL(worker.url()).host;
+  }
+
+  const extensionsPage = await context.newPage();
+  try {
+    await extensionsPage.goto("chrome://extensions/", { waitUntil: "domcontentloaded" });
+    const extension = extensionsPage
+      .locator("extensions-item")
+      .filter({ hasText: "Deep Work Course Guard" });
+    await extension.waitFor({ timeout: 5_000 });
+    const extensionId = await extension.getAttribute("id");
+    if (extensionId && /^[a-p]{32}$/.test(extensionId)) return extensionId;
+  } finally {
+    await extensionsPage.close();
+  }
+
+  // MV3 workers can idle out; wait as a final fallback after checking the
+  // browser's loaded-extension registry.
   const deadline = Date.now() + 20_000;
   while (Date.now() < deadline) {
     const [worker] = context.serviceWorkers();
@@ -76,8 +96,8 @@ async function getExtensionId(context) {
     }
     await new Promise((resolve) => setTimeout(resolve, 400));
   }
-  const worker = await context.waitForEvent("serviceworker", { timeout: 20_000 });
-  return new URL(worker.url()).host;
+  const waitedWorker = await context.waitForEvent("serviceworker", { timeout: 20_000 });
+  return new URL(waitedWorker.url()).host;
 }
 
 function startViteDev(extensionId) {
@@ -103,6 +123,71 @@ try {
   const context = await launchBrowserContext(dirWithExt, { withExtension: true });
   const extensionId = await getExtensionId(context);
   record("Unpacked extension loaded, runtime ID discovered", Boolean(extensionId), extensionId);
+
+  const popup = await context.newPage();
+  const popupErrors = [];
+  popup.on("pageerror", (error) => popupErrors.push(error.message));
+  popup.on("console", (entry) => {
+    if (entry.type() === "error") popupErrors.push(entry.text());
+  });
+  await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+  await popup.getByRole("button", { name: "Start guard" }).waitFor();
+  const coursePage = await context.newPage();
+  await coursePage.route("https://learn.example.com/**", (route) =>
+    route.fulfill({ body: "<title>Course</title>", contentType: "text/html" }),
+  );
+  await coursePage.goto("https://learn.example.com/lesson");
+  await coursePage.bringToFront();
+  const startedAtMs = Date.now() - 60_000;
+  await popup.evaluate(
+    async ({ startedAtMs }) => {
+      await globalThis.chrome.storage.local.set({
+        guardState: {
+          courseOrigin: "https://learn.example.com",
+          courseUrl: "https://learn.example.com/lesson",
+          interruptionCount: 0,
+          latestInCourseTabId: 1,
+          latestInCourseUrl: "https://learn.example.com/lesson",
+          lastSession: null,
+          phase: "watching",
+          returnCount: 0,
+          sessionId: `guard-${startedAtMs}`,
+          sessionStartedAtMs: startedAtMs,
+        },
+      });
+    },
+    { startedAtMs },
+  );
+  const iframeUrl = `chrome-extension://${extensionId}/popup.html?verify-stop`;
+  const verifyPopup = popup.waitForEvent("framenavigated", {
+    predicate: (frame) => frame.url() === iframeUrl,
+  });
+  await popup.evaluate(() => {
+    const frame = globalThis.document.createElement("iframe");
+    frame.src = globalThis.chrome.runtime.getURL("popup.html?verify-stop");
+    globalThis.document.body.append(frame);
+  });
+  const popupFrame = await verifyPopup;
+  await popupFrame.getByRole("button", { name: "Stop guard" }).waitFor();
+  await popupFrame.getByRole("button", { name: "Stop guard" }).click();
+  await popupFrame.getByRole("button", { name: "Start guard" }).waitFor();
+  const guardState = await popup.evaluate(async () => {
+    const stored = await globalThis.chrome.storage.local.get("guardState");
+    return stored.guardState;
+  });
+  const popupStopped =
+    guardState?.phase === "idle" && guardState.lastSession?.completionStatus === "completed";
+  record(
+    "Generated popup: Stop guard persists a completed idle session",
+    popupStopped,
+    popupStopped ? "" : JSON.stringify(guardState),
+  );
+  record(
+    "Generated popup has no browser page errors",
+    popupErrors.length === 0,
+    popupErrors.join(" | "),
+  );
+  await popup.screenshot({ path: path.join(outDir, "00-popup-stopped.png"), fullPage: true });
 
   log(`starting approved dev server with VITE_COURSE_GUARD_EXTENSION_ID=${extensionId}…`);
   const vite = startViteDev(extensionId);

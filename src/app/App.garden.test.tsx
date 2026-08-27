@@ -42,7 +42,9 @@ describe("Momo Memory Garden and local history", () => {
       ).toBeInTheDocument(),
     );
     fireEvent.click(screen.getByRole("button", { name: "More study tools" }));
-    expect(screen.getByText("No completed sessions yet.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Your first sprout is waiting" }),
+    ).toBeInTheDocument();
     await waitFor(async () => expect((await repository.load()).decks).toHaveLength(0));
 
     fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "Math" } });
