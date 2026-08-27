@@ -302,7 +302,7 @@ test("gives an empty Archive a first-sprout next step", async ({ page }) => {
 Run:
 
 ```bash
-npx playwright test tests/e2e/momo-consistency.spec.ts --grep "Back to Plaza|Plaza visual language|empty Archive"
+npx playwright test -c tests/e2e/playwright.config.ts tests/e2e/momo-consistency.spec.ts --grep "Back to Plaza|Plaza visual language|empty Archive"
 ```
 
 Expected: the new assertions fail against the current route-specific back-link CSS and Town Hall surfaces. The Archive content assertion may pass because Task 2 already added that markup; the command must still have failing tests before CSS implementation begins.
@@ -682,7 +682,7 @@ git commit -m "style: align Town Hall and Archive with Momo Plaza"
 Run:
 
 ```bash
-npx playwright test tests/e2e/momo-consistency.spec.ts --grep "Back to Plaza|Plaza visual language|empty Archive"
+npx playwright test -c tests/e2e/playwright.config.ts tests/e2e/momo-consistency.spec.ts --grep "Back to Plaza|Plaza visual language|empty Archive"
 ```
 
 Expected: the shared back-link, Town Hall surface, and Archive first-sprout tests pass at the required viewports.
@@ -692,7 +692,7 @@ Expected: the shared back-link, Town Hall surface, and Archive first-sprout test
 Run:
 
 ```bash
-npx playwright test tests/e2e/momo-consistency.spec.ts
+npx playwright test -c tests/e2e/playwright.config.ts tests/e2e/momo-consistency.spec.ts
 ```
 
 Expected: all route, footer, active-session, accessibility, visual-contract, error, reduced-motion, and 390px overflow tests pass.
@@ -743,7 +743,7 @@ Expected: the extension bundle and bridge smoke verification succeed without cha
 - [ ] **Step 4: Run the full Playwright acceptance suite**
 
 ```bash
-npx playwright test tests/e2e
+npx playwright test -c tests/e2e/playwright.config.ts tests/e2e
 ```
 
 Expected: every route is visible at desktop and 390px, no console/page errors occur, the four back controls share one contract, Town Hall has the Plaza-family surfaces, Archive has its guided empty state, and active Focus → Reflection → Reward navigation remains intact.
