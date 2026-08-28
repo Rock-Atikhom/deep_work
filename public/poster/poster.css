@@ -1,0 +1,365 @@
+@page {
+  size: 594mm 841mm;
+  margin: 0;
+}
+
+:root {
+  --poster-sky: #a9d8e8;
+  --poster-grass: #68a86e;
+  --poster-grass-dark: #2e6941;
+  --poster-yellow: #ffd66b;
+  --poster-coral: #ef8e72;
+  --poster-plum: #755b82;
+  --poster-cream: #fff7e9;
+  --poster-ink: #243347;
+  --poster-muted: #56657a;
+  --poster-white: #fffefa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-width: 320px;
+  margin: 0;
+  background: #d9e6e9;
+}
+
+body {
+  color: var(--poster-ink);
+  font-family: "IBM Plex Sans", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.poster {
+  width: 594mm;
+  min-height: 841mm;
+  padding: 14mm;
+  overflow: hidden;
+  background: var(--poster-cream);
+}
+
+.poster-header {
+  padding: 12mm 14mm 9mm;
+  color: var(--poster-white);
+  background: linear-gradient(120deg, var(--poster-plum), #176694 58%, #287fba);
+  border: 3px solid var(--poster-ink);
+  border-radius: 7mm;
+  box-shadow: 4px 4px 0 rgba(36, 51, 71, 0.25);
+}
+
+.poster-kicker {
+  margin: 0;
+  font-size: 5.1mm;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.poster h1,
+.poster h2,
+.poster h3 {
+  font-family: Newsreader, Georgia, "Times New Roman", serif;
+}
+
+.poster h1 {
+  max-width: 530mm;
+  margin: 4mm 0 0;
+  font-size: 19mm;
+  font-weight: 700;
+  line-height: 1.02;
+}
+
+.poster-subtitle {
+  max-width: 500mm;
+  margin: 5mm 0 0;
+  font-size: 6.1mm;
+  line-height: 1.2;
+}
+
+.poster-meta {
+  margin: 9mm -14mm -9mm;
+  padding: 4mm 14mm;
+  color: var(--poster-ink);
+  background: var(--poster-sky);
+  font-size: 4.4mm;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.poster-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+  grid-template-rows: 154mm 244mm 160mm auto;
+  gap: 8mm;
+  margin-top: 9mm;
+}
+
+.poster-panel {
+  min-width: 0;
+  padding: 8mm;
+  border: 3px solid var(--poster-ink);
+  border-radius: 6mm;
+  background: var(--poster-white);
+  box-shadow: 3px 3px 0 rgba(36, 51, 71, 0.13);
+  break-inside: avoid;
+}
+
+.poster-panel h2 {
+  width: max-content;
+  max-width: 100%;
+  margin: -14mm 0 6mm;
+  padding: 3mm 7mm;
+  color: var(--poster-white);
+  background: var(--poster-ink);
+  border-radius: 3mm;
+  font-size: 9mm;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.poster-panel h3 {
+  margin: 0 0 2mm;
+  color: var(--poster-plum);
+  font-size: 6.2mm;
+  line-height: 1;
+}
+
+.poster-panel p,
+.poster-panel li {
+  font-size: 4.7mm;
+  line-height: 1.22;
+}
+
+.poster-panel p {
+  margin: 4mm 0 0;
+}
+
+.poster-panel ul {
+  margin: 0;
+  padding-left: 6mm;
+}
+
+.poster-panel li + li {
+  margin-top: 2mm;
+}
+
+.poster-objective {
+  grid-column: 1;
+  grid-row: 1;
+  border-color: var(--poster-coral);
+}
+
+.poster-methodology {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  border-color: var(--poster-plum);
+}
+
+.poster-companion {
+  grid-column: 1;
+  grid-row: 2;
+  border-color: var(--poster-grass-dark);
+}
+
+.poster-privacy {
+  grid-column: 1;
+  grid-row: 3;
+  border-color: var(--poster-sky);
+}
+
+.poster-validation {
+  grid-column: 2;
+  grid-row: 3;
+  border-color: var(--poster-yellow);
+}
+
+.poster-conclusion {
+  grid-column: 1 / -1;
+  grid-row: 4;
+  border-color: var(--poster-ink);
+}
+
+.poster-flow {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 2mm;
+}
+
+.panel-note {
+  padding: 4mm;
+  border-left: 4px solid var(--poster-coral);
+  background: #fff0e9;
+  font-weight: 700;
+}
+
+.state-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.1mm;
+  min-height: 15mm;
+  padding: 3mm 4mm;
+  color: var(--poster-ink);
+  background: var(--poster-yellow);
+  border-radius: 3mm;
+  font-size: 4.2mm !important;
+  font-weight: 800;
+  text-align: center;
+}
+
+.state-flow span {
+  color: var(--poster-plum);
+  font-size: 5.5mm;
+}
+
+.poster-screens {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3mm;
+  margin-top: 5mm;
+}
+
+.poster-screens figure,
+.privacy-screen,
+.extension-screen {
+  min-width: 0;
+  margin: 0;
+}
+
+.poster-screens img,
+.privacy-screen img,
+.extension-screen img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid var(--poster-ink);
+  border-radius: 3mm;
+}
+
+.poster-screens img {
+  height: 70mm;
+  object-fit: cover;
+  object-position: top;
+}
+
+.poster figcaption {
+  margin-top: 2mm;
+  color: var(--poster-muted);
+  font-size: 3.5mm;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.privacy-layout,
+.validation-layout,
+.conclusion-layout {
+  display: grid;
+  align-items: start;
+  gap: 6mm;
+}
+
+.privacy-layout {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+}
+
+.validation-layout {
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+}
+
+.privacy-layout ul,
+.validation-layout ul {
+  padding-left: 5mm;
+}
+
+.privacy-screen img {
+  height: 78mm;
+  object-fit: cover;
+  object-position: top;
+}
+
+.extension-screen img {
+  height: 78mm;
+  object-fit: cover;
+  object-position: top;
+}
+
+.conclusion-layout {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) 47mm;
+}
+
+.conclusion-layout p {
+  margin-top: 0;
+}
+
+.qr-placeholder {
+  display: grid;
+  align-content: center;
+  min-height: 38mm;
+  padding: 5mm;
+  color: var(--poster-ink);
+  background: var(--poster-sky);
+  border: 3px dashed var(--poster-ink);
+  border-radius: 4mm;
+  text-align: center;
+}
+
+.qr-placeholder strong {
+  font-size: 4.2mm;
+}
+
+.qr-placeholder span {
+  margin-top: 2mm;
+  font-size: 3.3mm;
+  overflow-wrap: anywhere;
+}
+
+.poster-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8mm;
+  margin-top: 7mm;
+  padding: 5mm 8mm;
+  color: var(--poster-ink);
+  background: var(--poster-sky);
+  border: 3px solid var(--poster-ink);
+  border-radius: 4mm;
+  font-size: 4mm;
+  font-weight: 800;
+}
+
+.poster a:focus-visible {
+  outline: 3px solid var(--poster-coral);
+  outline-offset: 3px;
+}
+
+@media screen and (max-width: 900px) {
+  body {
+    overflow-x: auto;
+  }
+
+  .poster {
+    width: 594mm;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: white;
+  }
+
+  .poster,
+  .poster-header,
+  .poster-panel,
+  .poster-meta,
+  .poster-footer,
+  .state-flow,
+  .qr-placeholder {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
