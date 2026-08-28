@@ -2,7 +2,7 @@
 
 A local-first browser extension and Learning Plaza companion that helps learners return to their online course when they leave the course website.
 
-Deep Work Course Guard is a gentle, learner-directed boundary—not a Pomodoro timer, surveillance tool, or productivity score.
+Deep Work Course Guard is a gentle, learner-directed boundary—not a Pomodoro timer, surveillance tool, or productivity score. It is a working local-first companion and extension, not a hosted SaaS product.
 
 ## What it does
 
@@ -114,6 +114,7 @@ npm run typecheck
 npm run vision:manifest:check
 npm run build
 npm run extension:build
+npm run poster:render
 npx --yes playwright@1.62.0 test --config=tests/e2e
 ```
 
@@ -127,7 +128,9 @@ The repository includes an A1 portrait project poster draft based on the Learnin
 
 The renderer creates a PDF and PNG preview. Generated files are intentionally kept outside version control.
 
-## Repository map
+## Technology and repository map
+
+The web app is built with React and Vite, while the browser extension uses Chrome Manifest V3. The repository also includes browser-local persistence plus camera-aware and timer-only learning-history surfaces; those local PWA features remain separate from Course Guard's extension bridge.
 
 - [`CONTEXT.md`](CONTEXT.md) — product language, guard behavior, privacy boundaries, and domain terms.
 - [`DESIGN.md`](DESIGN.md) — Learning Plaza visual identity and interaction principles.
