@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Deep Work Course Guard and Learning Plaza project poster" />
+    <title>Deep Work Course Guard — Project Poster</title>
+    <link rel="stylesheet" href="./poster.css" />
+  </head>
+  <body>
+    <main class="poster" data-page-size="A1 portrait">
+      <header class="poster-header">
+        <p class="poster-kicker">Deep Work Companion · Learning Plaza</p>
+        <h1>Deep Work Course Guard: A Local-First Learning Companion for Gentle Focus</h1>
+        <p class="poster-subtitle">
+          A privacy-first browser extension and companion dashboard that helps learners return to
+          their online course without surveillance, punishment, or fixed Pomodoro intervals.
+        </p>
+        <p class="poster-meta">
+          [AUTHOR NAME] | [INSTITUTION / COMPANY] | [DEMO OR REPOSITORY URL]
+        </p>
+      </header>
+
+      <div class="poster-grid">
+        <section
+          class="poster-panel poster-objective"
+          data-section="Objective"
+          aria-labelledby="objective-title"
+        >
+          <h2 id="objective-title">Objective</h2>
+          <ul>
+            <li>Unwanted tab switching can interrupt online learning.</li>
+            <li>Many blockers feel restrictive or punitive.</li>
+            <li>Course Guard provides a gentle, learner-directed boundary.</li>
+            <li>The system detects leaving the course website without reading page content.</li>
+            <li>Session summaries and companion progress remain local to the browser.</li>
+          </ul>
+        </section>
+
+        <section
+          class="poster-panel poster-methodology"
+          data-section="Methodology"
+          aria-labelledby="methodology-title"
+        >
+          <h2 id="methodology-title">Methodology</h2>
+          <img
+            class="poster-flow"
+            src="./learning-plaza-flow.svg"
+            alt="Learner flow from selecting a course website to returning to the course and completing a session"
+          />
+          <p class="panel-note">
+            The extension is authoritative for active guard state and checks website origin, not
+            page contents.
+          </p>
+        </section>
+
+        <section
+          class="poster-panel poster-companion"
+          data-section="Companion experience"
+          aria-labelledby="companion-title"
+        >
+          <h2 id="companion-title">Companion experience</h2>
+          <p class="state-flow">
+            Resting <span>→</span> Ready <span>→</span> Focusing <span>→</span> Encouraging
+            <span>→</span> Proud
+          </p>
+          <div class="poster-screens">
+            <figure>
+              <img data-poster-asset src="./assets/plaza.png" alt="Learning Plaza dashboard" />
+              <figcaption>Learning Plaza</figcaption>
+            </figure>
+            <figure>
+              <img data-poster-asset src="./assets/course-guard.png" alt="Course Guard station" />
+              <figcaption>Course Guard station</figcaption>
+            </figure>
+            <figure>
+              <img data-poster-asset src="./assets/archive.png" alt="Session Archive" />
+              <figcaption>Session Archive</figcaption>
+            </figure>
+          </div>
+          <p>
+            Mood, energy, growth, and cosmetic unlocks are expressive progress signals, not
+            attention or performance scores.
+          </p>
+        </section>
+
+        <section
+          class="poster-panel poster-privacy"
+          data-section="Privacy by design"
+          aria-labelledby="privacy-title"
+        >
+          <h2 id="privacy-title">Privacy by design</h2>
+          <div class="privacy-layout">
+            <ul>
+              <li>No page-content reading.</li>
+              <li>No uploaded browsing history.</li>
+              <li>No camera frames transmitted.</li>
+              <li>Explicit permission at guard start.</li>
+              <li>Safe handling of permission denial or revocation.</li>
+              <li>Local session history and companion progress.</li>
+              <li>No leaderboard, streak pressure, punishment, or attention score.</li>
+            </ul>
+            <figure class="privacy-screen">
+              <img
+                data-poster-asset
+                src="./assets/town-hall.png"
+                alt="Town Hall privacy and connection controls"
+              />
+              <figcaption>Town Hall keeps connection and local-data controls visible.</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section
+          class="poster-panel poster-validation"
+          data-section="Implementation validation"
+          aria-labelledby="validation-title"
+        >
+          <h2 id="validation-title">Implementation validation</h2>
+          <div class="validation-layout">
+            <ul>
+              <li>49 unit-test files and 219 unit tests passed.</li>
+              <li>25 responsive Playwright tests passed.</li>
+              <li>Desktop and mobile route audit completed.</li>
+              <li>Extension bridge and disconnected-state checks passed.</li>
+              <li>Production and extension builds passed.</li>
+            </ul>
+            <figure class="extension-screen">
+              <img
+                data-poster-asset
+                src="./assets/extension.png"
+                alt="Course Guard extension popup showing an active guard state"
+              />
+              <figcaption>Compact extension companion surface</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section
+          class="poster-panel poster-conclusion"
+          data-section="Conclusion and future work"
+          aria-labelledby="conclusion-title"
+        >
+          <h2 id="conclusion-title">Conclusion and future work</h2>
+          <div class="conclusion-layout">
+            <p>
+              Deep Work Course Guard turns distraction recovery into a supportive interaction rather
+              than a punishment. Learning Plaza combines a clear browser boundary with a friendly
+              companion experience while keeping control, privacy, and progress local to the
+              learner.
+            </p>
+            <div>
+              <h3>Potential future work</h3>
+              <p>
+                Usability testing with online learners, accessibility testing with assistive
+                technologies, cross-browser extension support, and evaluation of return-to-course
+                behavior.
+              </p>
+            </div>
+            <aside class="qr-placeholder" aria-label="Demo or repository QR code placeholder">
+              <strong>SCAN TO EXPLORE</strong>
+              <span>[DEMO OR REPOSITORY URL]</span>
+            </aside>
+          </div>
+        </section>
+      </div>
+
+      <footer class="poster-footer">
+        <span>Deep Work Course Guard · Learning Plaza</span>
+        <span>Local-first learning support · Original project work</span>
+      </footer>
+    </main>
+  </body>
+</html>

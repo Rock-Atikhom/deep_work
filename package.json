@@ -18,7 +18,8 @@
     "build": "tsc -b && vite build",
     "extension:build": "vite build -c vite.extension.config.ts",
     "preview": "vite preview",
-    "verify:chrome": "npm run extension:build && node scripts/verify-chrome-bridge.mjs"
+    "verify:chrome": "npm run extension:build && node scripts/verify-chrome-bridge.mjs",
+    "poster:render": "npm run build && (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/learning-plaza-poster-preview.log 2>&1 & preview_pid=$!; trap 'kill $preview_pid' EXIT; POSTER_BASE_URL=http://127.0.0.1:4174 node scripts/render-learning-plaza-poster.mjs)"
   },
   "dependencies": {
     "@fontsource-variable/newsreader": "5.3.0",
