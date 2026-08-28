@@ -152,4 +152,4 @@ Contributions should preserve these boundaries and include verification evidence
 
 ## License and notices
 
-This project is distributed under the [`LICENSE`](LICENSE). See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for dependency and asset notices.
+This project is licensed under the [MIT License](LICENSE). See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for dependency and asset notices.
