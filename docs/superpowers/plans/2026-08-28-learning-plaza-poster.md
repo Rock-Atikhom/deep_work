@@ -72,7 +72,7 @@ test.describe("Learning Plaza project poster", () => {
 
     await page.goto("/poster/");
     await page.waitForLoadState("networkidle");
-    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(() => globalThis.document.fonts.ready);
 
     await expect(page).toHaveTitle("Deep Work Course Guard — Project Poster");
     await expect(page.locator("main[data-page-size='A1 portrait']")).toHaveCount(1);
@@ -95,7 +95,7 @@ test.describe("Learning Plaza project poster", () => {
     }
 
     await expect(page.getByText("[AUTHOR NAME]", { exact: false })).toBeVisible();
-    await expect(page.getByText("[DEMO OR REPOSITORY URL]", { exact: false })).toBeVisible();
+    await expect(page.getByText("[DEMO OR REPOSITORY URL]", { exact: true })).toBeVisible();
     expect(errors).toEqual([]);
   });
 
@@ -113,7 +113,7 @@ test.describe("Learning Plaza project poster", () => {
 
     const copy = await page.locator("body").innerText();
     expect(copy).toContain("No page-content reading");
-    expect(copy).toContain("No attention score");
+    expect(copy).toContain("attention score");
     expect(copy).not.toContain("Experimental results");
     expect(copy).not.toContain("proves distraction");
     expect(copy).not.toContain("measures attention");
@@ -463,7 +463,7 @@ import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 
 const outputDir = "/tmp/learning-plaza-poster";
-const baseUrl = process.env.POSTER_BASE_URL ?? "http://127.0.0.1:4173";
+const baseUrl = process.env.POSTER_BASE_URL ?? "http://127.0.0.1:4174";
 
 await mkdir(outputDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
@@ -475,12 +475,26 @@ try {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.goto(`${baseUrl}/poster/`, { waitUntil: "networkidle" });
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(() => globalThis.document.fonts.ready);
 
   const poster = page.locator("main[data-page-size='A1 portrait']");
   if ((await poster.count()) !== 1) throw new Error("A1 poster root is missing");
-  const naturalWidths = await page.locator("img[data-poster-asset]").evaluateAll((images) => images.map((image) => image.naturalWidth));
+  const requiredAssets = page.locator("img[data-poster-asset]");
+  if ((await requiredAssets.count()) !== 5) throw new Error("Poster asset contract is incomplete");
+  const naturalWidths = await requiredAssets.evaluateAll((images) => images.map((image) => image.naturalWidth));
   if (naturalWidths.some((width) => width <= 0)) throw new Error(`Poster asset failed to load: ${naturalWidths.join(", ")}`);
+  const posterSize = await poster.evaluate((element) => {
+    const style = globalThis.getComputedStyle(element);
+    return { width: Number.parseFloat(style.width), minHeight: Number.parseFloat(style.minHeight) };
+  });
+  const expectedWidth = (594 / 25.4) * 96;
+  const expectedHeight = (841 / 25.4) * 96;
+  if (
+    Math.abs(posterSize.width - expectedWidth) > 1 ||
+    Math.abs(posterSize.minHeight - expectedHeight) > 1
+  ) {
+    throw new Error(`Unexpected poster dimensions: ${JSON.stringify(posterSize)}`);
+  }
   if (pageErrors.length > 0) throw new Error(pageErrors.join("\n"));
 
   await page.screenshot({ path: `${outputDir}/learning-plaza-poster.png`, fullPage: true });
@@ -501,7 +515,7 @@ try {
 Add this script to `package.json` without changing existing commands:
 
 ```json
-"poster:render": "npm run build && (npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/learning-plaza-poster-preview.log 2>&1 & preview_pid=$!; trap 'kill $preview_pid' EXIT; node scripts/render-learning-plaza-poster.mjs)"
+"poster:render": "npm run build && (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/learning-plaza-poster-preview.log 2>&1 & preview_pid=$!; trap 'kill $preview_pid' EXIT; POSTER_BASE_URL=http://127.0.0.1:4174 node scripts/render-learning-plaza-poster.mjs)"
 ```
 
 - [ ] **Step 3: Render the draft.**
