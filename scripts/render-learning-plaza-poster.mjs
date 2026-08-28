@@ -14,7 +14,7 @@ try {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.goto(`${baseUrl}/poster/`, { waitUntil: "networkidle" });
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(() => globalThis.document.fonts.ready);
 
   const poster = page.locator("main[data-page-size='A1 portrait']");
   if ((await poster.count()) !== 1) throw new Error("A1 poster root is missing");
@@ -27,7 +27,7 @@ try {
     throw new Error(`Poster asset failed to load: ${naturalWidths.join(", ")}`);
   }
   const posterSize = await poster.evaluate((element) => {
-    const style = getComputedStyle(element);
+    const style = globalThis.getComputedStyle(element);
     return { width: Number.parseFloat(style.width), minHeight: Number.parseFloat(style.minHeight) };
   });
   const expectedWidth = (594 / 25.4) * 96;
