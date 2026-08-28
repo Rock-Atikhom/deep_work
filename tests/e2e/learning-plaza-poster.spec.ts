@@ -1,11 +1,13 @@
 import { expect, test } from "@playwright/test";
 
+const posterPath = process.env.GITHUB_ACTIONS === "true" ? "/deep_work/poster/" : "/poster/";
+
 test.describe("Learning Plaza project poster", () => {
   test("exposes the approved A1 content structure", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
 
-    await page.goto("/poster/");
+    await page.goto(posterPath);
     await page.waitForLoadState("networkidle");
     await page.evaluate(() => document.fonts.ready);
 
@@ -35,7 +37,7 @@ test.describe("Learning Plaza project poster", () => {
   });
 
   test("loads every required project visual without unsupported claims", async ({ page }) => {
-    await page.goto("/poster/");
+    await page.goto(posterPath);
     await page.waitForLoadState("networkidle");
 
     const images = page.locator("img[data-poster-asset]");

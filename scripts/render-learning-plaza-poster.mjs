@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 
 const outputDir = "/tmp/learning-plaza-poster";
 const baseUrl = process.env.POSTER_BASE_URL ?? "http://127.0.0.1:4174";
+const posterPath = process.env.GITHUB_ACTIONS === "true" ? "/deep_work/poster/" : "/poster/";
 
 await mkdir(outputDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
@@ -13,7 +14,7 @@ try {
   });
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.goto(`${baseUrl}/poster/`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}${posterPath}`, { waitUntil: "networkidle" });
   await page.evaluate(() => globalThis.document.fonts.ready);
 
   const poster = page.locator("main[data-page-size='A1 portrait']");

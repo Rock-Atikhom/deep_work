@@ -65,12 +65,14 @@ Create the test with the following assertions before the poster is implemented:
 ```ts
 import { expect, test } from "@playwright/test";
 
+const posterPath = process.env.GITHUB_ACTIONS === "true" ? "/deep_work/poster/" : "/poster/";
+
 test.describe("Learning Plaza project poster", () => {
   test("exposes the approved A1 content structure", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
 
-    await page.goto("/poster/");
+    await page.goto(posterPath);
     await page.waitForLoadState("networkidle");
     await page.evaluate(() => globalThis.document.fonts.ready);
 
@@ -100,7 +102,7 @@ test.describe("Learning Plaza project poster", () => {
   });
 
   test("loads every required project visual without unsupported claims", async ({ page }) => {
-    await page.goto("/poster/");
+    await page.goto(posterPath);
     await page.waitForLoadState("networkidle");
 
     const images = page.locator("img[data-poster-asset]");
@@ -464,6 +466,7 @@ import { mkdir } from "node:fs/promises";
 
 const outputDir = "/tmp/learning-plaza-poster";
 const baseUrl = process.env.POSTER_BASE_URL ?? "http://127.0.0.1:4174";
+const posterPath = process.env.GITHUB_ACTIONS === "true" ? "/deep_work/poster/" : "/poster/";
 
 await mkdir(outputDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
@@ -474,7 +477,7 @@ try {
   });
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.goto(`${baseUrl}/poster/`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}${posterPath}`, { waitUntil: "networkidle" });
   await page.evaluate(() => globalThis.document.fonts.ready);
 
   const poster = page.locator("main[data-page-size='A1 portrait']");
